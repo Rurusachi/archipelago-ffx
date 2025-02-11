@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <PlatformTarget>x86</PlatformTarget>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <!-- PROJECT REFERENCES -->
+  <ItemGroup>
+    <ProjectReference Include="..\core\Fahrenheit.Core.csproj">
+		<Private>false</Private>
+		<ExcludeAssets>runtime</ExcludeAssets>
+	</ProjectReference>
+    <ProjectReference Include="..\runtime\Fahrenheit.Core.Runtime.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+  
+  
+    <!-- SHARED FILE LINKS -->
+  <ItemGroup>
+    <Compile Include="../core/typedefs.cs" Link="src/_typedefs.cs" />
+    <None Include="$(SolutionDir).editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Archipelago.MultiClient.Net" Version="6.3.1" />
+  </ItemGroup>
+  
+  <!-- LOCAL DEPLOYMENT TARGET -->
+  <PropertyGroup>
+    <CopyToDir>$(SolutionDir)artifacts\localdeploy\modules\$(AssemblyName)</CopyToDir>
+  </PropertyGroup>
+  
+  <!-- ASSEMBLY ADDITIONAL PROPERTIES -->
+  <PropertyGroup>
+    <AssemblyName>archipelago</AssemblyName>
+    <AssemblyTitle>Fahrenheit Archipelago Mod for Final Fantasy X</AssemblyTitle>
+    <Product>Fahrenheit Archipelago Mod for Final Fantasy X</Product>
+  </PropertyGroup>
+
+
+</Project>
