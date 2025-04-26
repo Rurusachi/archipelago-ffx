@@ -784,10 +784,10 @@ public unsafe partial class ArchipelagoFFXModule {
                 reset_party();
                 // Battle frontline gets copied after this so have to set here
                 for (int i = 0; i < 3; i++) {
-                    Globals.btl->frontline[i] = Globals.save_data->party_order[i];
+                    btl->frontline[i] = save_data->party_order[i];
                 }
                 for (int i = 0; i < 4; i++) {
-                    Globals.btl->backline[i] = Globals.save_data->party_order[i+3];
+                    btl->backline[i] = save_data->party_order[i+3];
                 }
                 party_overridden = false;
             }
@@ -800,7 +800,7 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void* curr_pos_area_ptr = null;
     public static byte h_MsBtlReadSetScene() {
         byte result = _MsBtlReadSetScene.orig_fptr();
-        ref BtlAreas original_pos_struct = ref *Globals.btl->ptr_pos_def;
+        ref BtlAreas original_pos_struct = ref *btl->ptr_pos_def;
         if (original_pos_struct.area_count == 0) return result;
         if (curr_pos_area_ptr != null) {
             NativeMemory.Free(curr_pos_area_ptr);
@@ -965,7 +965,7 @@ public unsafe partial class ArchipelagoFFXModule {
         *curr_pos_struct.chunk_end = *original_pos_struct.chunk_end;
 
 
-        Globals.btl->ptr_pos_def = curr_pos_struct_ptr;
+        btl->ptr_pos_def = curr_pos_struct_ptr;
 
         return result;
     }
