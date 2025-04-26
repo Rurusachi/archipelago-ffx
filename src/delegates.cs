@@ -4,10 +4,10 @@ using Fahrenheit.Core.FFX.Atel;
 using Fahrenheit.Core.FFX.Battle;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static Fahrenheit.Modules.Archipelago.Client.ArchipelagoClient;
+using static Fahrenheit.Modules.ArchipelagoFFX.Client.ArchipelagoClient;
 
-namespace Fahrenheit.Modules.Archipelago;
-internal static unsafe class delegates {
+namespace Fahrenheit.Modules.ArchipelagoFFX;
+public static unsafe class delegates {
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void AtelEventSetUp(u32 event_id);
@@ -206,11 +206,5 @@ internal static unsafe class delegates {
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Map_800F(AtelBasicWorker* work, i32* storage, AtelStack* atelStack);
-
-
-
-
-
-
 }
 

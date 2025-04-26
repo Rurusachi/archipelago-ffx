@@ -6,7 +6,7 @@ using Archipelago.MultiClient.Net.MessageLog.Parts;
 using Archipelago.MultiClient.Net.Models;
 using Fahrenheit.Core;
 using Fahrenheit.Core.FFX;
-using Fahrenheit.Modules.Archipelago.GUI;
+using Fahrenheit.Modules.ArchipelagoFFX.GUI;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -14,9 +14,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using static Fahrenheit.Modules.Archipelago.delegates;
+using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
-namespace Fahrenheit.Modules.Archipelago.Client;
+namespace Fahrenheit.Modules.ArchipelagoFFX.Client;
 public class ArchipelagoClient {
     public static ArchipelagoSession? session;
     private static int received_items = 0;
@@ -119,7 +119,7 @@ public class ArchipelagoClient {
                     FhLog.Error($"Received unhandled item: {item.ItemName} ({item.ItemId})");
                 }
                  */
-                ArchipelagoModule.obtain_item((uint)item.ItemId, 1);
+                ArchipelagoFFXModule.obtain_item((uint)item.ItemId, 1);
                 received_items++;
             }
         }

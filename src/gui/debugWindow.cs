@@ -4,7 +4,7 @@ using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Atel;
 using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Core.FFX.Ids;
-using Fahrenheit.Modules.Archipelago.Client;
+using Fahrenheit.Modules.ArchipelagoFFX.Client;
 using Fahrenheit.Core.ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -12,10 +12,11 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static Fahrenheit.Modules.Archipelago.ArchipelagoData;
+using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using Color = Archipelago.MultiClient.Net.Models.Color;
+using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
-namespace Fahrenheit.Modules.Archipelago.GUI;
+namespace Fahrenheit.Modules.ArchipelagoFFX.GUI;
 public unsafe static class ArchipelagoGUI {
     public delegate void OnRenderDelegate();
 
@@ -85,14 +86,14 @@ public unsafe static class ArchipelagoGUI {
         } else {
             ImGui.Text($"Connected as {ArchipelagoClient.active_player!.Name}");
         }
-        fixed (uint* ap_mult = &ArchipelagoModule.ap_multiplier) {
+        fixed (uint* ap_mult = &ArchipelagoFFXModule.ap_multiplier) {
             uint step = 1;
             uint step_fast = 10;
             ImGui.InputScalar("AP multiplier", ImGuiDataType.U32, (nint)ap_mult, (nint)(&step), (nint)(&step_fast));
         }
 
-        ImGui.Text($"Current room: {Globals.save_data->current_room_id} ({Marshal.PtrToStringAnsi((isize)ArchipelagoModule.get_event_name(*(uint*)Globals.event_id))!})");
-        ImGui.Text($"Current region: {ArchipelagoModule.current_region}");
+        ImGui.Text($"Current room: {Globals.save_data->current_room_id} ({Marshal.PtrToStringAnsi((isize)ArchipelagoFFXModule.get_event_name(*(uint*)Globals.event_id))!})");
+        ImGui.Text($"Current region: {ArchipelagoFFXModule.current_region}");
         ImGui.Text($"Current story progress: {Globals.save_data->story_progress}");
 
         //ImGui.Text($"Battle State: {Globals.btl->battle_state}");
@@ -104,21 +105,21 @@ public unsafe static class ArchipelagoGUI {
 
             if (ImGui.InputInt3("MsBtlGetPosInput", ref MsBtlGetPosParams[0])) {
                 fixed (Vector4* out_pos = &MsBtlGetPosResult)
-                ArchipelagoModule.h_MsBtlGetPos(0, &Globals.Battle.player_characters[Globals.btl->frontline[0]], MsBtlGetPosParams[0], MsBtlGetPosParams[1], MsBtlGetPosParams[2], out_pos);
+                ArchipelagoFFXModule.h_MsBtlGetPos(0, &Globals.Battle.player_characters[Globals.btl->frontline[0]], MsBtlGetPosParams[0], MsBtlGetPosParams[1], MsBtlGetPosParams[2], out_pos);
             }
             ImGui.Text($"{MsBtlGetPosResult}");
         } else {
             fixed (uint* battle_input = &LaunchBattleInput) {
                 uint p_step = 1;
                 uint p_step_fast = 10;
-                ImGui.InputScalar("launchBattleInput", ImGuiDataType.U32, (nint)battle_input, (nint)(&p_step), (nint)(&p_step_fast), "%x", ImGuiInputTextFlags.EnterReturnsTrue);
+                ImGui.InputScalar("launchBattleInput", ImGuiDataType.U32, (nint)battle_input, (nint)(&p_step), (nint)(&p_step_fast), "%x");
             }
             if (ImGui.Button("launchBattleButton")) {
-                ArchipelagoModule.h_MsBattleLabelExe(LaunchBattleInput, 1, 1);
+                ArchipelagoFFXModule.h_MsBattleLabelExe(LaunchBattleInput, 1, 1);
             }
         }
 
-        ImGui.InputInt("IgnoreThisInput", ref ArchipelagoModule.ignore_this);
+        //ImGui.InputInt("IgnoreThisInput", ref ArchipelagoFFXModule.ignore_this);
 
         /*
         AtelBasicWorker* worker0 = Atel.controllers[0].worker(0);
@@ -145,9 +146,9 @@ public unsafe static class ArchipelagoGUI {
         ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
         ImGui.Text(s);
         int counter = 0;
-        int length = ArchipelagoModule.region_is_unlocked.Count;
-        foreach (var (region, i) in ArchipelagoModule.region_is_unlocked.Select((value, i) => (value, i))) {
-            ArchipelagoModule.region_is_unlocked[region.Key] ^= ImGui.Button($"{region.Key} unlocked: {region.Value}");
+        int length = ArchipelagoFFXModule.region_is_unlocked.Count;
+        foreach (var (region, i) in ArchipelagoFFXModule.region_is_unlocked.Select((value, i) => (value, i))) {
+            ArchipelagoFFXModule.region_is_unlocked[region.Key] ^= ImGui.Button($"{region.Key} unlocked: {region.Value}");
             if (counter < 3 && i < length-1) {
                 ImGui.SameLine();
             }
@@ -158,9 +159,9 @@ public unsafe static class ArchipelagoGUI {
         ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
         ImGui.Text(s);
         counter = 0;
-        length = ArchipelagoModule.character_is_unlocked.Count;
-        foreach (var (character, i) in ArchipelagoModule.character_is_unlocked.Select((value, i) => (value, i))) {
-            ArchipelagoModule.character_is_unlocked[character.Key] ^= ImGui.Button($"{character.Key} unlocked: {character.Value}");
+        length = ArchipelagoFFXModule.character_is_unlocked.Count;
+        foreach (var (character, i) in ArchipelagoFFXModule.character_is_unlocked.Select((value, i) => (value, i))) {
+            ArchipelagoFFXModule.character_is_unlocked[character.Key] ^= ImGui.Button($"{character.Key} unlocked: {character.Value}");
             if (counter < 3 && i < length-1) {
                 ImGui.SameLine();
             }
@@ -228,7 +229,7 @@ public unsafe static class ArchipelagoGUI {
                             if (int.TryParse(entrance, out int entrance_id)) {
                                 List<(string, Color)> message = [("Warping to ", Color.White), ($"{map_id} (entrance {entrance_id})", Color.Blue)];
                                 client_log.Add(message);
-                                ArchipelagoModule.call_warp_to_map(map_id, entrance_id);
+                                ArchipelagoFFXModule.call_warp_to_map(map_id, entrance_id);
                             }
                             else {
                                 List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entrance, Color.Blue)];
@@ -246,7 +247,7 @@ public unsafe static class ArchipelagoGUI {
                     },
                     ["/resetregion", string regionString] => () => {
                         if (Enum.TryParse(regionString, out RegionEnum region)) {
-                            ArchipelagoModule.region_states[region] = region_starting_state[region];
+                            ArchipelagoFFXModule.region_states[region] = region_starting_state[region];
                         } else {
                             List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
                             client_log.Add(message);
@@ -255,7 +256,44 @@ public unsafe static class ArchipelagoGUI {
                     ["/resetregion", ..] => () => {
                         List<(string, Color)> message = [("Wrong arguments for '/resetregion': Should be ", Color.Red), ($"/resetregion regionName", Color.Blue)];
                         client_log.Add(message);
-                    },
+                    }
+                    ,
+                    ["/setregion", string regionString, string progressString, string mapString, string entranceString] => () => {
+                        if (Enum.TryParse(regionString, out RegionEnum region)) {
+                            if (ushort.TryParse(progressString, out ushort progress)) {
+                                if (ushort.TryParse(mapString, out ushort map)) {
+                                    if (ushort.TryParse(entranceString, out ushort entrance)) {
+                                        ArchipelagoRegion r = ArchipelagoFFXModule.region_states[region];
+                                        r.story_progress = progress;
+                                        r.room_id = map;
+                                        r.entrance = entrance;
+                                    } else {
+                                        List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entranceString, Color.Blue)];
+                                        client_log.Add(message);
+                                    }
+                                }
+                                else{
+                                    List<(string, Color)> message = [("invalid map_id: ", Color.Red), (mapString, Color.Blue)];
+                                    client_log.Add(message);
+                                }
+
+                            } else {
+                                List<(string, Color)> message = [("invalid story_progress: ", Color.Red), (progressString, Color.Blue)];
+                                client_log.Add(message);
+                            }
+
+                        }
+                        else {
+                            List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
+                            client_log.Add(message);
+                        }
+                    }
+                    ,
+                    ["/setregion", ..] => () => {
+                        List<(string, Color)> message = [("Wrong arguments for '/setregion': Should be ", Color.Red), ($"/setregion regionName story_progress map_id entrance_id", Color.Blue)];
+                        client_log.Add(message);
+                    }
+                    ,
                     ["/clear"] => () => {client_log.Clear(); },
                     _ => () => {
                         List<(string, Color)> message = [("unknown command: ", Color.Red), (client_input_command, Color.Blue)];

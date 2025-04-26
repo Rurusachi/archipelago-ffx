@@ -1,31 +1,22 @@
 ﻿using Fahrenheit.Core;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System;
-using static Fahrenheit.Core.FhHookDelegates;
-using static Fahrenheit.Modules.Archipelago.delegates;
+using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 using Fahrenheit.Core.FFX;
-//using ImGuiNET;
-//using Fahrenheit.Modules.Archipelago.GUI;
-using Fahrenheit.Modules.Archipelago.Client;
-using static Fahrenheit.Modules.Archipelago.Client.ArchipelagoClient;
+using Fahrenheit.Modules.ArchipelagoFFX.Client;
+using static Fahrenheit.Modules.ArchipelagoFFX.Client.ArchipelagoClient;
 using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Core.FFX.Atel;
 using System.Collections.Generic;
 using static Fahrenheit.Core.FFX.Globals;
-using static Fahrenheit.Modules.Archipelago.ArchipelagoData;
+using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using System.Linq;
-using System.Drawing;
-using System.Xml;
-using System.Runtime.InteropServices.Marshalling;
-using Newtonsoft.Json.Linq;
 using System.Numerics;
-using System.Reflection.Metadata;
 
 //[assembly: DisableRuntimeMarshalling]
-namespace Fahrenheit.Modules.Archipelago;
-public unsafe partial class ArchipelagoModule {
+namespace Fahrenheit.Modules.ArchipelagoFFX;
+public unsafe partial class ArchipelagoFFXModule {
 
     public static i32* takara_pointer => FhUtil.ptr_at<i32>(0xD35FEC);
     public static i32* buki_get_pointer => FhUtil.ptr_at<i32>(0xD35FF4);
@@ -307,7 +298,7 @@ public unsafe partial class ArchipelagoModule {
             && _SgEvent_showModularMenuInit.hook()
             && _Common_addPartyMember.hook() && _Common_removePartyMember.hook() && _Common_removePartyMemberLongTerm.hook() && _Common_setWeaponVisibilty.hook()
             && _Common_putPartyMemberInSlot.hook() && _Common_pushParty.hook() && _Common_popParty.hook() && _MsBattleExe.hook() && _FUN_00791820.hook()
-            && _MsApUp.hook() && _MsBtlReadSetScene.hook() && _Map_800F.hook(); //_MsBtlGetPos.hook();
+            && _MsApUp.hook() && _MsBtlReadSetScene.hook(); // && _Map_800F.hook(); //_MsBtlGetPos.hook();
             //&& _eiAbmParaGet.hook() && _FUN_00a48910.hook();
             //&& _openFile.hook() && _FUN_0070aec0.hook();
             //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
@@ -391,7 +382,7 @@ public unsafe partial class ArchipelagoModule {
                 current_state.entrance = save_data->last_spawnpoint;
             }
             else {
-                current_state.Story_progress = save_data->story_progress;
+                current_state.story_progress = save_data->story_progress;
             }
         }
     }
@@ -420,7 +411,7 @@ public unsafe partial class ArchipelagoModule {
                 if (current_region != region) {
                     current_region = region;
                     ArchipelagoRegion current_state = region_states[region];
-                    save_data->story_progress = current_state.Story_progress;
+                    save_data->story_progress = current_state.story_progress;
 
                     //call_warp_to_map(current_state.room_id, current_state.entrance);
                     save_data->current_room_id = current_state.room_id;
@@ -639,7 +630,8 @@ public unsafe partial class ArchipelagoModule {
     public static i32 h_Common_addPartyMember(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
 
-        if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        if (!party_overridden) {
             if (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && !is_unlocked) {
                 atelStack->pop_int();
                 return 1;
@@ -652,7 +644,8 @@ public unsafe partial class ArchipelagoModule {
     public static i32 h_Common_removePartyMember(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
 
-        if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        if (!party_overridden) {
             if (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && is_unlocked) {
                 atelStack->pop_int();
                 return 1;
@@ -665,7 +658,8 @@ public unsafe partial class ArchipelagoModule {
     public static i32 h_Common_removePartyMemberLongTerm(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
 
-        if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        if (!party_overridden) {
             if (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && is_unlocked) {
                 atelStack->pop_int();
                 return 1;
@@ -689,7 +683,8 @@ public unsafe partial class ArchipelagoModule {
     public static i32 h_Common_putPartyMemberInSlot(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
         int slot = atelStack->values_as_int[0];
         uint character = (byte)atelStack->values_as_int[1];
-        if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
+        if (!party_overridden) {
             if (character == 0xff || (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && !is_unlocked)) {
                 // Ignore call
                 atelStack->pop_int();
@@ -704,15 +699,15 @@ public unsafe partial class ArchipelagoModule {
     public static i32 h_Common_pushParty(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
         FhLog.Debug($"push_party");
 
-        if (party_overridden) return _Common_pushParty.orig_fptr(work, storage, atelStack);
-        save_party();
+        //if (party_overridden) return _Common_pushParty.orig_fptr(work, storage, atelStack);
+        //save_party();
         return 0;
     }
     public static i32 h_Common_popParty(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
         FhLog.Debug($"pop_party");
 
-        if (party_overridden) return _Common_popParty.orig_fptr(work, storage, atelStack);
-        reset_party();
+        //if (party_overridden) return _Common_popParty.orig_fptr(work, storage, atelStack);
+        //reset_party();
         return 1;
     }
 
@@ -724,6 +719,7 @@ public unsafe partial class ArchipelagoModule {
         FhLog.Debug($"get_current_party_slots: slot_0={*param_1}, slot_1={*param_2}, slot_2={*param_3}");
     }
 
+    // Pre-battle
     public static void h_MsBattleExe(uint param_1, int field_idx, int group_idx, int formation_idx) {
         var field_ptr = btl->ptr_btl_bin_fields + field_idx * 0xe;
         string field_name = Marshal.PtrToStringAnsi((nint)(field_ptr+6));
@@ -733,14 +729,23 @@ public unsafe partial class ArchipelagoModule {
 
         string encounter_name = $"{field_name}_{group_name:00}";
         FhLog.Debug($"{encounter_name}: param_1={param_1}");
-
+        /*
         if (encounterToPartyDict.TryGetValue(encounter_name, out List<PlySaveId> characters)) {
-            save_party();
-            set_party(characters);
+            if (characters.Count > 0) {
+                save_party();
+                set_party(characters);
+            }
+            else {
+                reset_party();
+            }
         }
+         */
+        if (encounterToActionDict.TryGetValue(encounter_name, out Action action)) action();
+        else reset_party();
         _MsBattleExe.orig_fptr(param_1, field_idx, group_idx, formation_idx);
     }
 
+    // Pre-battle (only battles launched from Atel script?)
     public static int h_MsBattleLabelExe(uint encounter_id, byte param_2, byte screen_transition) {
         var result = _MsBattleLabelExe.orig_fptr(encounter_id, param_2, screen_transition);
 
@@ -752,22 +757,39 @@ public unsafe partial class ArchipelagoModule {
 
         string encounter_name = $"{field_name}_{group_name:00}";
         FhLog.Debug($"{encounter_name}: encounter ={encounter_id}, transition={screen_transition}, param_2={param_2}");
-
+        /*
         if (encounterToPartyDict.TryGetValue(encounter_name, out List<PlySaveId> characters)) {
-            save_party();
-            set_party(characters);
+            if (characters.Count > 0) {
+                save_party();
+                set_party(characters);
+            } else {
+                reset_party();
+            }
         }
+         */
+        if (encounterToActionDict.TryGetValue(encounter_name, out Action action)) action();
+        else reset_party();
 
         return result;
     }
 
+    // Post-battle
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
         string encounter_name = Marshal.PtrToStringAnsi((nint)btl->field_name);
         if (btl->battle_end_type > 1 && btl->battle_state == 0x21) {
             FhLog.Info($"Victory: type={btl->battle_end_type}, encounter={encounter_name}");
-            if (save_data->atel_is_push_member == 1) {
+            //if (save_data->atel_is_push_member == 1) {
+            if (party_overridden) {
                 reset_party();
+                // Battle frontline gets copied after this so have to set here
+                for (int i = 0; i < 3; i++) {
+                    Globals.btl->frontline[i] = Globals.save_data->party_order[i];
+                }
+                for (int i = 0; i < 4; i++) {
+                    Globals.btl->backline[i] = Globals.save_data->party_order[i+3];
+                }
+                party_overridden = false;
             }
             if (encounterToLocationDict.TryGetValue(encounter_name, out int location_id)) {
                 sendLocation(location_id);
@@ -775,174 +797,10 @@ public unsafe partial class ArchipelagoModule {
         }
     }
 
-    /*
     private static void* curr_pos_area_ptr = null;
     public static byte h_MsBtlReadSetScene() {
         byte result = _MsBtlReadSetScene.orig_fptr();
-        if (Globals.btl->ptr_pos_def->area_count == 0) return result;
-        if (curr_pos_area_ptr != null) {
-            NativeMemory.Free(curr_pos_area_ptr);
-            curr_pos_area_ptr = null;
-            //Marshal.FreeHGlobal((nint)curr_pos_area);
-        }
-        int total_size = 0;
-        int total_info_count = 0;
-        for (int i = 0; i < Globals.btl->ptr_pos_def->area_count; i++) {
-            total_size += 0x60;
-            total_size += Math.Max(Globals.btl->ptr_pos_def[i].party_pos_count, (byte)3) * 0x20;
-            total_size += Math.Max(Globals.btl->ptr_pos_def[i].aeon_pos_count, (byte)0xC) * 0x20;
-            total_size += Globals.btl->ptr_pos_def[i].enemy_pos_count * 0x20;
-            total_size += Globals.btl->ptr_pos_def[i].some_info_count * 0x10; // some_info
-            total_info_count += Globals.btl->ptr_pos_def[i].some_info_count;
-            for (int j = 0; j < Globals.btl->ptr_pos_def[i].some_info_count; j++) {
-                total_size += PosArea.get_some_info(Globals.btl->ptr_pos_def, i)[j].something_count * 0x10;
-            }
-        }
-        total_size += 0x10; //chunk_end
-        curr_pos_area_ptr = NativeMemory.AllocZeroed((uint)total_size);
-        //curr_pos_area = (PosArea*)Marshal.AllocHGlobal(total_size);
-
-        PosArea* curr_pos_area = (PosArea*)curr_pos_area_ptr;
-        // Copy
-        int some_info_start = Globals.btl->ptr_pos_def->area_count * 0x60;
-        int curr_info_count = 0;
-        int positions_start = some_info_start + total_info_count * 0x10;
-        int curr_position_count = 0;
-        for (int i = 0; i < Globals.btl->ptr_pos_def->area_count; i++) {
-            curr_pos_area[i] = Globals.btl->ptr_pos_def[i];
-
-            curr_pos_area[i].party_pos_count = Math.Max(curr_pos_area[i].party_pos_count, (byte)3);
-            curr_pos_area[i].aeon_pos_count = Math.Max(curr_pos_area[i].aeon_pos_count, (byte)0xc);
-            curr_pos_area[i].enemy_pos_count = curr_pos_area[i].enemy_pos_count;
-
-            curr_pos_area[i].party_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_area[i].party_pos_count; j++) {
-                
-                if (Globals.btl->ptr_pos_def[i].party_pos_count <= 2 || (PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[0] - PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[Globals.btl->ptr_pos_def[i].party_pos_count - 1]).Length() < 10) {
-                    // TODO: Calculate positions
-                    if (Globals.btl->ptr_pos_def[i].party_pos_count == 1 || Globals.btl->ptr_pos_def[i].party_pos_count >= 3) {
-                        if (j > 2) {
-                            //FhLog.Warning($"Unexpected position: {param_1}, {btl_pos_a}, {btl_pos_b}, {btl_pos_c}");
-                        }
-                        PosArea.get_party_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[0];
-                        if (j != 1) {
-                            Vector4 enemy_pos = PosArea.get_enemy_pos(Globals.btl->ptr_pos_def, i)[0];
-                            Vector4 enemy_to_party = PosArea.get_party_pos(curr_pos_area, i)[j] - enemy_pos;
-                            Vector3 enemy_to_party_3d = new(enemy_to_party.X, enemy_to_party.Y, enemy_to_party.Z);
-                            Vector3 rotation_axis = new(0, 1, 0);
-                            double angle = j == 0 ? -(Math.PI / 2) : (Math.PI / 2);
-
-                            Vector3 x = Vector3.Cross(rotation_axis, enemy_to_party_3d);
-                            Vector3 y = Vector3.Cross(rotation_axis, x);
-                            Vector3 rotated = enemy_to_party_3d + (float)Math.Sin(angle) * x + (float)(1 - Math.Cos(angle)) * y;
-                            PosArea.get_party_pos(curr_pos_area, i)[j] += new Vector4(Vector3.Normalize(rotated) * 30, PosArea.get_party_pos(curr_pos_area, i)[j].W);
-                        }
-                    } else {
-                        //if (j > 2) return -1;
-                        Vector4 ally_1 = PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[0];
-                        Vector4 line = PosArea.get_party_pos(curr_pos_area, i)[1] - ally_1;
-                        if (line.Length() > 10) {
-                            if (j == 2) {
-                                PosArea.get_party_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[1];
-                                PosArea.get_party_pos(curr_pos_area, i)[j] += line;
-                            } else {
-                                PosArea.get_party_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[j];
-                            }
-                        } else if (j != 1) {
-                            Vector4 enemy_pos = PosArea.get_enemy_pos(Globals.btl->ptr_pos_def, i)[0];
-                            Vector4 enemy_to_party = PosArea.get_party_pos(curr_pos_area, i)[j] - enemy_pos;
-                            Vector3 enemy_to_party_3d = new(enemy_to_party.X, enemy_to_party.Y, enemy_to_party.Z);
-                            Vector3 rotation_axis = new(0, 1, 0);
-                            double angle = j == 0 ? -(Math.PI / 2) : (Math.PI / 2);
-
-                            Vector3 x = Vector3.Cross(rotation_axis, enemy_to_party_3d);
-                            Vector3 y = Vector3.Cross(rotation_axis, x);
-                            Vector3 rotated = enemy_to_party_3d + (float)Math.Sin(angle) * x + (float)(1 - Math.Cos(angle)) * y;
-                            PosArea.get_party_pos(curr_pos_area, i)[j] += new Vector4(Vector3.Normalize(rotated) * 30, PosArea.get_party_pos(curr_pos_area, i)[j].W);
-                        }
-                    }
-                } else {
-                    // Copy
-                    PosArea.get_party_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[j];
-                }
-                curr_position_count++;
-            }
-            curr_pos_area[i].party_run_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_area[i].party_pos_count; j++) {
-                if (Globals.btl->ptr_pos_def[i].party_pos_count <= j) {
-                    PosArea.get_party_run_pos(curr_pos_area, i)[j] = PosArea.get_party_run_pos(Globals.btl->ptr_pos_def, i)[0];
-                }
-                else {
-                    PosArea.get_party_run_pos(curr_pos_area, i)[j] = PosArea.get_party_run_pos(Globals.btl->ptr_pos_def, i)[j];
-                }
-                if (PosArea.get_party_run_pos(curr_pos_area, i)[j] == Vector4.Zero) {
-                    PosArea.get_party_run_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(Globals.btl->ptr_pos_def, i)[0];
-                    Vector4 enemy_pos = PosArea.get_enemy_pos(Globals.btl->ptr_pos_def, i)[0];
-                    Vector4 enemy_to_party = PosArea.get_party_run_pos(curr_pos_area, i)[j] - enemy_pos;
-                    PosArea.get_party_run_pos(curr_pos_area, i)[j] += Vector4.Normalize(enemy_to_party) * 0x30;
-                }
-                curr_position_count++;
-            }
-
-            curr_pos_area[i].aeon_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_area[i].aeon_pos_count; j++) {
-                if (j == 7) {
-                    PosArea.get_aeon_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(curr_pos_area, i)[0];
-                } else if (j == 9) {
-                    PosArea.get_aeon_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(curr_pos_area, i)[2];
-                } else {
-                    PosArea.get_aeon_pos(curr_pos_area, i)[j] = PosArea.get_party_pos(curr_pos_area, i)[1];
-                }
-                curr_position_count++;
-            }
-            curr_pos_area[i].aeon_run_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_area[i].aeon_pos_count; j++) {
-                PosArea.get_aeon_run_pos(curr_pos_area, i)[j] = PosArea.get_party_run_pos(curr_pos_area, i)[0];
-                curr_position_count++;
-            }
-
-            curr_pos_area[i].enemy_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_area[i].enemy_pos_count; j++) {
-                PosArea.get_enemy_pos(curr_pos_area, i)[j] = PosArea.get_enemy_pos(Globals.btl->ptr_pos_def, i)[j];
-                curr_position_count++;
-            }
-            curr_pos_area[i].enemy_run_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_area[i].enemy_pos_count; j++) {
-                PosArea.get_enemy_run_pos(curr_pos_area, i)[j] = PosArea.get_enemy_run_pos(Globals.btl->ptr_pos_def, i)[j];
-                curr_position_count++;
-            }
-
-            curr_pos_area[i].some_info_offset = (uint)(some_info_start + curr_info_count * 0x10);
-            for (int j = 0; j < curr_pos_area[i].some_info_count; j++) {
-                PosArea.get_some_info(curr_pos_area, i)[j] = PosArea.get_some_info(Globals.btl->ptr_pos_def, i)[j];
-                curr_info_count++;
-            }
-        }
-
-        for (int i = 0; i < Globals.btl->ptr_pos_def->area_count; i++) {
-            for (int j = 0; j < curr_pos_area[i].some_info_count; j++) {
-                PosArea.get_some_info(curr_pos_area, i)[j].something_offset = (uint)(positions_start + curr_position_count * 0x10);
-                for (int k = 0; k < PosArea.get_some_info(curr_pos_area, i)[j].something_count; k++) {
-                    PosArea.get_some_info(curr_pos_area, i)[j].something[k] = PosArea.get_some_info(Globals.btl->ptr_pos_def, i)[j].something[k];
-                    curr_position_count++;
-                }
-            }
-        }
-        for (int i = 0; i < Globals.btl->ptr_pos_def->area_count; i++) {
-            curr_pos_area[i].chunk_end_offset = (uint)(positions_start + curr_position_count * 0x10);
-        }
-        *PosArea.get_chunk_end(curr_pos_area) = *PosArea.get_chunk_end(Globals.btl->ptr_pos_def);
-
-
-        Globals.btl->ptr_pos_def = curr_pos_area;
-
-        return result;
-        }
-     */
-    private static void* curr_pos_area_ptr = null;
-    public static byte h_MsBtlReadSetScene() {
-        byte result = _MsBtlReadSetScene.orig_fptr();
-        ref PosStruct original_pos_struct = ref *Globals.btl->ptr_pos_def;
+        ref BtlAreas original_pos_struct = ref *Globals.btl->ptr_pos_def;
         if (original_pos_struct.area_count == 0) return result;
         if (curr_pos_area_ptr != null) {
             NativeMemory.Free(curr_pos_area_ptr);
@@ -953,22 +811,22 @@ public unsafe partial class ArchipelagoModule {
         int total_info_count = 0;
         for (int i = 0; i < original_pos_struct.area_count; i++) {
             total_size += 0x60;
-            total_size += Math.Max(original_pos_struct[i].party_pos_count, (byte)3) * 0x20;
-            total_size += Math.Max(original_pos_struct[i].aeon_pos_count, (byte)0xC) * 0x20;
-            total_size += original_pos_struct[i].enemy_pos_count * 0x20;
-            total_size += original_pos_struct[i].some_info_count * 0x10; // some_info
-            total_info_count += original_pos_struct[i].some_info_count;
-            for (int j = 0; j < original_pos_struct[i].some_info_count; j++) {
-                total_size += original_pos_struct.some_info(i, j).something_count * 0x10;
+            total_size += Math.Max(original_pos_struct[i].count_party_pos, (byte)3) * 0x20;
+            total_size += Math.Max(original_pos_struct[i].count_aeon_pos, (byte)0xC) * 0x20;
+            total_size += original_pos_struct[i].count_enemy_pos * 0x20;
+            total_size += original_pos_struct[i].count_some_info * 0x10; // some_info
+            total_info_count += original_pos_struct[i].count_some_info;
+            for (int j = 0; j < original_pos_struct[i].count_some_info; j++) {
+                total_size += original_pos_struct.some_info(i)[j].count_something * 0x10;
             }
         }
         total_size += 0x10; //chunk_end
         curr_pos_area_ptr = NativeMemory.AllocZeroed((uint)total_size);
         //curr_pos_area = (PosArea*)Marshal.AllocHGlobal(total_size);
 
-        PosStruct* curr_pos_struct_ptr = (PosStruct*)curr_pos_area_ptr;
+        BtlAreas* curr_pos_struct_ptr = (BtlAreas*)curr_pos_area_ptr;
 
-        ref PosStruct curr_pos_struct = ref *curr_pos_struct_ptr;
+        ref BtlAreas curr_pos_struct = ref *curr_pos_struct_ptr;
 
         // Copy
         int some_info_start = original_pos_struct.area_count * 0x60;
@@ -978,23 +836,23 @@ public unsafe partial class ArchipelagoModule {
         for (int i = 0; i < original_pos_struct.area_count; i++) {
             curr_pos_struct[i] = original_pos_struct[i];
 
-            curr_pos_struct[i].party_pos_count = Math.Max(curr_pos_struct[i].party_pos_count, (byte)3);
-            curr_pos_struct[i].aeon_pos_count = Math.Max(curr_pos_struct[i].aeon_pos_count, (byte)0xc);
-            curr_pos_struct[i].enemy_pos_count = curr_pos_struct[i].enemy_pos_count;
+            curr_pos_struct[i].count_party_pos = Math.Max(curr_pos_struct[i].count_party_pos, (byte)3);
+            curr_pos_struct[i].count_aeon_pos = Math.Max(curr_pos_struct[i].count_aeon_pos, (byte)0xc);
+            curr_pos_struct[i].count_enemy_pos = curr_pos_struct[i].count_enemy_pos;
 
-            curr_pos_struct[i].party_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].party_pos_count; j++) {
+            curr_pos_struct[i].offset_party_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct[i].count_party_pos; j++) {
 
-                if (original_pos_struct[i].party_pos_count <= 2 || (original_pos_struct.party_pos(i, 0) - original_pos_struct.party_pos(i, original_pos_struct[i].party_pos_count - 1)).Length() < 10) {
+                if (original_pos_struct[i].count_party_pos <= 2 || (original_pos_struct.party_pos(i)[0] - original_pos_struct.party_pos(i)[original_pos_struct[i].count_party_pos - 1]).Length() < 10) {
                     // TODO: Calculate positions
-                    if (original_pos_struct[i].party_pos_count == 1 || original_pos_struct[i].party_pos_count >= 3) {
+                    if (original_pos_struct[i].count_party_pos == 1 || original_pos_struct[i].count_party_pos >= 3) {
                         if (j > 2) {
                             //FhLog.Warning($"Unexpected position: {param_1}, {btl_pos_a}, {btl_pos_b}, {btl_pos_c}");
                         }
-                        curr_pos_struct.party_pos(i, j) = original_pos_struct.party_pos(i, 0);
+                        curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[0];
                         if (j != 1) {
-                            Vector4 enemy_pos = original_pos_struct.enemy_pos(i, 0);
-                            Vector4 enemy_to_party = curr_pos_struct.party_pos(i, j) - enemy_pos;
+                            Vector4 enemy_pos = original_pos_struct.enemy_pos(i)[0];
+                            Vector4 enemy_to_party = curr_pos_struct.party_pos(i)[j] - enemy_pos;
                             Vector3 enemy_to_party_3d = new(enemy_to_party.X, enemy_to_party.Y, enemy_to_party.Z);
                             Vector3 rotation_axis = new(0, 1, 0);
                             double angle = j == 0 ? -(Math.PI / 2) : (Math.PI / 2);
@@ -1002,25 +860,25 @@ public unsafe partial class ArchipelagoModule {
                             Vector3 x = Vector3.Cross(rotation_axis, enemy_to_party_3d);
                             Vector3 y = Vector3.Cross(rotation_axis, x);
                             Vector3 rotated = enemy_to_party_3d + (float)Math.Sin(angle) * x + (float)(1 - Math.Cos(angle)) * y;
-                            curr_pos_struct.party_pos(i, j) += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.party_pos(i, j).W);
+                            curr_pos_struct.party_pos(i)[j] += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.party_pos(i)[j].W);
                         }
                     }
                     else {
                         //if (j > 2) return -1;
-                        Vector4 ally_1 = original_pos_struct.party_pos(i, 0);
-                        Vector4 line = curr_pos_struct.party_pos(i, 1) - ally_1;
+                        Vector4 ally_1 = original_pos_struct.party_pos(i)[0];
+                        Vector4 line = curr_pos_struct.party_pos(i)[1] - ally_1;
                         if (line.Length() > 10) {
                             if (j == 2) {
-                                curr_pos_struct.party_pos(i, j) = original_pos_struct.party_pos(i, 1);
-                                curr_pos_struct.party_pos(i, j) += line;
+                                curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[1];
+                                curr_pos_struct.party_pos(i)[j] += line;
                             }
                             else {
-                                curr_pos_struct.party_pos(i, j) = original_pos_struct.party_pos(i, j);
+                                curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[j];
                             }
                         }
                         else if (j != 1) {
-                            Vector4 enemy_pos = original_pos_struct.enemy_pos(i, 0);
-                            Vector4 enemy_to_party = curr_pos_struct.party_pos(i, j) - enemy_pos;
+                            Vector4 enemy_pos = original_pos_struct.enemy_pos(i)[0];
+                            Vector4 enemy_to_party = curr_pos_struct.party_pos(i)[j] - enemy_pos;
                             Vector3 enemy_to_party_3d = new(enemy_to_party.X, enemy_to_party.Y, enemy_to_party.Z);
                             Vector3 rotation_axis = new(0, 1, 0);
                             double angle = j == 0 ? -(Math.PI / 2) : (Math.PI / 2);
@@ -1028,83 +886,83 @@ public unsafe partial class ArchipelagoModule {
                             Vector3 x = Vector3.Cross(rotation_axis, enemy_to_party_3d);
                             Vector3 y = Vector3.Cross(rotation_axis, x);
                             Vector3 rotated = enemy_to_party_3d + (float)Math.Sin(angle) * x + (float)(1 - Math.Cos(angle)) * y;
-                            curr_pos_struct.party_pos(i, j) += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.party_pos(i, j).W);
+                            curr_pos_struct.party_pos(i)[j] += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.party_pos(i)[j].W);
                         }
                     }
                 }
                 else {
                     // Copy
-                    curr_pos_struct.party_pos(i, j) = original_pos_struct.party_pos(i, j);
+                    curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[j];
                 }
                 curr_position_count++;
             }
-            curr_pos_struct[i].party_run_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].party_pos_count; j++) {
-                if (original_pos_struct[i].party_pos_count <= j) {
-                    curr_pos_struct.party_run_pos(i, j) = original_pos_struct.party_run_pos(i, 0);
+            curr_pos_struct[i].offset_party_run_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct[i].count_party_pos; j++) {
+                if (original_pos_struct[i].count_party_pos <= j) {
+                    curr_pos_struct.party_run_pos(i)[j] = original_pos_struct.party_run_pos(i)[0];
                 }
                 else {
-                    curr_pos_struct.party_run_pos(i, j) = original_pos_struct.party_run_pos(i, j);
+                    curr_pos_struct.party_run_pos(i)[j] = original_pos_struct.party_run_pos(i)[j];
                 }
-                if (curr_pos_struct.party_run_pos(i, j) == Vector4.Zero) {
-                    curr_pos_struct.party_run_pos(i, j) = original_pos_struct.party_pos(i, 0);
-                    Vector4 enemy_pos = original_pos_struct.enemy_pos(i, 0);
-                    Vector4 enemy_to_party = curr_pos_struct.party_run_pos(i, j) - enemy_pos;
-                    curr_pos_struct.party_run_pos(i, j) += Vector4.Normalize(enemy_to_party) * 0x30;
+                if (curr_pos_struct.party_run_pos(i)[j] == Vector4.Zero) {
+                    curr_pos_struct.party_run_pos(i)[j] = original_pos_struct.party_pos(i)[0];
+                    Vector4 enemy_pos = original_pos_struct.enemy_pos(i)[0];
+                    Vector4 enemy_to_party = curr_pos_struct.party_run_pos(i)[j] - enemy_pos;
+                    curr_pos_struct.party_run_pos(i)[j] += Vector4.Normalize(enemy_to_party) * 0x30;
                 }
                 curr_position_count++;
             }
 
-            curr_pos_struct[i].aeon_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].aeon_pos_count; j++) {
+            curr_pos_struct[i].offset_aeon_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct[i].count_aeon_pos; j++) {
                 if (j == 7) {
-                    curr_pos_struct.aeon_pos(i, j) = curr_pos_struct.party_pos(i, 0);
+                    curr_pos_struct.aeon_pos(i)[j] = curr_pos_struct.party_pos(i)[0];
                 }
                 else if (j == 9) {
-                    curr_pos_struct.aeon_pos(i, j) = curr_pos_struct.party_pos(i, 2);
+                    curr_pos_struct.aeon_pos(i)[j] = curr_pos_struct.party_pos(i)[2];
                 }
                 else {
-                    curr_pos_struct.aeon_pos(i, j) = curr_pos_struct.party_pos(i, 1);
+                    curr_pos_struct.aeon_pos(i)[j] = curr_pos_struct.party_pos(i)[1];
                 }
                 curr_position_count++;
             }
-            curr_pos_struct[i].aeon_run_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].aeon_pos_count; j++) {
-                curr_pos_struct.aeon_run_pos(i, j) = curr_pos_struct.party_run_pos(i, 0);
+            curr_pos_struct[i].offset_aeon_run_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct[i].count_aeon_pos; j++) {
+                curr_pos_struct.aeon_run_pos(i)[j] = curr_pos_struct.party_run_pos(i)[0];
                 curr_position_count++;
             }
 
-            curr_pos_struct[i].enemy_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].enemy_pos_count; j++) {
-                curr_pos_struct.enemy_pos(i, j) = original_pos_struct.enemy_pos(i, j);
+            curr_pos_struct[i].offset_enemy_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct[i].count_enemy_pos; j++) {
+                curr_pos_struct.enemy_pos(i)[j] = original_pos_struct.enemy_pos(i)[j];
                 curr_position_count++;
             }
-            curr_pos_struct[i].enemy_run_pos_offset = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].enemy_pos_count; j++) {
-                curr_pos_struct.enemy_run_pos(i, j) = original_pos_struct.enemy_run_pos(i, j);
+            curr_pos_struct[i].offset_enemy_run_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct[i].count_enemy_pos; j++) {
+                curr_pos_struct.enemy_run_pos(i)[j] = original_pos_struct.enemy_run_pos(i)[j];
                 curr_position_count++;
             }
 
-            curr_pos_struct[i].some_info_offset = (uint)(some_info_start + curr_info_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].some_info_count; j++) {
-                curr_pos_struct.some_info(i, j) = original_pos_struct.some_info(i, j);
+            curr_pos_struct[i].offset_some_info = (uint)(some_info_start + curr_info_count * 0x10);
+            for (int j = 0; j < curr_pos_struct[i].count_some_info; j++) {
+                curr_pos_struct.some_info(i)[j] = original_pos_struct.some_info(i)[j];
                 curr_info_count++;
             }
         }
 
         for (int i = 0; i < original_pos_struct.area_count; i++) {
-            for (int j = 0; j < curr_pos_struct[i].some_info_count; j++) {
-                curr_pos_struct.some_info(i, j).something_offset = (uint)(positions_start + curr_position_count * 0x10);
-                for (int k = 0; k < curr_pos_struct.some_info(i, j).something_count; k++) {
-                    curr_pos_struct.something(i, j, k) = original_pos_struct.something(i, j, k);
+            for (int j = 0; j < curr_pos_struct[i].count_some_info; j++) {
+                curr_pos_struct.some_info(i)[j].offset_something = (uint)(positions_start + curr_position_count * 0x10);
+                for (int k = 0; k < curr_pos_struct.some_info(i)[j].count_something; k++) {
+                    curr_pos_struct.something(i, j)[k] = original_pos_struct.something(i, j)[k];
                     curr_position_count++;
                 }
             }
         }
         for (int i = 0; i < original_pos_struct.area_count; i++) {
-            curr_pos_struct[i].chunk_end_offset = (uint)(positions_start + curr_position_count * 0x10);
+            curr_pos_struct[i].offset_chunk_end = (uint)(positions_start + curr_position_count * 0x10);
         }
-        curr_pos_struct.chunk_end = original_pos_struct.chunk_end;
+        *curr_pos_struct.chunk_end = *original_pos_struct.chunk_end;
 
 
         Globals.btl->ptr_pos_def = curr_pos_struct_ptr;

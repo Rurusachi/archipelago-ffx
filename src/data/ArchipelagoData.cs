@@ -1,4 +1,5 @@
 ﻿using Fahrenheit.Core;
+using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Ids;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Fahrenheit.Modules.Archipelago;
+namespace Fahrenheit.Modules.ArchipelagoFFX;
 
 public class ArchipelagoData {
     public static string[] id_to_character => [
@@ -124,6 +125,7 @@ public class ArchipelagoData {
             282,
             220,
             139,
+            191, // 
             336, // Jecht Sphere
             337, // Jecht Sphere
             ] },
@@ -293,6 +295,8 @@ public class ArchipelagoData {
             284,
             330,
             331,
+            332,
+            191,
             260, // Maybe
             365, // Maybe
             391, // Luca flashback
@@ -410,6 +414,7 @@ public class ArchipelagoData {
             277,
             255,
             392,
+            205,
             ] },
         { RegionEnum.OmegaRuins, [
             258,
@@ -430,24 +435,24 @@ public class ArchipelagoData {
     }
     public unsafe class ArchipelagoRegion {
         public Dictionary<ushort, ArchipelagoStoryCheck> story_checks = [];
-        private ushort story_progress;
-        public ushort Story_progress 
+        private ushort _story_progress;
+        public ushort story_progress 
         {
-            get => story_progress;
+            get => _story_progress;
             set 
             {
-                if (story_progress == value) return;
+                if (_story_progress == value) return;
                 if (story_checks.TryGetValue(value, out var storyCheck)) {
-                    if (ArchipelagoModule.region_is_unlocked.TryGetValue(storyCheck.return_if_locked, out var is_unlocked) && !is_unlocked) {
-                        ArchipelagoModule.call_warp_to_map(382, 0);
+                    storyCheck.check_delegate?.Invoke(this);
+                    if (ArchipelagoFFXModule.region_is_unlocked.TryGetValue(storyCheck.return_if_locked, out var is_unlocked) && !is_unlocked) {
+                        ArchipelagoFFXModule.call_warp_to_map(382, 0);
                     }
-                    story_progress = storyCheck.next_story_progress ?? value;
+                    _story_progress = storyCheck.next_story_progress ?? value;
                     room_id = storyCheck.next_room_id ?? room_id;
                     entrance = storyCheck.next_entrance ?? entrance;
 
-                    storyCheck.check_delegate?.Invoke(this);
                 } else {
-                    story_progress = value;
+                    _story_progress = value;
                 }
                     /*
                     if (story_checks.TryGetValue(value, out var checkDelegate)) {
@@ -462,100 +467,108 @@ public class ArchipelagoData {
         public uint airship_destination_index;
     }
 
-    public static Dictionary<RegionEnum, ArchipelagoRegion> region_starting_state => new(){
-        {RegionEnum.DreamZanarkand, new(){ Story_progress = 0, room_id = 132, entrance = 0, airship_destination_index = 99,
+    public static unsafe Dictionary<RegionEnum, ArchipelagoRegion> region_starting_state => new(){
+        {RegionEnum.DreamZanarkand, new(){ story_progress = 0, room_id = 132, entrance = 0, airship_destination_index = 99,
             story_checks = {
                 { 5, new() {check_delegate = (r) => {
                     FhLog.Info("Dream Zanarkand complete");
-                    ArchipelagoModule.save_party();
-                    ArchipelagoModule.reset_party();
-                    ArchipelagoModule.call_warp_to_map(382, 0);
+                    ArchipelagoFFXModule.save_party();
+                    ArchipelagoFFXModule.reset_party();
+                    ArchipelagoFFXModule.call_warp_to_map(382, 0);
                 }} }
             } } },
-        {RegionEnum.BaajTemple, new(){ Story_progress = 30, room_id = 48, entrance = 0, airship_destination_index = 1, 
+        {RegionEnum.BaajTemple, new(){ story_progress = 30, room_id = 48, entrance = 0, airship_destination_index = 1, 
             story_checks = {
                 { 60, new() {check_delegate = (r) => {FhLog.Info("Baaj Temple visit 1 complete"); } } },
                 { 110, new() {next_story_progress = 3000, next_room_id = 49, next_entrance = 2, return_if_locked = RegionEnum.Besaid, check_delegate = (r) => {FhLog.Info("Al Bhed Ship complete"); } } },
             } } },
-        {RegionEnum.Besaid, new(){ Story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
+        {RegionEnum.Besaid, new(){ story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
             story_checks = {
                 { 228, new() {check_delegate = (r) => {FhLog.Info("Besaid visit 1 complete"); } } },
                 { 290, new() {next_story_progress = 3000, next_room_id = 19, next_entrance = 1, return_if_locked = RegionEnum.Kilika, check_delegate = (r) => {FhLog.Info("S.S Liki visit complete"); } } },
             } } },
-        {RegionEnum.Kilika, new(){ Story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
+        {RegionEnum.Kilika, new(){ story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
             story_checks = {
                 { 372, new() {check_delegate = (r) => {FhLog.Info("Kilika visit 1 complete"); } } },
                 { 400, new() {next_story_progress = 3000, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {FhLog.Info("S.S Winno visit complete"); } } },
                 { 402, new() {next_story_progress = 3000, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {FhLog.Info("S.S Winno visit complete"); } } },
             } } },
-        {RegionEnum.Luca, new(){ Story_progress = 402, room_id = 267, entrance = 0, airship_destination_index = 4,
+        {RegionEnum.Luca, new(){ story_progress = 402, room_id = 267, entrance = 0, airship_destination_index = 4,
             story_checks = {
-                { 730, new() {next_story_progress = 3000, next_room_id = 123, next_entrance = 6, return_if_locked = RegionEnum.MiihenHighroad, check_delegate = (r) => {FhLog.Info("Luca visit complete"); } } },
+                { 730, new() {next_story_progress = 3000, next_room_id = 123, next_entrance = 6, return_if_locked = RegionEnum.MiihenHighroad, 
+                    check_delegate = (r) => {
+                        FhLog.Info("Luca visit complete"); 
+                        // CSR workaround
+                        Globals.save_data->current_room_id = 123;
+                        Globals.save_data->current_spawnpoint = 6;
+                    } } },
             } } },
-        {RegionEnum.MiihenHighroad, new(){ Story_progress = 730, room_id = 95, entrance = 0, airship_destination_index = 5,
+        {RegionEnum.MiihenHighroad, new(){ story_progress = 730, room_id = 95, entrance = 0, airship_destination_index = 5,
             story_checks = {
                 { 787, new() {next_story_progress = 3000, next_room_id = 171, next_entrance = 1, return_if_locked = RegionEnum.MushroomRockRoad, check_delegate = (r) => {FhLog.Info("Mi'ihen Highroad visit complete"); } } },
             } } },
-        {RegionEnum.MushroomRockRoad, new(){ Story_progress = 787, room_id = 79, entrance = 0, airship_destination_index = 6,
+        {RegionEnum.MushroomRockRoad, new(){ story_progress = 787, room_id = 79, entrance = 0, airship_destination_index = 6,
             story_checks = {
                 { 960, new() {next_story_progress = 3000, next_room_id = 131, next_entrance = 3, return_if_locked = RegionEnum.Djose, check_delegate = (r) => {FhLog.Info("Mushroom Rock Road visit complete"); } } },
             } } },
-        {RegionEnum.Djose, new(){ Story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
+        {RegionEnum.Djose, new(){ story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
             story_checks = {
                 { 1030, new() {next_story_progress = 3000, next_room_id = 82, next_entrance = 0, return_if_locked = RegionEnum.Moonflow, check_delegate = (r) => {FhLog.Info("Djose visit 1 complete"); } } },
             } } },
-        {RegionEnum.Moonflow, new(){ Story_progress = 1030, room_id = 75, entrance = 0, airship_destination_index = 7,
+        {RegionEnum.Moonflow, new(){ story_progress = 1030, room_id = 75, entrance = 0, airship_destination_index = 7,
             story_checks = {
                 { 1085, new() {next_story_progress = 3000, next_room_id = 235, next_entrance = 1, return_if_locked = RegionEnum.Guadosalam, check_delegate = (r) => {FhLog.Info("Moonflow visit complete"); } } },
             } } },
-        {RegionEnum.Guadosalam, new(){ Story_progress = 1085, room_id = 135, entrance = 0, airship_destination_index = 8,
+        {RegionEnum.Guadosalam, new(){ story_progress = 1085, room_id = 135, entrance = 0, airship_destination_index = 8,
             story_checks = {
                 { 1210, new() {next_story_progress = 3000, next_room_id = 243, next_entrance = 1, return_if_locked = RegionEnum.ThunderPlains, check_delegate = (r) => {FhLog.Info("Guadosalam visit complete"); } } },
             } } },
-        {RegionEnum.ThunderPlains, new(){ Story_progress = 1210, room_id = 140, entrance = 0, airship_destination_index = 9,
+        {RegionEnum.ThunderPlains, new(){ story_progress = 1210, room_id = 140, entrance = 0, airship_destination_index = 9,
             story_checks = {
                 { 1375, new() {next_story_progress = 3000, next_room_id = 263, next_entrance = 2, return_if_locked = RegionEnum.Macalania, check_delegate = (r) => {FhLog.Info("Thunder Plains visit complete"); } } },
             } } },
-        {RegionEnum.Macalania, new(){ Story_progress = 1400, room_id = 110, entrance = 0, airship_destination_index = 10,
+        {RegionEnum.Macalania, new(){ story_progress = 1400, room_id = 110, entrance = 0, airship_destination_index = 10,
             story_checks = {
                 { 1470, new() {check_delegate = (r) => {FhLog.Info("Macalania Woods visit complete"); } } },
                 { 1704, new() {next_story_progress = 3000, next_room_id = 215, next_entrance = 1, return_if_locked = RegionEnum.Bikanel, check_delegate = (r) => {FhLog.Info("Lake Macalania visit 1 complete"); } } },
             } } },
-        {RegionEnum.Bikanel, new(){ Story_progress = 1704, room_id = 129, entrance = 0, airship_destination_index = 11,
+        {RegionEnum.Bikanel, new(){ story_progress = 1704, room_id = 129, entrance = 0, airship_destination_index = 11,
             story_checks = {
+                { 1940, new() {next_story_progress = 3000, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {FhLog.Info("Bikanel visit complete"); } } },
                 { 1950, new() {next_story_progress = 3000, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {FhLog.Info("Bikanel visit complete"); } } },
             } } },
-        {RegionEnum.Airship, new(){ Story_progress = 1950, room_id = 194, entrance = 1, airship_destination_index = 99,
+        {RegionEnum.Airship, new(){ story_progress = 1950, room_id = 194, entrance = 1, airship_destination_index = 99,
             story_checks = {
                 { 2075, new() {next_story_progress = 2970, next_room_id = 255, next_entrance = 0, return_if_locked = RegionEnum.Bevelle, check_delegate = (r) => {FhLog.Info("Airship visit 1 complete"); } } },
             } } },
-        {RegionEnum.Bevelle, new(){ Story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 18, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
+        {RegionEnum.Bevelle, new(){ story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 18, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
             story_checks = {
                 { 2385, new() {next_story_progress = 2920, next_room_id = 227, next_entrance = 0, return_if_locked = RegionEnum.CalmLands, check_delegate = (r) => {FhLog.Info("Bevelle visit 1 complete"); } } },
                 { 2945, new() {next_story_progress = 3000, next_room_id = 208, next_entrance = 1, check_delegate = (r) => {FhLog.Info("Bevelle visit 2 complete"); } } },
             } } }, 
-        {RegionEnum.CalmLands, new(){ Story_progress = 2385, room_id = 223, entrance = 0, airship_destination_index = 13,
+        {RegionEnum.CalmLands, new(){ story_progress = 2385, room_id = 223, entrance = 0, airship_destination_index = 13,
             story_checks = {
-                { 2440, new() {next_story_progress = 3000, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {FhLog.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
-                { 2510, new() {next_story_progress = 3000, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {FhLog.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
+                { 2440, new() {next_story_progress = 3210, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {FhLog.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
+                { 2510, new() {next_story_progress = 3210, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {FhLog.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
             } } },
-        {RegionEnum.CavernOfTheStolenFayth, new(){ Story_progress = 2385, room_id = 56, entrance = 0, airship_destination_index = 99 } },
-        {RegionEnum.MtGagazet, new(){ Story_progress = 2440, room_id = 259, entrance = 0, airship_destination_index = 14,
+        {RegionEnum.CavernOfTheStolenFayth, new(){ story_progress = 2385, room_id = 56, entrance = 0, airship_destination_index = 99 } },
+        {RegionEnum.MtGagazet, new(){ story_progress = 2440, room_id = 259, entrance = 0, airship_destination_index = 14,
             story_checks = {
                 { 2680, new() {next_story_progress = 3000, next_room_id = 259, next_entrance = 2, return_if_locked = RegionEnum.ZanarkandRuins, check_delegate = (r) => {FhLog.Info("Mt. Gagazet complete"); } } },
             } } },
-        {RegionEnum.ZanarkandRuins, new(){ Story_progress = 2680, room_id = 132, entrance = 0, airship_destination_index = 15,
+        {RegionEnum.ZanarkandRuins, new(){ story_progress = 2680, room_id = 132, entrance = 0, airship_destination_index = 15,
             story_checks = {
+                { 2875, new() {next_story_progress = 3000, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {FhLog.Info("Zanarkand Ruins complete"); } } },
                 { 2900, new() {next_story_progress = 3000, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {FhLog.Info("Zanarkand Ruins complete"); } } },
             } } },
-        {RegionEnum.Sin, new(){ Story_progress = 3085, room_id = 199, entrance = 0, airship_destination_index = 16,
+        {RegionEnum.Sin, new(){ story_progress = 3085, room_id = 199, entrance = 0, airship_destination_index = 16,
             story_checks = {
                 { 3400, new() {next_room_id = 199, next_entrance = 0, check_delegate = (r) => {FhLog.Info("Game Complete"); } } },
             } } },
-        {RegionEnum.OmegaRuins, new(){ Story_progress = 3000, room_id = 258, entrance = 2, airship_destination_index = 17 } }, // Story_progress?
+        {RegionEnum.OmegaRuins, new(){ story_progress = 3000, room_id = 258, entrance = 2, airship_destination_index = 17 } }, // Story_progress?
     };
 
-    // For battle that don't push/pop but should
+    // For battles that don't push/pop but should
     public static Dictionary<string, List<PlySaveId>> encounterToPartyDict => new(){
         {"bjyt02_00", [PlySaveId.PC_TIDUS,
             PlySaveId.PC_WAKKA,
@@ -565,27 +578,100 @@ public class ArchipelagoData {
             PlySaveId.PC_WAKKA,
             PlySaveId.PC_RIKKU,
         ]},
-        {"lchb07_00", [PlySaveId.PC_AURON,
-            PlySaveId.PC_TIDUS,
-            PlySaveId.PC_YUNA,
-            PlySaveId.PC_KIMAHRI,
-            PlySaveId.PC_WAKKA,
-            PlySaveId.PC_LULU,
-            PlySaveId.PC_RIKKU,
-            PlySaveId.PC_VALEFOR,
-            PlySaveId.PC_IFRIT,
-            PlySaveId.PC_IXION,
-            PlySaveId.PC_SHIVA,
-            PlySaveId.PC_BAHAMUT,
-            PlySaveId.PC_ANIMA,
-            PlySaveId.PC_YOJIMBO,
-            PlySaveId.PC_MAGUS1,
-            PlySaveId.PC_MAGUS2,
-            PlySaveId.PC_MAGUS3,
+        {"lchb07_00", [ // Auron solo
+        ]},
+        {"lchb08_00", [ // Luca post-blitzball sahagins
         ]},
     };
 
+    public static Dictionary<string, Action> encounterToActionDict => new(){
+        //{"bjyt04_00", ArchipelagoFFXModule.reset_party }, // Klikk (solo Tidus)
+        //{"bjyt04_01", ArchipelagoFFXModule.reset_party }, // Klikk (Tidus + Rikku)
+        
+        // Auron solo
+        {"lchb07_00", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_AURON], true, false) },
+        // Yenke and Biran. Can only target Kimahri and scale on his stats.
+        {"mtgz01_10", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_KIMAHRI], true, false) },
 
+        // Bikanel forced Zu fight. Maybe not needed?
+        //{"bika00_10", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_LULU, PlySaveId.PC_AURON], true, false) },
+
+        // Tutorials
+        // Will softlock with Lulu
+        {"bsil07_51", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_LULU], true, false) },
+        // Yuna is unable to act without an aeon, causing a softlock.
+        {"bsil05_50", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_LULU, PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_YUNA, PlySaveId.PC_VALEFOR], true, false) },
+
+        // Tidus only gets 1 turn?
+        {"klyt00_50", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_KIMAHRI, PlySaveId.PC_LULU], true, false) },
+
+        // Piercing tutorial. Tidus only gets 1 turn. Enemy only attacks 3rd character?
+        {"mihn00_50", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_AURON, PlySaveId.PC_WAKKA], true, false) },
+
+        // Summon fights
+        // Belgemine
+        {"genk00_40",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"kino04_40",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_00",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_01",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_02",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_03",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_04",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_05",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_06",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"lmyt01_07",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"mihn00_60",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"nagi00_40",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"zzzz00_250", () => ArchipelagoFFXModule.set_summon_party()},
+        {"zzzz02_85",  () => ArchipelagoFFXModule.set_summon_party()},
+        // Isaaru
+        {"bvyt09_10",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"bvyt09_11",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"bvyt09_12",  () => ArchipelagoFFXModule.set_summon_party()},
+        {"zzzz00_248", () => ArchipelagoFFXModule.set_summon_party()},
+
+
+        // Underwater fights
+        // Luca post-blitzball underwater fight
+        {"lchb08_00", () => {
+            ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA]); // Only 2. Third character stays in original spot when battle moves forward
+        } },
+        // Extractor. May not work correctly without Yuna?
+        {"genk09_00", () => {
+            ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_YUNA, PlySaveId.PC_RIKKU]);
+        } },
+        // Baaj. Should work with 3
+        {"bjyt02_00", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"bjyt02_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"bjyt02_02", () => ArchipelagoFFXModule.set_underwater_party()},
+        // Al Bhed Ship. May only work with 2
+        {"cdsp00_00", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"cdsp00_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"cdsp00_02", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"cdsp07_00", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"cdsp07_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        // Gagazet. Probably the underwater fights
+        {"mtgz07_00", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"mtgz07_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"mtgz07_02", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"mtgz07_03", () => ArchipelagoFFXModule.set_underwater_party()},
+        // Via Purifico
+        {"stbv00_00", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"stbv00_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"stbv00_02", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"stbv00_03", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"stbv00_04", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"stbv00_10", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"stbv00_11", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"stbv00_12", () => ArchipelagoFFXModule.set_underwater_party()},
+        // Besaid with Wakka
+        {"bsil03_00", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"bsil03_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"bsil03_02", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"bsil03_03", () => ArchipelagoFFXModule.set_underwater_party()},
+        // S.S Liki
+        {"slik02_01", () => ArchipelagoFFXModule.set_underwater_party()},
+    };
 
 
 

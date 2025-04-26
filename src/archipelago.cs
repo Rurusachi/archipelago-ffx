@@ -2,8 +2,8 @@
 using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Atel;
 using Fahrenheit.Core.FFX.Ids;
-using Fahrenheit.Modules.Archipelago.Client;
-using Fahrenheit.Modules.Archipelago.GUI;
+using Fahrenheit.Modules.ArchipelagoFFX.Client;
+using Fahrenheit.Modules.ArchipelagoFFX.GUI;
 using Fahrenheit.Core.ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -12,25 +12,25 @@ using System.Linq;
 using System.Runtime.InteropServices;
 
 
-//using Fahrenheit.Modules.Archipelago.GUI;
+//using Fahrenheit.Modules.ArchipelagoFFX.GUI;
 using System.Text.Json.Serialization;
-using static Fahrenheit.Modules.Archipelago.ArchipelagoData;
-using static Fahrenheit.Modules.Archipelago.Client.ArchipelagoClient;
-using static Fahrenheit.Modules.Archipelago.delegates;
+using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
+using static Fahrenheit.Modules.ArchipelagoFFX.Client.ArchipelagoClient;
+using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
-namespace Fahrenheit.Modules.Archipelago;
-public sealed record ArchipelagoModuleConfig : FhModuleConfig {
+namespace Fahrenheit.Modules.ArchipelagoFFX;
+public sealed record ArchipelagoFFXModuleConfig : FhModuleConfig {
     [JsonConstructor]
-    public ArchipelagoModuleConfig(string name)
+    public ArchipelagoFFXModuleConfig(string name)
         : base(name) { }
 
     public override FhModule SpawnModule() {
-        return new ArchipelagoModule(this);
+        return new ArchipelagoFFXModule(this);
     }
 }
 
-public unsafe partial class ArchipelagoModule : FhModule {
-    private readonly ArchipelagoModuleConfig _moduleConfig;
+public unsafe partial class ArchipelagoFFXModule : FhModule {
+    private readonly ArchipelagoFFXModuleConfig _moduleConfig;
 
     private ushort last_story_progress = 0;
     private ushort last_room_id = 0;
@@ -51,7 +51,7 @@ public unsafe partial class ArchipelagoModule : FhModule {
     public static nint prev_length = 0;
     public static nint prev_bank = 0;
 
-    public ArchipelagoModule(ArchipelagoModuleConfig moduleConfig) : base(moduleConfig) {
+    public ArchipelagoFFXModule(ArchipelagoFFXModuleConfig moduleConfig) : base(moduleConfig) {
         _moduleConfig = moduleConfig;
 
         init_hooks();
@@ -126,9 +126,13 @@ public unsafe partial class ArchipelagoModule : FhModule {
         if (Globals.Input.select.held && Globals.Input.l1.just_pressed) {
             //var region_to_id = ArchipelagoData.id_to_region.ToLookup(id => id.Value, id => id.Key);
             if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out var current_state)) {
-                FhLog.Debug($"{current_region}: story_progress={current_state.Story_progress}, room_id={current_state.room_id}, entrance={current_state.entrance}");
+                FhLog.Debug($"{current_region}: story_progress={current_state.story_progress}, room_id={current_state.room_id}, entrance={current_state.entrance}");
             }
-            h_MsBattleLabelExe(0x00AC0000, 1, 1);
+            //h_MsBattleLabelExe(0x00AC0000, 1, 1);
+            var luca = region_states[RegionEnum.Luca];
+            luca.story_progress = 617;
+            luca.room_id = 107;
+            luca.entrance = 0;
 
 
             //_SndSepPlay(81019, 63, 127);
@@ -207,6 +211,7 @@ public unsafe partial class ArchipelagoModule : FhModule {
             FhLog.Debug($"fev: {fev[0]} {fev[1]} {fev[2]} {fev[3]}");
             FhLog.Debug($"bank: {bank[0]} {bank[1]} {bank[2]} {bank[3]}");
              */
+            get_party_frontline();
 
         }
         if (Globals.Input.select.held && Globals.Input.r2.just_pressed) {
@@ -268,7 +273,8 @@ public unsafe partial class ArchipelagoModule : FhModule {
     }
 
     public static void save_party() {
-        Globals.save_data->atel_is_push_member = 1;
+        //Globals.save_data->atel_is_push_member = 1;
+
         foreach (var pair in character_is_unlocked) {
             if (pair.Value) {
                 Globals.save_data->atel_push_party |= (byte)(1 << (byte)pair.Key);
@@ -284,7 +290,6 @@ public unsafe partial class ArchipelagoModule : FhModule {
     }
 
     public static void reset_party() {
-        Globals.save_data->atel_is_push_member = 0;
         //call_put_party_member_in_slot(0, (PlySaveId)0xff);
         //call_put_party_member_in_slot(1, (PlySaveId)0xff);
         //call_put_party_member_in_slot(2, (PlySaveId)0xff);
@@ -312,13 +317,20 @@ public unsafe partial class ArchipelagoModule : FhModule {
             if (character == 0xff || !character_is_unlocked[(PlySaveId)character] || frontline.Contains(character)) {
                 while (slot < 3 && (frontline.Contains(unlocked[slot]) || unlocked[slot] > 7)) slot++;
                 if (slot < 3) character = unlocked[slot++];
+                else character = 0xff;
             }
             call_put_party_member_in_slot(i, (PlySaveId)character);
             frontline.Add(character);
         }
+        //Globals.save_data->atel_is_push_member = 0;
     }
 
-    public static void set_party(List<PlySaveId> characters) {
+    public static void set_party(List<PlySaveId> characters, bool saveParty = true, bool onlyUnlocked = true) {
+        FhLog.Debug($"Setting party to: {String.Join(", ", characters)}");
+        party_overridden = true;
+        if (saveParty) {
+            save_party();
+        }
         for (PlySaveId chr = 0; chr <= PlySaveId.PC_MAGUS3; chr++) {
             call_remove_party_member(chr, true);
         }
@@ -328,11 +340,23 @@ public unsafe partial class ArchipelagoModule : FhModule {
 
         var slot = 0;
         foreach (PlySaveId character in characters) {
+            if (onlyUnlocked && character_is_unlocked.TryGetValue(character, out bool is_unlocked) && !is_unlocked) continue;
             call_add_party_member(character);
             if (slot < 3 && character <= PlySaveId.PC_SEYMOUR) {
                 call_put_party_member_in_slot(slot++, character);
             }
         }
+    }
+
+    public static void set_underwater_party(bool saveParty = true, bool onlyUnlocked = true) {
+        set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_RIKKU], saveParty, onlyUnlocked);
+    }
+
+    public static void set_summon_party(bool saveParty = true, bool onlyUnlocked = true) {
+        set_party([ PlySaveId.PC_YUNA, PlySaveId.PC_VALEFOR, PlySaveId.PC_IFRIT, PlySaveId.PC_IXION,
+                    PlySaveId.PC_SHIVA, PlySaveId.PC_BAHAMUT, PlySaveId.PC_ANIMA, PlySaveId.PC_YOJIMBO,
+                    PlySaveId.PC_MAGUS1, PlySaveId.PC_MAGUS2, PlySaveId.PC_MAGUS3
+                  ], saveParty, onlyUnlocked);
     }
 
     public static void set_character_model(PlySaveId chr_id) {
@@ -351,7 +375,9 @@ public unsafe partial class ArchipelagoModule : FhModule {
         file_ptr = 0;
 
         fixed (int* fs = fileStream) {
-            h_openFile((nint)fs, Marshal.StringToHGlobalAnsi(filename), true, 0, 0, 1);
+            nint pFilename = Marshal.StringToHGlobalAnsi(filename);
+            h_openFile((nint)fs, pFilename, true, 0, 0, 1);
+            Marshal.FreeHGlobal(pFilename);
             FhLog.Debug($"file_handle={fileStream[0]}, file_length={*(long*)(*(int*)(fileStream[1] + 0xc) + 8)}");
             if (fileStream[1] == 0) return 0;
             var file_length = *(long*)(*(int*)(fileStream[1] + 0xc) + 8);
