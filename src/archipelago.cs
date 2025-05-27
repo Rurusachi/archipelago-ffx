@@ -13,36 +13,34 @@ using System.Runtime.InteropServices;
 
 
 //using Fahrenheit.Modules.ArchipelagoFFX.GUI;
-using System.Text.Json.Serialization;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.ArchipelagoClient;
 using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using System.Reflection;
+using System.Collections;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
-public sealed record ArchipelagoFFXModuleConfig : FhModuleConfig {
-    [JsonConstructor]
-    public ArchipelagoFFXModuleConfig(string name)
-        : base(name) { }
 
-    public override FhModule SpawnModule() {
-        return new ArchipelagoFFXModule(this);
-    }
-}
-
+[FhLoad(FhGameType.FFX)]
 public unsafe partial class ArchipelagoFFXModule : FhModule {
-    private readonly ArchipelagoFFXModuleConfig _moduleConfig;
 
-    private ushort last_story_progress = 0;
-    private ushort last_room_id = 0;
+    public  static bool   skip_state_updates = false;
+    private static ushort last_story_progress = 0;
+    private static ushort last_room_id = 0;
+    private static ushort last_entrance_id = 0;
 
     public static RegionEnum current_region = RegionEnum.None;
     public static Dictionary<RegionEnum, bool> region_is_unlocked = [];
     public static Dictionary<RegionEnum, ArchipelagoRegion> region_states = [];
 
-    public static Dictionary<PlySaveId, bool> character_is_unlocked = [];
+    public static Dictionary<int, bool> character_is_unlocked = [];
     public static bool party_overridden = false;
 
-    public static uint ap_multiplier = 1;
+    public static int ap_multiplier = 1;
 
     public static nint voice_fev = 0;
     public static nint voice_bank = 0;
@@ -51,50 +49,254 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     public static nint prev_length = 0;
     public static nint prev_bank = 0;
 
-    public ArchipelagoFFXModule(ArchipelagoFFXModuleConfig moduleConfig) : base(moduleConfig) {
-        _moduleConfig = moduleConfig;
+    public static FhLogger logger;
 
+    public ArchipelagoFFXModule() {
         init_hooks();
     }
 
-    public override bool init() {
+    static ArchipelagoFFXModule() {
+        var current_version_match = RegexSemVer().Match(VersionString);
+        if (current_version_match.Success) {
+            int major = int.Parse(current_version_match.Groups["major"].Value);
+            int minor = int.Parse(current_version_match.Groups["minor"].Value);
+            int patch = int.Parse(current_version_match.Groups["patch"].Value);
+            string prerelease = current_version_match.Groups["prerelease"].Value;
+            string buildmetadata = current_version_match.Groups["buildmetadata"].Value;
+            Version = new(major, minor, patch, prerelease, buildmetadata);
+        }
+    }
+
+    private class ArchipelagoState {
+        public Dictionary<RegionEnum, ArchipelagoRegion> region_states         { get; set; }
+        public Dictionary<RegionEnum, bool>              region_is_unlocked    { get; set; }
+        public Dictionary<int,        bool>              character_is_unlocked { get; set; }
+
+        public  bool   skip_state_updates  { get; set; }
+        private ushort last_story_progress { get; set; }
+        private ushort last_room_id        { get; set; }
+        private ushort last_entrance_id    { get; set; }
+
+        public ArchipelagoState() {
+            this.region_states         = ArchipelagoFFXModule.region_states;
+            this.region_is_unlocked    = ArchipelagoFFXModule.region_is_unlocked;
+            this.character_is_unlocked = ArchipelagoFFXModule.character_is_unlocked;
+            this.skip_state_updates    = ArchipelagoFFXModule.skip_state_updates;
+            this.last_story_progress   = ArchipelagoFFXModule.last_story_progress;
+            this.last_room_id          = ArchipelagoFFXModule.last_room_id;
+            this.last_entrance_id      = ArchipelagoFFXModule.last_entrance_id;
+        }
+    }
+
+    public override bool init(FileStream global_state_file) {
         // Initialize Archipelago Client
-        if (region_is_unlocked.Count == 0) { 
+        if (region_is_unlocked.Count == 0) {
+            logger = _logger;
             foreach (var region in region_to_ids) {
-                FhLog.Debug(region.Key.ToString());
+                _logger.Debug(region.Key.ToString());
                 region_is_unlocked.Add(region.Key, region.Key == RegionEnum.DreamZanarkand);
             }
             foreach (var region in region_starting_state) {
-                FhLog.Debug(region.Key.ToString());
+                _logger.Debug(region.Key.ToString());
                 region_states.Add(region.Key, region.Value);
             }
             for (int i = 0; i < 0x12; i++) {
-                character_is_unlocked.Add((PlySaveId)i, false);
+                character_is_unlocked.Add(i, false);
             }
             // Until Archipelago handles this
             character_is_unlocked[PlySaveId.PC_TIDUS] = true;
+
+            SemVer[] sampleVersions = [
+                new("1.0.0-alpha"),
+                new("1.0.0-alpha.1"),
+                new("1.0.0-alpha.beta"),
+                new("1.0.0-beta"),
+                new("1.0.0-beta.2"),
+                new("1.0.0-beta.11"),
+                new("1.0.0-rc.1"),
+                new("1.0.0"),
+                ];
+
+            for (int i = 0; i < sampleVersions.Length; i++) {
+                for (int j = 0; j < sampleVersions.Length; j++) {
+                    if (i == j) {
+                        logger.Debug($"{sampleVersions[i]} == {sampleVersions[j]}: {sampleVersions[i] == sampleVersions[j]}");
+                    } else
+                    if (i < j) {
+                        logger.Debug($"{sampleVersions[i]} < {sampleVersions[j]}: {sampleVersions[i] < sampleVersions[j]}");
+                    } else
+                    if (i > j) {
+                        logger.Debug($"{sampleVersions[i]} > {sampleVersions[j]}: {sampleVersions[i] > sampleVersions[j]}");
+                    }
+                }
+            }
         }
         return hook();
+    }
+
+
+    [GeneratedRegex("^(?<major>0|[1-9]\\d*)\\.(?<minor>0|[1-9]\\d*)\\.(?<patch>0|[1-9]\\d*)(?:-(?<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")]
+    private static partial Regex RegexSemVer();
+
+    private static readonly string VersionString = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+
+    private static readonly SemVer Version;
+
+    private record SemVer(int major,
+                          int minor,
+                          int patch,
+                          string prerelease,
+                          string buildmetadata) : IComparable<SemVer>, IEquatable<SemVer> {
+        public SemVer(string versionString) : this(0, 0, 0, "", "") {
+            var version_match = RegexSemVer().Match(versionString);
+            major = int.Parse(version_match.Groups["major"].Value);
+            minor = int.Parse(version_match.Groups["minor"].Value);
+            patch = int.Parse(version_match.Groups["patch"].Value);
+            prerelease = version_match.Groups["prerelease"].Value;
+            buildmetadata = version_match.Groups["buildmetadata"].Value;
+        }
+
+        public override string ToString() {
+            string s = $"{major}.{minor}.{patch}";
+            if (prerelease != "") s += "-"+prerelease;
+            if (buildmetadata != "") s += "+"+buildmetadata;
+            return s;
+        }
+
+        public static int Compare(SemVer? lhs, SemVer? rhs) {
+            if (lhs is null) return (rhs is null ? 0 : -1);
+
+            return lhs.CompareTo(rhs);
+        }
+        public int CompareTo(SemVer? other) {
+            if (other is null) return 1;
+
+            int result = major.CompareTo(other.major);
+            if (result != 0) return result;
+            result = minor.CompareTo(other.minor);
+            if (result != 0) return result;
+            result = patch.CompareTo(other.patch);
+            if (result != 0) return result;
+
+            if (prerelease == "") {
+                if (other.prerelease == "") return 0;
+                return 1;
+            }
+            if (other.prerelease == "") return -1;
+
+            var lhs = prerelease.Split('.');
+            var rhs = other.prerelease.Split(".");
+            int i = 0;
+            int ln;
+            int rn;
+            for (; i < lhs.Length && i < rhs.Length; i++) {
+                string l = lhs[i];
+                string r = rhs[i];
+                if (int.TryParse(l, out ln)) {
+                    if (int.TryParse(r, out rn)) {
+                        result = ln.CompareTo(rn);
+                        if (result != 0) return result;
+                        continue;
+                    }
+                    return -1;
+                }
+                if (int.TryParse(r, out rn)) {
+                    return 1;
+                }
+                result = l.CompareTo(r);
+                if (result != 0) return result;
+            }
+            if (i < lhs.Length) return 1; // left longer
+            if (i < rhs.Length) return -1; // right longer
+            return 0;
+        }
+
+        bool IEquatable<SemVer>.Equals(SemVer? other) => Compare(this, other) == 0;
+
+        //public static bool operator ==(SemVer lhs, SemVer rhs) => Compare(lhs, rhs) == 0;
+        //public static bool operator !=(SemVer lhs, SemVer rhs) => Compare(lhs, rhs) != 0;
+
+        public static bool operator  <(SemVer? lhs, SemVer? rhs) => Compare(lhs, rhs)  < 0;
+        public static bool operator  >(SemVer? lhs, SemVer? rhs) => Compare(lhs, rhs)  > 0;
+        public static bool operator <=(SemVer? lhs, SemVer? rhs) => Compare(lhs, rhs) <= 0;
+        public static bool operator >=(SemVer? lhs, SemVer? rhs) => Compare(lhs, rhs) >= 0;
+    }
+
+    public override void save_local_state(FileStream local_state_file) {
+        ArchipelagoState state = new();
+        JsonSerializer.Serialize(local_state_file, state);
+        local_state_file.SetLength(local_state_file.Position);
+    }
+    public override void load_local_state(FileStream local_state_file, FhLocalStateInfo local_state_info) {
+        var save_version_match = RegexSemVer().Match(local_state_info.Version);
+        
+        if (save_version_match.Success) {
+            int major = int.Parse(save_version_match.Groups["major"].Value);
+            int minor = int.Parse(save_version_match.Groups["minor"].Value);
+            int patch = int.Parse(save_version_match.Groups["patch"].Value);
+            string prerelease = save_version_match.Groups["prerelease"].Value;
+            string buildmetadata = save_version_match.Groups["buildmetadata"].Value;
+            logger.Debug($"Version {major}.{minor}.{patch}-{prerelease}+{buildmetadata}");
+
+            SemVer save_version = new(major, minor, patch, prerelease, buildmetadata);
+
+            logger.Debug($"Version comparison: {Version} > {save_version} is {Version > save_version}");
+        }
+        var loaded_state = JsonSerializer.Deserialize<ArchipelagoState>(local_state_file);
+        //var loaded_regions = JsonSerializer.Deserialize<Dictionary<RegionEnum, ArchipelagoRegion>>(local_state_file);
+        if (loaded_state != null) {
+            foreach (var region in loaded_state.region_states) {
+                region_states[region.Key].story_progress = region.Value.story_progress;
+                region_states[region.Key].room_id = region.Value.room_id;
+                region_states[region.Key].entrance = region.Value.entrance;
+            }
+            foreach (var region in loaded_state.region_is_unlocked) {
+                region_is_unlocked[region.Key] = region.Value;
+            }
+            foreach (var character in loaded_state.character_is_unlocked) {
+                character_is_unlocked[character.Key] = character.Value;
+            }
+            skip_state_updates = loaded_state.skip_state_updates;
+            //last_story_progress = loaded_state.last_story_progress;
+            //last_room_id = loaded_state.last_room_id;
+            //last_entrance_id = loaded_state.last_entrance_id;
+        }
     }
 
     public override void pre_update() {
         // Update Archipelago Client
         ArchipelagoClient.update();
         if (last_story_progress != Globals.save_data->story_progress) {
-            FhLog.Info($"story_progress changed: {last_story_progress} -> {Globals.save_data->story_progress}");
+            ushort story_progress = Globals.save_data->story_progress;
+            _logger.Info($"story_progress changed: {last_story_progress} -> {story_progress}");
 
-            update_region_state(false);
-            last_story_progress = Globals.save_data->story_progress;
+            if (current_region != RegionEnum.None) {
+                ArchipelagoRegion region = region_states[current_region];
+                if (region.story_checks.TryGetValue(story_progress, out var storyCheck)) {
+                    storyCheck.check_delegate?.Invoke(region);
+                    if (region_is_unlocked.TryGetValue(storyCheck.return_if_locked, out var is_unlocked) && !is_unlocked) {
+                        call_warp_to_map(382, 0);
+                        //Globals.save_data->current_room_id = 382;
+                        //Globals.save_data->current_spawnpoint = 0;
+                    }
+                    region.story_progress = storyCheck.next_story_progress ?? region.story_progress;
+                    region.room_id = storyCheck.next_room_id ?? region.room_id;
+                    region.entrance = storyCheck.next_entrance ?? region.entrance;
+                    skip_state_updates = true;
+                }
+            }
+            last_story_progress = story_progress;
         }
         if (last_room_id != Globals.save_data->current_room_id) {
-            FhLog.Info($"Room changed: Entered {Globals.save_data->current_room_id} at entrance {Globals.save_data->current_spawnpoint}");
+            _logger.Info($"Room changed: Entered {Globals.save_data->current_room_id} at entrance {Globals.save_data->current_spawnpoint}");
             
             on_map_change();
             last_room_id = Globals.save_data->current_room_id;
+            last_entrance_id = Globals.save_data->current_spawnpoint;
 
             /*
             if (Globals.save_data->last_room_id == 368 && Globals.save_data->current_room_id == 376) {
-                FhLog.Debug("Skip Dream Zanarkand");
+                _logger.Debug("Skip Dream Zanarkand");
                 call_warp_to_map(382, 0);
             }
              */
@@ -109,12 +311,12 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         if (Globals.Input.select.held) {
             if (Globals.Input.l1.just_pressed) {
                 transitionsEnabled = !transitionsEnabled;
-                FhLog.Debug($"transitionsEnableD = {transitionsEnabled}");
+                _logger.Debug($"transitionsEnableD = {transitionsEnabled}");
             }
         }
          */
         if (Globals.Input.l1.held && Globals.Input.r1.held && Globals.Input.start.just_pressed) {
-            FhLog.Debug("Soft Reset");
+            _logger.Debug("Soft Reset");
             //Globals.save_data->current_room_id = 23;
             if (Globals.btl->battle_state != 0) {
                 Globals.btl->battle_end_type = 1;
@@ -126,13 +328,10 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         if (Globals.Input.select.held && Globals.Input.l1.just_pressed) {
             //var region_to_id = ArchipelagoData.id_to_region.ToLookup(id => id.Value, id => id.Key);
             if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out var current_state)) {
-                FhLog.Debug($"{current_region}: story_progress={current_state.story_progress}, room_id={current_state.room_id}, entrance={current_state.entrance}");
+                // _logger.Debug($"{current_region}: story_progress={current_state.story_progress}, room_id={current_state.room_id}, entrance={current_state.entrance}");
+                _logger.Debug(JsonSerializer.Serialize(current_state));
             }
             //h_MsBattleLabelExe(0x00AC0000, 1, 1);
-            var luca = region_states[RegionEnum.Luca];
-            luca.story_progress = 617;
-            luca.room_id = 107;
-            luca.entrance = 0;
 
 
             //_SndSepPlay(81019, 63, 127);
@@ -194,28 +393,33 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
         }
         if (Globals.Input.select.held && Globals.Input.r1.just_pressed) {
-            FhLog.Info($"Resetting party");
+            _logger.Info($"Resetting party");
 
             reset_party();
         }
         if (Globals.Input.select.held && Globals.Input.l2.just_pressed) {
             //foreach (var state in region_states) {
-            //    FhLog.Debug($"{state.Key}: story_progress={state.Value.Story_progress}, room_id={state.Value.room_id}, entrance={state.Value.entrance}");
+            //    _logger.Debug($"{state.Key}: story_progress={state.Value.Story_progress}, room_id={state.Value.room_id}, entrance={state.Value.entrance}");
             //}
             /*
             var SyncManager = FhUtil.get_at<int>(0x008e9004);
             var fev = *(int**)(SyncManager + 0x2c);
             var fev_length = *(int*)(SyncManager + 0x14);
             var bank = *(int**)(SyncManager + 0x3c);
-            FhLog.Debug($"fev_length: {fev_length}");
-            FhLog.Debug($"fev: {fev[0]} {fev[1]} {fev[2]} {fev[3]}");
-            FhLog.Debug($"bank: {bank[0]} {bank[1]} {bank[2]} {bank[3]}");
+            _logger.Debug($"fev_length: {fev_length}");
+            _logger.Debug($"fev: {fev[0]} {fev[1]} {fev[2]} {fev[3]}");
+            _logger.Debug($"bank: {bank[0]} {bank[1]} {bank[2]} {bank[3]}");
              */
-            get_party_frontline();
+            //get_party_frontline();
+            if (Globals.SphereGrid.lpamng != null) {
+                for (int i = 0; i < Globals.SphereGrid.lpamng->node_count; i++) {
+                    Globals.SphereGrid.lpamng->nodes[i].activated_by = 0x7f;
+                }
+            }
 
         }
         if (Globals.Input.select.held && Globals.Input.r2.just_pressed) {
-            FhLog.Debug("Warp to Airship");
+            _logger.Debug("Warp to Airship");
             call_warp_to_map(382, 0);
         }
     }
@@ -230,9 +434,9 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
         h_Common_warpToMap((AtelBasicWorker*)&work, &storage, &stack);
     }
-    public static void call_remove_party_member(PlySaveId character_id, bool long_term = false) {
+    public static void call_remove_party_member(int character_id, bool long_term = false) {
         AtelStack stack = new AtelStack();
-        stack.push_int((int)character_id);
+        stack.push_int(character_id);
 
         int work = 0;
         int storage = 0;
@@ -241,9 +445,9 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         else h_Common_removePartyMemberLongTerm((AtelBasicWorker*)&work, &storage, &stack);
     }
 
-    public static void call_add_party_member(PlySaveId character_id) {
+    public static void call_add_party_member(int character_id) {
         AtelStack stack = new AtelStack();
-        stack.push_int((int)character_id);
+        stack.push_int(character_id);
 
         int work = 0;
         int storage = 0;
@@ -251,10 +455,10 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         h_Common_addPartyMember((AtelBasicWorker*)&work, &storage, &stack);
     }
 
-    public static void call_put_party_member_in_slot(int slot, PlySaveId character_id) {
+    public static void call_put_party_member_in_slot(int slot, int character_id) {
         AtelStack stack = new AtelStack();
         stack.push_int(slot);
-        stack.push_int((int)character_id);
+        stack.push_int(character_id);
 
         int work = 0;
         int storage = 0;
@@ -314,32 +518,32 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         List<byte> frontline = [];
         for (int i = 0; i < 3; i++) {
             byte character = Globals.save_data->atel_push_frontline[i];
-            if (character == 0xff || !character_is_unlocked[(PlySaveId)character] || frontline.Contains(character)) {
+            if (character == 0xff || !character_is_unlocked[character] || frontline.Contains(character)) {
                 while (slot < 3 && (frontline.Contains(unlocked[slot]) || unlocked[slot] > 7)) slot++;
                 if (slot < 3) character = unlocked[slot++];
                 else character = 0xff;
             }
-            call_put_party_member_in_slot(i, (PlySaveId)character);
+            call_put_party_member_in_slot(i, character);
             frontline.Add(character);
         }
         //Globals.save_data->atel_is_push_member = 0;
     }
 
-    public static void set_party(List<PlySaveId> characters, bool saveParty = true, bool onlyUnlocked = true) {
-        FhLog.Debug($"Setting party to: {String.Join(", ", characters)}");
+    public static void set_party(List<int> characters, bool saveParty = true, bool onlyUnlocked = true) {
+        logger.Debug($"Setting party to: {String.Join(", ", characters.Select(i => id_to_character[i]))}");
         party_overridden = true;
         if (saveParty) {
             save_party();
         }
-        for (PlySaveId chr = 0; chr <= PlySaveId.PC_MAGUS3; chr++) {
+        for (int chr = 0; chr <= PlySaveId.PC_MAGUS3; chr++) {
             call_remove_party_member(chr, true);
         }
-        call_put_party_member_in_slot(0, (PlySaveId)0xff);
-        call_put_party_member_in_slot(1, (PlySaveId)0xff);
-        call_put_party_member_in_slot(2, (PlySaveId)0xff);
+        call_put_party_member_in_slot(0, 0xff);
+        call_put_party_member_in_slot(1, 0xff);
+        call_put_party_member_in_slot(2, 0xff);
 
         var slot = 0;
-        foreach (PlySaveId character in characters) {
+        foreach (int character in characters) {
             if (onlyUnlocked && character_is_unlocked.TryGetValue(character, out bool is_unlocked) && !is_unlocked) continue;
             call_add_party_member(character);
             if (slot < 3 && character <= PlySaveId.PC_SEYMOUR) {
@@ -359,9 +563,9 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                   ], saveParty, onlyUnlocked);
     }
 
-    public static void set_character_model(PlySaveId chr_id) {
+    public static void set_character_model(int chr_id) {
         AtelStack stack = new AtelStack();
-        stack.push_int((int)chr_id + 1);
+        stack.push_int(chr_id + 1);
         AtelBasicWorker* worker0 = Globals.Atel.controllers[0].worker(0);
         int storage = 0;
         _Common_loadModel(worker0, &storage, &stack);
@@ -378,14 +582,14 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             nint pFilename = Marshal.StringToHGlobalAnsi(filename);
             h_openFile((nint)fs, pFilename, true, 0, 0, 1);
             Marshal.FreeHGlobal(pFilename);
-            FhLog.Debug($"file_handle={fileStream[0]}, file_length={*(long*)(*(int*)(fileStream[1] + 0xc) + 8)}");
+            logger.Debug($"file_handle={fileStream[0]}, file_length={*(long*)(*(int*)(fileStream[1] + 0xc) + 8)}");
             if (fileStream[1] == 0) return 0;
             var file_length = *(long*)(*(int*)(fileStream[1] + 0xc) + 8);
             file_ptr = Marshal.AllocHGlobal((int)file_length);
             uint max_len = (uint)file_length;
             readBytes = _readFile((nint)fs, file_ptr, max_len);
         }
-        FhLog.Debug($"read {readBytes}, beginning={((byte*)file_ptr)[0]} {((byte*)file_ptr)[1]} {((byte*)file_ptr)[2]} {((byte*)file_ptr)[3]}");
+        logger.Debug($"read {readBytes}, beginning={((byte*)file_ptr)[0]} {((byte*)file_ptr)[1]} {((byte*)file_ptr)[2]} {((byte*)file_ptr)[3]}");
         return readBytes;
     }
 

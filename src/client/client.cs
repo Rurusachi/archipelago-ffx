@@ -20,7 +20,7 @@ namespace Fahrenheit.Modules.ArchipelagoFFX.Client;
 public class ArchipelagoClient {
     public static ArchipelagoSession? session;
     private static int received_items = 0;
-    private static List<long> local_checked_locations = new List<long>();
+    private static readonly List<long> local_checked_locations = [];
     private static bool local_locations_updated = false;
     public ArchipelagoClient() {
         
@@ -51,7 +51,7 @@ public class ArchipelagoClient {
                 errorMessage += $"\n    {error}";
             }
             session = null;
-            FhLog.Error(errorMessage);
+            ArchipelagoFFXModule.logger.Error(errorMessage);
             return; // Did not connect, show the user the contents of `errorMessage`
         }
         var loginSuccess = (LoginSuccessful)login_result;
@@ -67,7 +67,7 @@ public class ArchipelagoClient {
     public unsafe static void update() {
         /*
         foreach (ItemInfo item in session.Items.AllItemsReceived) {
-            FhLog.Debug($"received_item: {item.ItemName}");
+            ArchipelagoFFXModule.logger.Debug($"received_item: {item.ItemName}");
         }
          */
         if (session == null) {
@@ -79,14 +79,14 @@ public class ArchipelagoClient {
         }
 
         if (session.Items.AllItemsReceived.Count > received_items) {
-            FhLog.Debug("New items received");
+            ArchipelagoFFXModule.logger.Debug("New items received");
             foreach (ItemInfo item in session.Items.AllItemsReceived.Skip(received_items)) {
-                FhLog.Debug($"received_item: {item.ItemName}");
+                ArchipelagoFFXModule.logger.Debug($"received_item: {item.ItemName}");
                 /*
                 if ((item.ItemId & 0xA000) == 0xA000) {
                     // Key Item
                     var bit_index = (int)(item.ItemId & 0xFF);
-                    FhLog.Debug($"Received Key item: {item.ItemName} ({bit_index})");
+                    ArchipelagoFFXModule.logger.Debug($"Received Key item: {item.ItemName} ({bit_index})");
                     if (bit_index < 32) {
                         Globals.save_data->ptr_important_bin.set_bit(bit_index, true);
                     } else {
@@ -94,7 +94,7 @@ public class ArchipelagoClient {
                     }
                 } else if ((item.ItemId & 0x2000) == 0x2000){
                     // Normal Item
-                    FhLog.Debug($"Received Normal item: {item.ItemName}");
+                    ArchipelagoFFXModule.logger.Debug($"Received Normal item: {item.ItemName}");
                     for (int i = 0; i < 70; i++) {
                         var id = Globals.save_data->inventory_ids[i];
                         if (item.ItemId == id) {
@@ -109,14 +109,14 @@ public class ArchipelagoClient {
                     }
                 } else if (item.ItemId == 0x1000) {
                     // 1000 Gil
-                    FhLog.Debug($"Received 1000 gil");
+                    ArchipelagoFFXModule.logger.Debug($"Received 1000 gil");
                     Globals.save_data->gil += 1000;
                 } else if ( item.ItemId <= 0x55) {
                     // Weapon
-                    FhLog.Debug($"Received Weapon: {item.ItemName}");
+                    ArchipelagoFFXModule.logger.Debug($"Received Weapon: {item.ItemName}");
                     // TODO: Implement weapon receiving
                 } else {
-                    FhLog.Error($"Received unhandled item: {item.ItemName} ({item.ItemId})");
+                    ArchipelagoFFXModule.logger.Error($"Received unhandled item: {item.ItemName} ({item.ItemId})");
                 }
                  */
                 ArchipelagoFFXModule.obtain_item((uint)item.ItemId, 1);
@@ -129,7 +129,7 @@ public class ArchipelagoClient {
             var local_only = local_checked_locations.Except(session.Locations.AllLocationsChecked);
             if (local_only.Any()) {
                 session.Locations.CompleteLocationChecks(local_only.ToArray());
-                FhLog.Debug($"Sent: {string.Join(",", local_only)}");
+                ArchipelagoFFXModule.logger.Debug($"Sent: {string.Join(",", local_only)}");
             }
             local_locations_updated = false;
         }
@@ -146,11 +146,11 @@ public class ArchipelagoClient {
         /*
         var remote_only = session.Locations.AllLocationsChecked.Except(local_checked_locations);
         if (remote_only.Any()) {
-            FhLog.Debug($"Received Remote Locations: {string.Join(",", remote_only)}");
+            ArchipelagoFFXModule.logger.Debug($"Received Remote Locations: {string.Join(",", remote_only)}");
             foreach (var location in remote_only) {
                 // TODO: Distinguish between location types
                 var treasure_id = (location - 0x14)/4;
-                FhLog.Debug($"Location id: {Convert.ToInt32(treasure_id)}");
+                ArchipelagoFFXModule.logger.Debug($"Location id: {Convert.ToInt32(treasure_id)}");
                 ArchipelagoModule.receive_treasure(Convert.ToInt32(treasure_id));
                 local_checked_locations.Add(location);
             }
@@ -183,9 +183,9 @@ public unsafe static void connectHandlers() {
 
        var remote_only = newCheckedLocations.Except(local_checked_locations);
        if (remote_only.Any()) {
-           FhLog.Debug($"Received Remote Locations: {string.Join(",", remote_only)}");
+           ArchipelagoFFXModule.logger.Debug($"Received Remote Locations: {string.Join(",", remote_only)}");
            foreach (var location in remote_only) {
-               FhLog.Debug($"Location id: {Convert.ToInt32(location)}");
+               ArchipelagoFFXModule.logger.Debug($"Location id: {Convert.ToInt32(location)}");
                ArchipelagoModule.receive_treasure(Convert.ToInt32(location));
                local_checked_locations.Add(location);
            }
@@ -204,7 +204,7 @@ public unsafe static void connectHandlers() {
         local_checked_locations.Add(locationId);
         local_locations_updated = true;
         if (is_connected) {
-            FhLog.Debug(session!.Locations.GetLocationNameFromId(locationId) ?? $"Location: {locationId}");
+            ArchipelagoFFXModule.logger.Debug(session!.Locations.GetLocationNameFromId(locationId) ?? $"Location: {locationId}");
         }
     }
     

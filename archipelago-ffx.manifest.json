@@ -1,9 +1,10 @@
 {
-    "Name":"Archipelago FFX",
-    "Desc":"Archipelago client for FFX",
-    "Authors":"Rurusachi",
-    "Link":"https://github.com/Rurusachi/archipelago-ffx",
-    "DllList":["archipelago-ffx"],
-    "Dependencies":[],
-    "LoadAfter":[]
+    "Name": "Archipelago FFX",
+    "Desc": "Archipelago client for FFX",
+    "Authors": "Rurusachi",
+    "Version": "{Version}",
+    "Link": "https://github.com/Rurusachi/archipelago-ffx",
+    "DllList": [ "archipelago-ffx" ],
+    "Dependencies": [],
+    "LoadAfter": []
 }

@@ -7,6 +7,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <PlatformTarget>x86</PlatformTarget>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+	<Version>0.1.1-beta</Version>
   </PropertyGroup>
 
 	<!-- ASSEMBLY ADDITIONAL PROPERTIES -->
@@ -18,12 +19,12 @@
 
 	<!-- LOCAL DEPLOYMENT TARGET -->
 	<PropertyGroup>
-		<CopyToDir>$(SolutionDir)artifacts\localdeploy\modules\$(AssemblyName)</CopyToDir>
+		<CopyToDir>$(SolutionDir)artifacts\localdeploy\mods\$(AssemblyName)</CopyToDir>
 	</PropertyGroup>
 
 	<!-- SHARED FILE LINKS -->
 	<ItemGroup>
-		<Compile Include="../core/typedefs.cs" Link="src/_typedefs.cs" />
+		<Compile Include="../../base/core/typedefs.cs" Link="src/_typedefs.cs" />
 		<None Include="$(SolutionDir).editorconfig" Link=".editorconfig" />
 	</ItemGroup>
 	<ItemGroup>
@@ -33,18 +34,20 @@
 		<Content Include="archipelago-ffx.manifest.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Include="archipelago-ffx.config.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
 	</ItemGroup>
+	
+	<!-- BUILD EVENTS -->
+	<Target Name="PostBuild" BeforeTargets="PostBuildEvent">
+		<Exec Command="powershell Set-Content 'archipelago-ffx.manifest.json' ((Get-Content 'archipelago-ffx.manifest.json').Replace('{Version}','$(Version)'))" WorkingDirectory="$(OutDir)"/>
+	</Target>
 
 	<!-- PROJECT REFERENCES -->
 	<ItemGroup>
-		<ProjectReference Include="..\core\Fahrenheit.Core.csproj">
+		<ProjectReference Include="..\..\base\core\Fahrenheit.Core.csproj">
 			<Private>false</Private>
 			<ExcludeAssets>runtime</ExcludeAssets>
 		</ProjectReference>
-		<ProjectReference Include="..\imgui\Fahrenheit.Core.ImGuiNET.csproj">
+		<ProjectReference Include="..\..\base\imgui\Fahrenheit.Core.ImGuiNET.csproj">
 			<Private>false</Private>
 			<ExcludeAssets>runtime</ExcludeAssets>
 		</ProjectReference>

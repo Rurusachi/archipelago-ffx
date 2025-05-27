@@ -8,25 +8,27 @@ using static Fahrenheit.Modules.ArchipelagoFFX.Client.ArchipelagoClient;
 using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Core.FFX.Atel;
-using System.Collections.Generic;
 using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using System.Linq;
 using System.Numerics;
+using Fahrenheit.Core.ImGuiNET;
+using System.Collections.Generic;
+using System.Text;
 
 //[assembly: DisableRuntimeMarshalling]
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 public unsafe partial class ArchipelagoFFXModule {
 
-    public static i32* takara_pointer => FhUtil.ptr_at<i32>(0xD35FEC);
-    public static i32* buki_get_pointer => FhUtil.ptr_at<i32>(0xD35FF4);
+    public static int* takara_pointer => FhUtil.ptr_at<int>(0xD35FEC);
+    public static int* buki_get_pointer => FhUtil.ptr_at<int>(0xD35FF4);
 
 
     // AtelEventSetUp
-    private static FhMethodHandle<AtelEventSetUp> _AtelEventSetUp;
+    private static FhMethodHandle<FhCall.AtelEventSetUp> _AtelEventSetUp;
 
-    public static char* get_event_name(u32 event_id) => FhUtil.get_fptr<AtelGetEventName>(0x4796e0)(event_id);
-    public static int atel_stack_pop(i32* param_1, AtelStack* atelStack) => FhUtil.get_fptr<AtelStackPop>(0x0046de90)(param_1, atelStack);
+    public static char* get_event_name(uint event_id) => FhUtil.get_fptr<AtelGetEventName>(0x4796e0)(event_id);
+    public static int atel_stack_pop(int* param_1, AtelStack* atelStack) => FhUtil.get_fptr<AtelStackPop>(0x0046de90)(param_1, atelStack);
 
     private static FhMethodHandle<Common_obtainTreasureInit> _Common_obtainTreasureInit;
     private static FhMethodHandle<Common_obtainTreasureSilentlyInit> _Common_obtainTreasureSilentlyInit;
@@ -68,10 +70,10 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhMethodHandle<Common_popParty> _Common_popParty;
 
     // getCurrentPartySlots
-    private static FhMethodHandle<MsGetSavePartyMember> _MsGetSavePartyMember;
+    private static FhMethodHandle<FhCall.MsGetSavePartyMember> _MsGetSavePartyMember;
 
-    private static MsBtlListGroup _MsBtlListGroup;
-    private static FhMethodHandle<MsBattleExe> _MsBattleExe;
+    private static FhCall.MsBtlListGroup _MsBtlListGroup;
+    private static FhMethodHandle<FhCall.MsBattleExe> _MsBattleExe;
     private static FhMethodHandle<MsBattleLabelExe> _MsBattleLabelExe;
     private static FhMethodHandle<FUN_00791820> _FUN_00791820;
 
@@ -102,44 +104,50 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
     // Overdrive Experiment
-    private static FhMethodHandle<Call.MsCheckLeftWindow> _MsCheckLeftWindow;
-    private static FhMethodHandle<Call.MsCheckUseCommand> _MsCheckUseCommand;
-    private static FhMethodHandle<Call.TOBtlDrawStatusLimitGauge> _TOBtlDrawStatusLimitGauge;
+    private static FhMethodHandle<FhCall.MsCheckLeftWindow> _MsCheckLeftWindow;
+    private static FhMethodHandle<FhCall.MsCheckUseCommand> _MsCheckUseCommand;
+    private static FhMethodHandle<FhCall.TOBtlDrawStatusLimitGauge> _TOBtlDrawStatusLimitGauge;
 
-    private static Call.MsGetChr _MsGetChr;
-    private static Call.MsGetComData _MsGetComData;
-    private static Call.MsGetCommandUse _MsGetCommandUse;
-    private static Call.MsGetCommandMP _MsGetCommandMP;
-    private static Call.MsGetRamChrMonster _MsGetRamChrMonster;
-    private static Call.TODrawCrossBoxXYWHC2 _TODrawCrossBoxXYWHC2;
+    private static FhCall.MsGetChr _MsGetChr;
+    private static FhCall.MsGetComData _MsGetComData;
+    private static FhCall.MsGetCommandUse _MsGetCommandUse;
+    private static FhCall.MsGetCommandMP _MsGetCommandMP;
+    private static FhCall.MsGetRamChrMonster _MsGetRamChrMonster;
+    private static FhCall.TODrawCrossBoxXYWHC2 _TODrawCrossBoxXYWHC2;
 
 
     // Sphere Grid Experiment
-    private static FhMethodHandle<eiAbmParaGet> _eiAbmParaGet;
+    private static FhMethodHandle<FhCall.eiAbmParaGet> _eiAbmParaGet;
     private static FhMethodHandle<FUN_00a48910> _FUN_00a48910;
 
-    private static FhMethodHandle<Call.MsApUp> _MsApUp;
+    private static FhMethodHandle<FhCall.MsApUp> _MsApUp;
 
 
     private static FhMethodHandle<openFile> _openFile;
     private static readFile _readFile;
     private static FhMethodHandle<FUN_0070aec0> _FUN_0070aec0;
 
-    private static ChN_ReadSystemMGRP _ChN_ReadSystemMGRP;
+    private static FhCall.ChN_ReadSystemMGRP _ChN_ReadSystemMGRP;
     private static Common_loadModel _Common_loadModel;
     private static Common_0043 _Common_0043;
     private static Common_linkFieldToBattleActor _Common_linkFieldToBattleActor;
-    private static SndSepPlay _SndSepPlay;
-    private static SndSepPlaySimple _SndSepPlaySimple;
+    private static FhCall.SndSepPlay _SndSepPlay;
+    private static FhCall.SndSepPlaySimple _SndSepPlaySimple;
 
 
+    private static FhMethodHandle<FhCall.MsSetSaveParam> _MsSetSaveParam;
+    public static FhCall.MsGetExcelData _MsGetExcelData;
+    public static FhCall.MsGetSaveWeapon _MsGetSaveWeapon;
 
     private static FhMethodHandle<Map_800F> _Map_800F;
+
+    private static FhMethodHandle<FUN_0086bec0> _FUN_0086bec0;
+    private static FhMethodHandle<FUN_0086bea0> _FUN_0086bea0;
 
     public void init_hooks() {
         const string game = "FFX.exe";
 
-        _AtelEventSetUp = new FhMethodHandle<AtelEventSetUp>(this, game, h_AtelEventSetUp, offset: 0x00472e90);
+        _AtelEventSetUp = new FhMethodHandle<FhCall.AtelEventSetUp>(this, game, h_AtelEventSetUp, offset: FhCall.__addr_AtelEventSetUp);
 
         _Common_obtainTreasureInit = new FhMethodHandle<Common_obtainTreasureInit>(this, game, h_Common_obtainTreasureInit, offset: 0x0045a740);
 
@@ -190,11 +198,11 @@ public unsafe partial class ArchipelagoFFXModule {
         _Common_popParty = new FhMethodHandle<Common_popParty>(this, game, h_Common_popParty, offset: 0x0045b3c0);
 
         // getCurrentPartySlots
-        _MsGetSavePartyMember = new FhMethodHandle<MsGetSavePartyMember>(this, game, h_MsGetSavePartyMember, offset: 0x003853b0);
+        _MsGetSavePartyMember = new FhMethodHandle<FhCall.MsGetSavePartyMember>(this, game, h_MsGetSavePartyMember, offset: FhCall.__addr_MsGetSavePartyMember);
 
 
-        _MsBtlListGroup = FhUtil.get_fptr<MsBtlListGroup>(0x0039d230);
-        _MsBattleExe = new FhMethodHandle<MsBattleExe>(this, game, h_MsBattleExe, offset: 0x003810f0);
+        _MsBtlListGroup = FhUtil.get_fptr<FhCall.MsBtlListGroup>(FhCall.__addr_MsBtlListGroup);
+        _MsBattleExe = new FhMethodHandle<FhCall.MsBattleExe>(this, game, h_MsBattleExe, offset: FhCall.__addr_MsBattleExe);
         _MsBattleLabelExe = new FhMethodHandle<MsBattleLabelExe>(this, game, h_MsBattleLabelExe, offset: 0x00381d60);
         _FUN_00791820 = new FhMethodHandle<FUN_00791820>(this, game, h_FUN_00791820, offset: 0x00391820);
 
@@ -229,21 +237,21 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
         // Overdrive Experiment
-        _MsCheckLeftWindow = new FhMethodHandle<Call.MsCheckLeftWindow>(this, game, h_MsCheckLeftWindow, offset: 0x0038f750);
-        _MsCheckUseCommand = new FhMethodHandle<Call.MsCheckUseCommand>(this, game, h_MsCheckUseCommand, offset: 0x0038c750);
-        _TOBtlDrawStatusLimitGauge = new FhMethodHandle<Call.TOBtlDrawStatusLimitGauge>(this, game, h_TOBtlDrawStatusLimitGauge, offset: 0x00496050);
+        _MsCheckLeftWindow = new FhMethodHandle<FhCall.MsCheckLeftWindow>(this, game, h_MsCheckLeftWindow, offset: 0x0038f750);
+        _MsCheckUseCommand = new FhMethodHandle<FhCall.MsCheckUseCommand>(this, game, h_MsCheckUseCommand, offset: 0x0038c750);
+        _TOBtlDrawStatusLimitGauge = new FhMethodHandle<FhCall.TOBtlDrawStatusLimitGauge>(this, game, h_TOBtlDrawStatusLimitGauge, offset: 0x00496050);
 
-        _MsGetChr = FhUtil.get_fptr<Call.MsGetChr>(0x00394030);
-        _MsGetComData = FhUtil.get_fptr<Call.MsGetComData>(0x0039a4c0);
-        _MsGetCommandUse = FhUtil.get_fptr<Call.MsGetCommandUse>(0x0039a5c0);
-        _MsGetCommandMP = FhUtil.get_fptr<Call.MsGetCommandMP>(0x0038d030);
-        _MsGetRamChrMonster = FhUtil.get_fptr<Call.MsGetRamChrMonster>(0x0039af00);
-        _TODrawCrossBoxXYWHC2 = FhUtil.get_fptr<Call.TODrawCrossBoxXYWHC2>(0x004f4b20);
+        _MsGetChr = FhUtil.get_fptr<FhCall.MsGetChr>(0x00394030);
+        _MsGetComData = FhUtil.get_fptr<FhCall.MsGetComData>(0x0039a4c0);
+        _MsGetCommandUse = FhUtil.get_fptr<FhCall.MsGetCommandUse>(0x0039a5c0);
+        _MsGetCommandMP = FhUtil.get_fptr<FhCall.MsGetCommandMP>(0x0038d030);
+        _MsGetRamChrMonster = FhUtil.get_fptr<FhCall.MsGetRamChrMonster>(0x0039af00);
+        _TODrawCrossBoxXYWHC2 = FhUtil.get_fptr<FhCall.TODrawCrossBoxXYWHC2>(0x004f4b20);
 
-        _eiAbmParaGet = new FhMethodHandle<eiAbmParaGet>(this, game, h_eiAbmParaGet, offset: 0x00654860);
+        _eiAbmParaGet = new FhMethodHandle<FhCall.eiAbmParaGet>(this, game, h_eiAbmParaGet, offset: FhCall.__addr_eiAbmParaGet);
         _FUN_00a48910 = new FhMethodHandle<FUN_00a48910>(this, game, h_FUN_00a48910, offset: 0x00648910);
 
-        _MsApUp = new FhMethodHandle<Call.MsApUp>(this, game, h_MsApUp, offset: 0x00398a10);
+        _MsApUp = new FhMethodHandle<FhCall.MsApUp>(this, game, h_MsApUp, offset: 0x00398a10);
 
         //delegate* unmanaged[Thiscall]<nint, nint, bool, bool> ph_openFile = &h_openFile;
         //openFile p_openFile = (x, y, z) => d_openFile(ph_openFile, x, y, z);
@@ -254,21 +262,42 @@ public unsafe partial class ArchipelagoFFXModule {
         _FUN_0070aec0 = new FhMethodHandle<FUN_0070aec0>(this, game, h_FUN_0070aec0, offset: 0x0030aec0);
 
 
-        _ChN_ReadSystemMGRP = FhUtil.get_fptr<ChN_ReadSystemMGRP>(0x004368f0);
+        _ChN_ReadSystemMGRP = FhUtil.get_fptr<FhCall.ChN_ReadSystemMGRP>(FhCall.__addr_ChN_ReadSystemMGRP);
 
         _Common_loadModel = FhUtil.get_fptr<Common_loadModel>(0x0045ce70);
         _Common_0043 = FhUtil.get_fptr<Common_0043>(0x0045c810);
         _Common_linkFieldToBattleActor = FhUtil.get_fptr<Common_linkFieldToBattleActor>(0x0045ca00);
 
-        _SndSepPlay = FhUtil.get_fptr<SndSepPlay>(0x00486db0);
-        _SndSepPlaySimple = FhUtil.get_fptr<SndSepPlaySimple>(0x00486de0);
+        _SndSepPlay = FhUtil.get_fptr<FhCall.SndSepPlay>(FhCall.__addr_SndSepPlay);
+        _SndSepPlaySimple = FhUtil.get_fptr<FhCall.SndSepPlaySimple>(FhCall.__addr_SndSepPlaySimple);
 
 
         _Map_800F = new FhMethodHandle<Map_800F>(this, game, h_Map_800F, offset: 0x0051b1a0);
+
+
+        _MsSetSaveParam = new FhMethodHandle<FhCall.MsSetSaveParam>(this, game, h_MsSetSaveParam, offset: FhCall.__addr_MsSetSaveParam);
+        _MsGetExcelData = FhUtil.get_fptr<FhCall.MsGetExcelData>(FhCall.__addr_MsGetExcelData);
+        _MsGetSaveWeapon = FhUtil.get_fptr<FhCall.MsGetSaveWeapon>(FhCall.__addr_MsGetSaveWeapon);
+
+
+        _FUN_0086bec0 = new FhMethodHandle<FUN_0086bec0>(this, game, h_FUN_0086bec0, offset: 0x0046bec0);
+        _FUN_0086bea0 = new FhMethodHandle<FUN_0086bea0>(this, game, h_FUN_0086bea0, offset: 0x0046bea0);
+
+        foreach (byte[] script in customScripts) {
+            customScriptHandles.Add(GCHandle.Alloc(script, GCHandleType.Pinned));
+        }
+        //customScriptHandles.Add(GCHandle.Alloc(customScriptHook, GCHandleType.Pinned));
+        //customScriptHandles.Add(GCHandle.Alloc(customScriptSin, GCHandleType.Pinned));
+        //customScriptHandle = GCHandle.Alloc(customScript, GCHandleType.Pinned);
+
+        foreach (byte[] text in customStrings) {
+            customStringHandles.Add(GCHandle.Alloc(text, GCHandleType.Pinned));
+        }
+        //customStringHandles.Add(GCHandle.Alloc(customStrings[0], GCHandleType.Pinned));
     }
 
     public static int ignore_this = 11;
-    public static int h_Map_800F(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    public static int h_Map_800F(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int param_1 = atelStack->values_as_int[0];
         if (param_1 == ignore_this) {
             atelStack->pop_int();
@@ -279,9 +308,9 @@ public unsafe partial class ArchipelagoFFXModule {
 
     public static bool h_openFile(nint _this, nint filename, bool readOnly, nint unknown_1, nint unknown_2, nint unknown_3) {
         string x = Marshal.PtrToStringAnsi(filename);
-        FhLog.Debug($"{_this}, {x}, {readOnly}, {unknown_1}, {unknown_2}, {unknown_3}");
+        logger.Debug($"{_this}, {x}, {readOnly}, {unknown_1}, {unknown_2}, {unknown_3}");
         var result = _openFile.orig_fptr(_this, filename, readOnly, unknown_1, unknown_2, unknown_3);
-        FhLog.Debug($"{result}, {*(int*)_this}, {*(int*)((int)_this + 4)}");
+        logger.Debug($"{result}, {*(int*)_this}, {*(int*)((int)_this + 4)}");
         return result;
     }
 
@@ -298,100 +327,311 @@ public unsafe partial class ArchipelagoFFXModule {
             && _SgEvent_showModularMenuInit.hook()
             && _Common_addPartyMember.hook() && _Common_removePartyMember.hook() && _Common_removePartyMemberLongTerm.hook() && _Common_setWeaponVisibilty.hook()
             && _Common_putPartyMemberInSlot.hook() && _Common_pushParty.hook() && _Common_popParty.hook() && _MsBattleExe.hook() && _FUN_00791820.hook()
-            && _MsApUp.hook() && _MsBtlReadSetScene.hook(); // && _Map_800F.hook(); //_MsBtlGetPos.hook();
-            //&& _eiAbmParaGet.hook() && _FUN_00a48910.hook();
-            //&& _openFile.hook() && _FUN_0070aec0.hook();
-            //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
+            && _MsApUp.hook() && _MsBtlReadSetScene.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
+            && _eiAbmParaGet.hook() // && _FUN_00a48910.hook()
+            && _FUN_0086bec0.hook() && _FUN_0086bea0.hook();
+        //&& _openFile.hook() && _FUN_0070aec0.hook();
+        //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
 
     }
 
-    private static void set(u8* code_ptr, i32 offset, AtelOpCode opcode) {
-        u8* ptr = code_ptr + offset;
-        foreach (u8 b in opcode.to_bytes()) {
+    private static void set(byte* code_ptr, int offset, AtelOpCode opcode) {
+        byte* ptr = code_ptr + offset;
+        foreach (byte b in opcode.to_bytes()) {
             *ptr = b;
             ptr++;
         }
     }
-
-    private static void h_AtelEventSetUp(u32 event_id) {
-        _AtelEventSetUp.orig_fptr(event_id);
-
-        string event_name = Marshal.PtrToStringAnsi((isize)get_event_name(event_id))!;
-        FhLog.Debug($"atel_event_setup: {event_name}");
-        if (event_name == "hiku2100") {
-            FhLog.Debug($"atel_event_setup: Inject set_airship_destinations call");
-            u8* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
-            set(code_ptr, 0x26D1, AtelInst.PUSHII.build(0x1));
-            set(code_ptr, 0x26D4, AtelInst.CALLPOPA.build(0x1B8)); // Common.obtainBrotherhood(1) = set_airship_destinations
-
-            set(code_ptr, 0x4028, AtelInst.JMP.build(0x13A));
+    private static void set(byte* code_ptr, int offset, AtelOpCode[] opcodes) {
+        byte* ptr = code_ptr + offset;
+        foreach (AtelOpCode op in opcodes) {
+            foreach (byte b in op.to_bytes()) {
+                *ptr = b;
+                ptr++;
+            }
         }
     }
 
-    private static void h_Common_obtainTreasureInit(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static byte* h_FUN_0086bec0(int param_1) {
+        byte* result = _FUN_0086bec0.orig_fptr(param_1);
+
+        if ((param_1 & 0x8000) != 0) {
+            int custom_index = param_1 & 0x7FFF;
+            result = (byte*)customStringHandles[custom_index].AddrOfPinnedObject();
+            string decoded = FhCharset.Us.to_string(result);
+            logger.Debug(decoded);
+        }
+
+        return result;
+    }
+    private static short h_FUN_0086bea0(int param_1) {
+        short result;
+        if ((param_1 & 0x8000) != 0) {
+            int custom_index = param_1 & 0x7FFF;
+            result = customStringFlags[custom_index];
+        } else {
+            result = _FUN_0086bea0.orig_fptr(param_1);
+        }
+
+        return result;
+    }
+
+    private static readonly byte NEWLINE = 0x03;
+    private static readonly byte TIME    = 0x09;
+    private static readonly byte CHOICE  = 0x10;
+
+    private static readonly List<GCHandle> customStringHandles = [];
+    private static readonly byte[][] customStrings = {
+        new byte[][] {
+            [TIME, 0x30],
+            FhCharset.Us.to_bytes("Ready to fight Sin?"),
+            [NEWLINE, CHOICE, 0x30],
+            FhCharset.Us.to_bytes("Yes"),
+            [NEWLINE, CHOICE, 0x31],
+            FhCharset.Us.to_bytes("No"),
+        }.SelectMany(x => x).ToArray(),
+    };
+    // Choices << 8 | Flags
+    private static readonly short[] customStringFlags = {
+        (02 << 8) | 00,
+
+    };
+
+    private static readonly List<GCHandle> customScriptHandles = [];
+    private static readonly byte[][] customScripts = {
+        // Cid talk hook
+        new AtelOpCode[]{
+            // If GameMoment < 2970 or GameMoment >= 3120: Jump to j01 (return)
+            AtelInst.PUSHV   .build(0x0000),
+            AtelInst.POPY    .build(      ),
+
+            AtelInst.PUSHY   .build(      ),
+            AtelInst.PUSHII  .build(2970  ),
+            AtelInst.LS      .build(      ),
+
+            AtelInst.PUSHY   .build(      ),
+            AtelInst.PUSHII  .build(3210  ),
+            AtelInst.GTE     .build(      ),
+
+            AtelInst.LOR     .build(      ),
+            AtelInst.POPXCJMP.build(0x0001),
+
+
+            // call Common.disablePlayerControl? [005Eh]();
+            AtelInst.CALLPOPA.build(0x005e),
+            // call Common.displayFieldChoice [013Bh](boxIndex=1 [01h], string="{TIME:00}{CHOICE:00}Save{\n}{CHOICE:01}Cancel" [D4h], p3=0 [00h], p4=1 [01h], x=280 [0118h], y=224 [E0h], align=Center [04h]);
+            AtelInst.PUSHII  .build(0x0001),
+            AtelInst.PUSHII  .build(0x8000),
+            AtelInst.PUSHII  .build(0x0000),
+            AtelInst.PUSHII  .build(0x0001),
+            AtelInst.PUSHII  .build(0x0100),
+            AtelInst.PUSHII  .build(0x00e0),
+            AtelInst.PUSHII  .build(0x0004),
+            AtelInst.CALLPOPA.build(0x013b),
+            AtelInst.PUSHA.build(),
+            // call Common.waitForText [0084h](boxIndex=1 [01h], p2=1 [01h]);
+            AtelInst.PUSHII  .build(0x0001),
+            AtelInst.PUSHII  .build(0x0001),
+            AtelInst.CALLPOPA.build(0x0084),
+            // call Common.enablePlayerControl? [005Dh]();
+            AtelInst.CALLPOPA.build(0x005d),
+            // call Common.obtainBrotherhood(choice, 1, 3) i.e. if !choice jump to customscripts[1]
+            AtelInst.PUSHII  .build(0x0103),
+            AtelInst.CALLPOPA.build(0x01B8),
+
+            
+            //// Jump to j01 (return)
+            AtelInst.JMP     .build(0x0001),
+        }.SelectMany(x => x.to_bytes()).ToArray(),
+
+        // Start Airship Sin fights
+        new AtelOpCode[]{
+            // Set GameMoment = 3085
+            AtelInst.PUSHII  .build(  3085),
+            AtelInst.POPV    .build(0x0000),
+            // call Common.transitionToMap? [0011h](map=199, entranceIndex=0);
+            AtelInst.PUSHII  .build(   199),
+            AtelInst.PUSHII  .build(     0),
+            AtelInst.CALLPOPA.build(0x0011),
+            // Return;
+            AtelInst.RET.build(),
+
+        }.SelectMany(x => x.to_bytes()).ToArray(),
+    };
+
+    private static readonly AtelOpCode[] save_sphere_load_model = [
+        AtelInst.PUSHII  .build(0x5001),
+        AtelInst.CALLPOPA.build(0x0001),
+    ];
+
+    private static string current_event_name = "";
+    private static void h_AtelEventSetUp(int event_id) {
+        _AtelEventSetUp.orig_fptr(event_id);
+
+        string event_name = Marshal.PtrToStringAnsi((nint)get_event_name((uint)event_id))!;
+        logger.Debug($"atel_event_setup: {event_name}");
+        if (event_name == "hiku2100") {
+            logger.Debug($"atel_event_setup: Inject set_airship_destinations call");
+            byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
+            set(code_ptr, 0x26D1, [
+                AtelInst.PUSHII  .build(0x0001),
+                AtelInst.CALLPOPA.build(0x01B8) // Common.obtainBrotherhood(1) = set_airship_destinations
+                ]);
+
+            set(code_ptr, 0x4028, AtelInst.JMP.build(0x013A));
+        } else if (event_name == "hiku0801") {
+            logger.Debug($"atel_event_setup: Inject Cid talk hook");
+            byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
+            set(code_ptr, 0x4DC5, [
+                AtelInst.PUSHII  .build(0x0002),
+                AtelInst.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0, 2) = jump to customScripts[0]
+                ]);
+
+        }
+        // Inject save sphere hook
+        {
+            AtelOpCode? previous_op = null;
+            AtelOpCode? current_op = null;
+            byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
+            uint code_length = Atel.controllers[0].worker(0)->script_chunk->code_length;
+            int i = 0;
+            while (i < code_length) {
+                previous_op = current_op;
+                AtelInst inst = (AtelInst)code_ptr[i];
+                if (inst.has_operand()) {
+                    current_op = inst.build(*(ushort*)(code_ptr + i + 1));
+                } else {
+                    current_op = inst.build();
+                }
+                if (current_op == save_sphere_load_model[1] && previous_op == save_sphere_load_model[0]) {
+                    logger.Debug($"Detected save sphere init at {i-6}");
+                    int save_sphere_offset = i - 6;
+                    set(code_ptr, save_sphere_offset + 0x48, AtelInst.JMP.build(0x0007)); // Always all options
+
+                    // Update region state. Also skips save sphere tutorial
+                    set(code_ptr, save_sphere_offset + 0x571, [
+                        AtelInst.PUSHII  .build(0x0007),
+                        AtelInst.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+
+                        AtelInst.JMP     .build(0x0023),
+                        ]);
+
+                    // Board Airship option
+                    set(code_ptr, save_sphere_offset + 0x657, [
+                        // call Common.00BB(0);
+                        AtelInst.PUSHII  .build(0x0000),
+                        AtelInst.CALLPOPA.build(0x00BB),
+                        // call Common.00BC(0);
+                        AtelInst.PUSHII  .build(0x0000),
+                        AtelInst.CALLPOPA.build(0x00BC),
+                        // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                        AtelInst.PUSHII  .build(   382),
+                        AtelInst.PUSHII  .build(     0),
+                        AtelInst.CALLPOPA.build(0x010B),
+                        ]);
+
+
+                }
+                i += inst.has_operand() ? 3 : 1;
+            }
+        }
+
+        current_event_name = event_name;
+    }
+
+    private static void h_Common_obtainTreasureInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int treasure_id = atelStack->values_as_int[1];
         //ArchipelagoGUI.lastTreasure = treasure_id;
-        FhLog.Debug($"obtain_treasure: {treasure_id}");
+        logger.Debug($"obtain_treasure: {treasure_id}");
         ArchipelagoClient.sendTreasureLocation(treasure_id);
 
         _Common_obtainTreasureInit.orig_fptr(work, storage, atelStack);
     }
 
-    private static void h_Common_obtainTreasureSilentlyInit(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static void h_Common_obtainTreasureSilentlyInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int treasure_id = atelStack->values_as_int[0];
         //ArchipelagoGUI.lastTreasure = treasure_id;
-        FhLog.Debug($"obtain_treasure_silently: {treasure_id}");
+        logger.Debug($"obtain_treasure_silently: {treasure_id}");
         ArchipelagoClient.sendTreasureLocation(treasure_id);
         _Common_obtainTreasureSilentlyInit.orig_fptr(work, storage, atelStack);
     }
 
-    private static void h_Common_obtainBrotherhood(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
-        FhLog.Debug($"obtain_brotherhood");
+    private static void h_Common_obtainBrotherhood(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug($"obtain_brotherhood");
         if (atelStack->size > 0) {
-            if (atelStack->values_as_int[0] == 1) {
-                FhLog.Info($"obtain_brotherhood: Set Airship Destinations");
+            int param = atelStack->pop_int();
+            int call_type = param & 0xff;
+            if (call_type == 1) {
+                logger.Info($"obtain_brotherhood: Set Airship Destinations");
                 set_airship_destinations();
-                atelStack->pop_int();
-                return;
+            } else if (call_type == 2) { // Jump
+                int jump_index = param >> 8;
+                work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
+            } else if (call_type == 3) { // Jump if false
+                int jump_index = param >> 8;
+                int val = atelStack->pop_int();
+                if (val == 0) {
+                    work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
+                }
+            } else if (call_type == 4) { // Jump if true
+                int jump_index = param >> 8;
+                int val = atelStack->pop_int();
+                if (val == 1) {
+                    work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
+                }
+            } else if (call_type == 5) { // Offset
+                int offset = atelStack->pop_int();
+                work->current_thread.pc += offset - 3;
+            } else if (call_type == 6) { // Offset if false
+                int offset = atelStack->pop_int();
+                int val = atelStack->pop_int();
+                if (val == 0) {
+                    work->current_thread.pc += offset - 3;
+                }
+            } else if (call_type == 6) { // Offset if true
+                int offset = atelStack->pop_int();
+                int val = atelStack->pop_int();
+                if (val == 1) {
+                    work->current_thread.pc += offset - 3;
+                }
+            } else if (call_type == 7) { // Update region state
+                update_region_state(false);
             }
+            return;
         }
 
         _Common_obtainBrotherhood.orig_fptr(work, storage, atelStack);
     }
-    private static i32 h_Common_grantCelestialUpgrade(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static int h_Common_grantCelestialUpgrade(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
         int level = atelStack->values_as_int[1];
-        FhLog.Debug($"grant_celestial_upgrade: character={(PlySaveId)character}, level={level}");
+        logger.Debug($"grant_celestial_upgrade: character={id_to_character[character]}, level={level}");
 
         return _Common_grantCelestialUpgrade.orig_fptr(work, storage, atelStack);
     }
-    private static i32 h_Common_setPrimerCollected(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static int h_Common_setPrimerCollected(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int primer = atelStack->values_as_int[0];
-        FhLog.Debug($"set_primer_collected: Al Bhed Primer {primer + 1}");
+        logger.Debug($"set_primer_collected: Al Bhed Primer {primer + 1}");
 
         return _Common_setPrimerCollected.orig_fptr(work, storage, atelStack);
     }
 
     private static void update_region_state(bool map_changed) {
+        logger.Info($"Update region state");
+        if (skip_state_updates) {
+            return;
+        }
 
         // Update region state
         if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out ArchipelagoData.ArchipelagoRegion? current_state)) {
             current_state = region_states[current_region];
-            if (map_changed) {
-                current_state.room_id = save_data->last_room_id;
-                current_state.entrance = save_data->last_spawnpoint;
-            }
-            else {
-                current_state.story_progress = save_data->story_progress;
-            }
+            current_state.room_id  = map_changed ? last_room_id     : save_data->current_room_id;
+            current_state.entrance = map_changed ? last_entrance_id : save_data->current_spawnpoint;
+            current_state.story_progress = save_data->story_progress;
         }
     }
 
     private static void on_map_change() {
-
-        update_region_state(true);
-
-        //if (id_to_region.TryGetValue(save_data->current_room_id, out RegionEnum region)) {
         if (id_to_regions.Contains(save_data->current_room_id)) {
 
             // New Game
@@ -400,15 +640,19 @@ public unsafe partial class ArchipelagoFFXModule {
             var regions = id_to_regions[save_data->current_room_id];
             RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();
 
+            if (save_data->current_room_id == 205 && save_data->story_progress != 2000) region = RegionEnum.Airship;
+
             if (!region_is_unlocked[region]) {
                 // Reroute to current room
-                FhLog.Info($"{region} is locked!");
+                logger.Info($"{region} is locked!");
                 //call_warp_to_map(save_data->last_room_id, save_data->last_spawnpoint);
                 save_data->current_room_id = save_data->last_room_id;
                 save_data->current_spawnpoint = save_data->last_spawnpoint;
             }
             else {
                 if (current_region != region) {
+                    update_region_state(true);
+                    if (current_region != RegionEnum.None) skip_state_updates = false;
                     current_region = region;
                     ArchipelagoRegion current_state = region_states[region];
                     save_data->story_progress = current_state.story_progress;
@@ -416,7 +660,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     //call_warp_to_map(current_state.room_id, current_state.entrance);
                     save_data->current_room_id = current_state.room_id;
                     save_data->current_spawnpoint = (byte)current_state.entrance;
-                    FhLog.Debug($"transition_to_map: Rerouted to map={current_state.room_id}, entrance={current_state.entrance}");
+                    logger.Debug($"transition_to_map: Rerouted to map={current_state.room_id}, entrance={current_state.entrance}");
 
                     /*
                     // No party members in early Baaj
@@ -448,65 +692,25 @@ public unsafe partial class ArchipelagoFFXModule {
             }
         }
         else {
+            if (save_data->current_room_id == 382) update_region_state(true);
             current_region = RegionEnum.None;
+            skip_state_updates = false;
         }
     }
-    /*
-    private static void on_transition(AtelStack* atelStack) {
+
+    private static int h_Common_transitionToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int map = atelStack->values_as_int[0];
         int entrance = atelStack->values_as_int[1];
-
-        // New Game
-        if (save_data->current_room_id == 0 && map == 132) current_region = RegionEnum.DreamZanarkand;
-
-
-        ArchipelagoData.ArchipelagoRegion? current_state;
-        // Update region state
-        if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out current_state)) {
-            current_state = region_states[current_region];
-            current_state.Story_progress = save_data->story_progress;
-            current_state.room_id = save_data->current_room_id;
-            current_state.entrance = save_data->current_spawnpoint;
-        }
-
-        if (ArchipelagoData.id_to_region.TryGetValue(map, out RegionEnum region)) {
-            if (!region_is_unlocked[region]) {
-                // Reroute to current room
-                FhLog.Debug($"{region} is locked!");
-                atelStack->values_as_int[0] = save_data->current_room_id;
-                atelStack->values_as_int[1] = save_data->current_spawnpoint;
-            }
-            else if (save_data->current_room_id == 382) {
-                current_region = region;
-                current_state = region_states[region];
-                save_data->story_progress = current_state.Story_progress;
-                atelStack->values_as_int[0] = current_state.room_id;
-                atelStack->values_as_int[1] = current_state.entrance;
-                map = atelStack->values_as_int[0];
-                entrance = atelStack->values_as_int[1];
-                FhLog.Debug($"transition_to_map: Rerouted to map={map}, entrance={entrance}");
-            }
-        }
-        else {
-            current_region = RegionEnum.None;
-        }
-
-    }
-     */
-
-    private static i32 h_Common_transitionToMap(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
-        int map = atelStack->values_as_int[0];
-        int entrance = atelStack->values_as_int[1];
-        FhLog.Debug($"transition_to_map: map={map}, entrance={entrance}");
+        logger.Debug($"transition_to_map: map={map}, entrance={entrance}");
 
         //update_region_state(atelStack);
 
         return _Common_transitionToMap.orig_fptr(work, storage, atelStack);
     }
-    private static i32 h_Common_warpToMap(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static int h_Common_warpToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int map = atelStack->values_as_int[0];
         int entrance = atelStack->values_as_int[1];
-        FhLog.Debug($"warp_to_map: map={map}, entrance={entrance}");
+        logger.Debug($"warp_to_map: map={map}, entrance={entrance}");
 
         // New Game
         //if (save_data->current_room_id == 0 && map == 132) current_region = RegionEnum.DreamZanarkand;
@@ -528,14 +732,14 @@ public unsafe partial class ArchipelagoFFXModule {
 
         // Skip intro
         if (map == 348) {
-            FhLog.Debug("Skip intro");
+            logger.Debug("Skip intro");
             atelStack->values_as_int[0] = 23;
         }
 
         return _Common_warpToMap.orig_fptr(work, storage, atelStack);
     }
 
-    private static void h_SgEvent_showModularMenuInit(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static void h_SgEvent_showModularMenuInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int menu = atelStack->values_as_int[0];
         int unknown1 = menu >> 24 & 0xFF;
         int menuType = menu >> 16 & 0xFF;
@@ -556,7 +760,7 @@ public unsafe partial class ArchipelagoFFXModule {
         };
 
         if (menu == 0x40800001 || menu == 0x40800002 || menu == 0x40800003 || menu == 0x40800004 || menu == 0x40800005) {
-            FhLog.Debug($"Skipping menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
+            logger.Debug($"Skipping menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
             //FhUtil.set_at(0x00efbbf0, 0x40080000);
             //FhUtil.set_at(0x00efbbf4, 0xffffffff);
             atelStack->pop_int();
@@ -564,38 +768,38 @@ public unsafe partial class ArchipelagoFFXModule {
             return;
         }
         if (menuType == 0x80) {
-            FhLog.Info($"Unknown tutorial?");
+            logger.Info($"Unknown tutorial?");
         }
-        FhLog.Info($"Opening menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
+        logger.Info($"Opening menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
         _SgEvent_showModularMenuInit.orig_fptr(work, storage, atelStack);
     }
 
     /*
-    private static i32 h_Common_playFieldVoiceLineInit(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static int h_Common_playFieldVoiceLineInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         var voice_line = atelStack->values_as_int[0];
-        FhLog.Debug($"play_field_voice_line_init: voice_line={voice_line}");
+        logger.Debug($"play_field_voice_line_init: voice_line={voice_line}");
 
         return _Common_playFieldVoiceLineInit.orig_fptr(work, storage, atelStack);
     }
-    private static i32 h_Common_playFieldVoiceLineExec(AtelBasicWorker* work, AtelStack* atelStack) {
-        FhLog.Debug($"play_field_voice_line_exec: param_1={atelStack->values_as_int[0]}");
+    private static int h_Common_playFieldVoiceLineExec(AtelBasicWorker* work, AtelStack* atelStack) {
+        logger.Debug($"play_field_voice_line_exec: param_1={atelStack->values_as_int[0]}");
 
         return _Common_playFieldVoiceLineExec.orig_fptr(work, atelStack);
     }
-    private static i32 h_Common_playFieldVoiceLineResultInt(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static int h_Common_playFieldVoiceLineResultInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         var voice_line = atelStack->values_as_int[0];
-        FhLog.Debug($"play_field_voice_line_result_int: param_1={voice_line}");
+        logger.Debug($"play_field_voice_line_result_int: param_1={voice_line}");
 
         return _Common_playFieldVoiceLineResultInt.orig_fptr(work, storage, atelStack);
     }
-    private static i32 h_after_voiceline_init(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    private static int h_after_voiceline_init(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         var input = atelStack->values_as_int[0];
-        FhLog.Debug($"after_voiceline_init: input={input}");
+        logger.Debug($"after_voiceline_init: input={input}");
 
         return _FUN_0085fb60.orig_fptr(work, storage, atelStack);
     }
-    private static bool h_after_voiceline_exec(i32* param_1, i32* param_2) {
-        FhLog.Debug($"after_voiceline_exec: param_1={*param_2}");
+    private static bool h_after_voiceline_exec(int* param_1, int* param_2) {
+        logger.Debug($"after_voiceline_exec: param_1={*param_2}");
 
         return _FUN_0085fdb0.orig_fptr(param_1, param_2);
     }
@@ -603,108 +807,108 @@ public unsafe partial class ArchipelagoFFXModule {
     public static void play_voice_line(int voice_line) {
         AtelStack stack = new AtelStack();
         stack.push_int(voice_line);
-        FhLog.Debug($"stack_size = {stack.size}, voice_line = {stack.values_as_int[0]}");
+        logger.Debug($"stack_size = {stack.size}, voice_line = {stack.values_as_int[0]}");
 
         int param_1 = 0;
         int param_2 = 0;
         h_Common_playFieldVoiceLineInit((AtelBasicWorker*)&param_1, &param_2, &stack);
-        FhLog.Debug($"play_voice_line: after play_field_voice_line_init");
+        logger.Debug($"play_voice_line: after play_field_voice_line_init");
 
         var result = h_Common_playFieldVoiceLineExec((AtelBasicWorker*)&param_1, &stack);
-        FhLog.Debug($"play_voice_line: after exec, result={result}");
+        logger.Debug($"play_voice_line: after exec, result={result}");
 
         h_Common_playFieldVoiceLineResultInt((AtelBasicWorker*)&param_1, &param_2, &stack);
-        FhLog.Debug($"play_voice_line: after play_field_voice_line_init");
-        FhLog.Debug($"play_field_voice_line_result_int: Stack={stack.size}");
+        logger.Debug($"play_voice_line: after play_field_voice_line_init");
+        logger.Debug($"play_field_voice_line_result_int: Stack={stack.size}");
         stack.push_int(5);
 
         h_after_voiceline_init((AtelBasicWorker*)&param_1, &param_2, &stack);
-        FhLog.Debug($"play_voice_line: after after_voiceline_init");
+        logger.Debug($"play_voice_line: after after_voiceline_init");
 
         h_after_voiceline_exec(&param_1, &param_2);
-        FhLog.Debug($"play_voice_line: after after_voiceline_exec");
+        logger.Debug($"play_voice_line: after after_voiceline_exec");
     }
      */
 
 
-    public static i32 h_Common_addPartyMember(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    public static int h_Common_addPartyMember(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
 
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && !is_unlocked) {
+            if (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && !is_unlocked) {
                 atelStack->pop_int();
                 return 1;
             }
         }
-        FhLog.Debug($"add_party_member: character={(PlySaveId)character}");
+        logger.Debug($"add_party_member: character={id_to_character[character]}");
 
         return _Common_addPartyMember.orig_fptr(work, storage, atelStack);
     }
-    public static i32 h_Common_removePartyMember(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    public static int h_Common_removePartyMember(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
 
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && is_unlocked) {
+            if (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && is_unlocked) {
                 atelStack->pop_int();
                 return 1;
             }
         }
-        FhLog.Debug($"remove_party_member: character={(PlySaveId)character}");
+        logger.Debug($"remove_party_member: character={id_to_character[character]}");
 
         return _Common_removePartyMember.orig_fptr(work, storage, atelStack);
     }
-    public static i32 h_Common_removePartyMemberLongTerm(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    public static int h_Common_removePartyMemberLongTerm(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
 
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && is_unlocked) {
+            if (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && is_unlocked) {
                 atelStack->pop_int();
                 return 1;
             }
         }
-        FhLog.Debug($"remove_party_member_long_term: character={(PlySaveId)character}");
+        logger.Debug($"remove_party_member_long_term: character={id_to_character[character]}");
 
         return _Common_removePartyMemberLongTerm.orig_fptr(work, storage, atelStack);
     }
-    public static i32 h_Common_setWeaponInvisible(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
-        uint character = (byte)atelStack->values_as_int[0];
+    public static int h_Common_setWeaponInvisible(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int character = (byte)atelStack->values_as_int[0];
         int state = atelStack->values_as_int[1];
-        FhLog.Debug($"character={(PlySaveId)character}, state={state}");
-        if (state != 0 && character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && is_unlocked) {
+        logger.Debug($"character={id_to_character[character]}, state={state}");
+        if (state != 0 && character_is_unlocked.TryGetValue(character, out bool is_unlocked) && is_unlocked) {
             atelStack->pop_int();
             atelStack->pop_int();
             return 0;
         }
         return _Common_setWeaponVisibilty.orig_fptr(work, storage, atelStack);
     }
-    public static i32 h_Common_putPartyMemberInSlot(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
+    public static int h_Common_putPartyMemberInSlot(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int slot = atelStack->values_as_int[0];
-        uint character = (byte)atelStack->values_as_int[1];
+        int character = (byte)atelStack->values_as_int[1];
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character == 0xff || (character_is_unlocked.TryGetValue((PlySaveId)character, out bool is_unlocked) && !is_unlocked)) {
+            if (character == 0xff || (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && !is_unlocked)) {
                 // Ignore call
                 atelStack->pop_int();
                 atelStack->pop_int();
                 return (int)get_party_frontline()[slot];
             }
         }
-        FhLog.Debug($"put_party_member_in_slot: slot={slot}, character={(character != 0xff ? (PlySaveId)character : "Empty")}");
+        logger.Debug($"put_party_member_in_slot: slot={slot}, character={(character != 0xff ? id_to_character[character] : "Empty")}");
 
         return _Common_putPartyMemberInSlot.orig_fptr(work, storage, atelStack);
     }
-    public static i32 h_Common_pushParty(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
-        FhLog.Debug($"push_party");
+    public static int h_Common_pushParty(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug($"push_party");
 
         //if (party_overridden) return _Common_pushParty.orig_fptr(work, storage, atelStack);
         //save_party();
         return 0;
     }
-    public static i32 h_Common_popParty(AtelBasicWorker* work, i32* storage, AtelStack* atelStack) {
-        FhLog.Debug($"pop_party");
+    public static int h_Common_popParty(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug($"pop_party");
 
         //if (party_overridden) return _Common_popParty.orig_fptr(work, storage, atelStack);
         //reset_party();
@@ -712,11 +916,11 @@ public unsafe partial class ArchipelagoFFXModule {
     }
 
     // TODO: Get function pointer instead of hook for most of these
-    public static void h_MsGetSavePartyMember(u32* param_1, u32* param_2, u32* param_3) {
-        FhLog.Debug($"get_current_party_slots");
+    public static void h_MsGetSavePartyMember(uint* param_1, uint* param_2, uint* param_3) {
+        logger.Debug($"get_current_party_slots");
         _MsGetSavePartyMember.orig_fptr(param_1, param_2, param_3);
 
-        FhLog.Debug($"get_current_party_slots: slot_0={*param_1}, slot_1={*param_2}, slot_2={*param_3}");
+        logger.Debug($"get_current_party_slots: slot_0={*param_1}, slot_1={*param_2}, slot_2={*param_3}");
     }
 
     // Pre-battle
@@ -728,7 +932,7 @@ public unsafe partial class ArchipelagoFFXModule {
         byte group_name = *(byte*)(group_ptr+5 + formation_idx * 2);
 
         string encounter_name = $"{field_name}_{group_name:00}";
-        FhLog.Debug($"{encounter_name}: param_1={param_1}");
+        logger.Debug($"{encounter_name}: param_1={param_1}");
         /*
         if (encounterToPartyDict.TryGetValue(encounter_name, out List<PlySaveId> characters)) {
             if (characters.Count > 0) {
@@ -756,7 +960,7 @@ public unsafe partial class ArchipelagoFFXModule {
         byte group_name = *(byte*)(group_ptr+5 + btl->formation_idx * 2);
 
         string encounter_name = $"{field_name}_{group_name:00}";
-        FhLog.Debug($"{encounter_name}: encounter ={encounter_id}, transition={screen_transition}, param_2={param_2}");
+        logger.Debug($"{encounter_name}: encounter ={encounter_id}, transition={screen_transition}, param_2={param_2}");
         /*
         if (encounterToPartyDict.TryGetValue(encounter_name, out List<PlySaveId> characters)) {
             if (characters.Count > 0) {
@@ -778,7 +982,7 @@ public unsafe partial class ArchipelagoFFXModule {
         _FUN_00791820.orig_fptr();
         string encounter_name = Marshal.PtrToStringAnsi((nint)btl->field_name);
         if (btl->battle_end_type > 1 && btl->battle_state == 0x21) {
-            FhLog.Info($"Victory: type={btl->battle_end_type}, encounter={encounter_name}");
+            logger.Info($"Victory: type={btl->battle_end_type}, encounter={encounter_name}");
             //if (save_data->atel_is_push_member == 1) {
             if (party_overridden) {
                 reset_party();
@@ -790,6 +994,9 @@ public unsafe partial class ArchipelagoFFXModule {
                     btl->backline[i] = save_data->party_order[i+3];
                 }
                 party_overridden = false;
+            }
+            if (encounterVictoryActions.TryGetValue(encounter_name, out Action action)) {
+                action();
             }
             if (encounterToLocationDict.TryGetValue(encounter_name, out int location_id)) {
                 sendLocation(location_id);
@@ -847,7 +1054,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     // TODO: Calculate positions
                     if (original_pos_struct[i].count_party_pos == 1 || original_pos_struct[i].count_party_pos >= 3) {
                         if (j > 2) {
-                            //FhLog.Warning($"Unexpected position: {param_1}, {btl_pos_a}, {btl_pos_b}, {btl_pos_c}");
+                            //logger.Warning($"Unexpected position: {param_1}, {btl_pos_a}, {btl_pos_b}, {btl_pos_c}");
                         }
                         curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[0];
                         if (j != 1) {
@@ -983,50 +1190,50 @@ public unsafe partial class ArchipelagoFFXModule {
         return _MsBtlGetPos.orig_fptr(param_1, chr, btl_pos_a, btl_pos_b, btl_pos_c, out_pos);
     }
 
-    private static u32 h_give_item(u32 param_1, i32 param_2) {
-        FhLog.Debug($"give_item: {param_2} x {param_1}");
+    private static uint h_give_item(uint param_1, int param_2) {
+        logger.Debug($"give_item: {param_2} x {param_1}");
 
         return _FUN_007905a0.orig_fptr(param_1, param_2);
     }
-    private static void h_give_key_item(u32 param_1) {
-        FhLog.Debug($"give_key_item: {param_1}");
+    private static void h_give_key_item(uint param_1) {
+        logger.Debug($"give_key_item: {param_1}");
 
         _FUN_0088e700.orig_fptr(param_1);
     }
-    private static void h_take_gil(i32 param_1) {
-        FhLog.Debug($"take_gil: {param_1}");
+    private static void h_take_gil(int param_1) {
+        logger.Debug($"take_gil: {param_1}");
 
         _FUN_00785a60.orig_fptr(param_1);
     }
-    private static i32 h_give_weapon(Equipment* param_1) {
-        FhLog.Debug($"give_weapon: {(i32)param_1}");
+    private static int h_give_weapon(Equipment* param_1) {
+        logger.Debug($"give_weapon: {(int)param_1}");
 
         return _FUN_007ab930.orig_fptr(param_1);
     }
-    private static byte* h_read_from_bin(i32 param_1, i16* param_2, i32 param_3) {
-        FhLog.Debug($"get_from_bin: {param_1}, {(i32)param_2}, {param_3}");
-        FhLog.Debug($"bin_pointers: {(u32)param_2}, {(u32)(*takara_pointer)}, {(u32)(*buki_get_pointer)}");
-        if (param_2 == (i16*)*takara_pointer) {
-            FhLog.Debug($"get_from_bin: takara.bin");
-        } else if (param_2 == (i16*)*buki_get_pointer) {
-            FhLog.Debug($"get_from_bin: buki_get.bin");
+    private static byte* h_read_from_bin(int param_1, short* param_2, int param_3) {
+        logger.Debug($"get_from_bin: {param_1}, {(int)param_2}, {param_3}");
+        logger.Debug($"bin_pointers: {(uint)param_2}, {(uint)(*takara_pointer)}, {(uint)(*buki_get_pointer)}");
+        if (param_2 == (short*)*takara_pointer) {
+            logger.Debug($"get_from_bin: takara.bin");
+        } else if (param_2 == (short*)*buki_get_pointer) {
+            logger.Debug($"get_from_bin: buki_get.bin");
         }
         var result = _FUN_007ab890.orig_fptr(param_1, param_2, param_3);
-        FhLog.Debug($"get_from_bin: result = {((u32)result).ToString("X")}");
+        logger.Debug($"get_from_bin: result = {((uint)result).ToString("X")}");
         return result;
     }
     private static ushort h_get_weapon_name(Equipment* param_1) {
-        FhLog.Debug($"get_weapon_name: {(i32)param_1}");
+        logger.Debug($"get_weapon_name: {(int)param_1}");
 
         return _FUN_007a0d10.orig_fptr(param_1);
     }
-    private static void h_get_weapon_model(u16 name_id, u8 owner, i32 unknown, u16* model_id_pointer) {
-        FhLog.Debug($"get_weapon_model: {name_id}, {owner}, {unknown}, {*model_id_pointer}, ");
+    private static void h_get_weapon_model(ushort name_id, byte owner, int unknown, ushort* model_id_pointer) {
+        logger.Debug($"get_weapon_model: {name_id}, {owner}, {unknown}, {*model_id_pointer}, ");
 
         _FUN_007a0c70.orig_fptr(name_id, owner, unknown, model_id_pointer);
     }
-    private static void h_obtain_treasure_cleanup(BtlRewardData* param_1, i32 param_2) {
-        FhLog.Debug($"obtain_treasure_cleanup");
+    private static void h_obtain_treasure_cleanup(BtlRewardData* param_1, int param_2) {
+        logger.Debug($"obtain_treasure_cleanup");
 
         _FUN_007993f0.orig_fptr(param_1, param_2);
     }
@@ -1047,9 +1254,9 @@ public unsafe partial class ArchipelagoFFXModule {
             case 0x5:
                 // Equipment
                 item_id &= 0xff;
-                UnownedEquipment* weapon_data = (UnownedEquipment*)h_read_from_bin((i32)item_id, (i16*)(*buki_get_pointer), 0);
-                //var data = get_from_bin((i32)item_id, (i16*)0x12000C00, 0);
-                FhLog.Debug($"obtain_item: Weapon {(i32)weapon_data}");
+                UnownedEquipment* weapon_data = (UnownedEquipment*)h_read_from_bin((int)item_id, (short*)(*buki_get_pointer), 0);
+                //var data = get_from_bin((int)item_id, (short*)0x12000C00, 0);
+                logger.Debug($"obtain_item: Weapon {(int)weapon_data}");
                 BtlRewardData rewardData = new BtlRewardData();
                 rewardData.gear_count = 1;
                 Equipment new_weapon = rewardData.gear[0];
@@ -1086,14 +1293,14 @@ public unsafe partial class ArchipelagoFFXModule {
             case 0xE:
                 // Region Unlock
                 item_id &= 0xff;
-                FhLog.Debug($"Region: {(RegionEnum)item_id}");
+                logger.Debug($"Region: {(RegionEnum)item_id}");
                 region_is_unlocked[(RegionEnum)item_id] = true;
                 break;
             case 0xF:
                 // Party Member
-                var char_id = item_id & 0xFF;
-                FhLog.Debug($"Character: {(PlySaveId)char_id}");
-                character_is_unlocked[(PlySaveId)char_id] = true;
+                int char_id = (int)(item_id & 0xFF);
+                logger.Debug($"Character: {id_to_character[char_id]}");
+                character_is_unlocked[char_id] = true;
                 if (char_id == 0xF) {
                     // Magus sisters
                     character_is_unlocked[PlySaveId.PC_MAGUS2] = true;
@@ -1110,9 +1317,9 @@ public unsafe partial class ArchipelagoFFXModule {
         }
         else if (item_type == 0x5000) {
             item_id &= 0xff;
-            UnownedEquipment* weapon_data = (UnownedEquipment*)read_from_bin((i32)item_id, (i16*)(*buki_get_pointer), 0);
-            //var data = get_from_bin((i32)item_id, (i16*)0x12000C00, 0);
-            FhLog.Debug($"obtain_item: Weapon {(i32)weapon_data}");
+            UnownedEquipment* weapon_data = (UnownedEquipment*)read_from_bin((int)item_id, (short*)(*buki_get_pointer), 0);
+            //var data = get_from_bin((int)item_id, (short*)0x12000C00, 0);
+            logger.Debug($"obtain_item: Weapon {(int)weapon_data}");
             BtlRewardData rewardData = new BtlRewardData();
             rewardData.gear_count = 1;
             Equipment new_weapon = rewardData.gear[0];
@@ -1146,12 +1353,12 @@ public unsafe partial class ArchipelagoFFXModule {
         } else if (item_type == 0xE000) {
             // Region unlock
             item_id &= 0xff;
-            FhLog.Debug($"Region: {(RegionEnum)item_id}");
+            logger.Debug($"Region: {(RegionEnum)item_id}");
             region_is_unlocked[(RegionEnum)item_id] = true;
         } else if (item_type == 0xF000) {
             // Party member
             var char_id = item_id & 0xFF;
-            FhLog.Debug($"Character: {(PlySaveId)char_id}");
+            logger.Debug($"Character: {(PlySaveId)char_id}");
             character_is_unlocked[(PlySaveId)char_id] = true;
             if (char_id == 0xF) {
                 // Magus sisters
@@ -1182,7 +1389,7 @@ public unsafe partial class ArchipelagoFFXModule {
     }
 
     public static void set_airship_destinations() {
-        FhLog.Debug("set_airship_destinations");
+        logger.Debug("set_airship_destinations");
         AtelBasicWorker* worker = Atel.controllers[0].worker(0);
         var var_table = worker->table_event_data;
         uint* airshipDestinationCount = &var_table[11];
@@ -1215,21 +1422,80 @@ public unsafe partial class ArchipelagoFFXModule {
 
     // Sphere Grid Experiment
 
-    private static void h_eiAbmParaGet() {
+    public static void h_eiAbmParaGet() {
         // Replace normal calculation with custom Archipelago-based calculation (if option enabled)
-        FhLog.Debug("Calculating stats");
+        logger.Debug("Calculating stats");
         _eiAbmParaGet.orig_fptr(); // security_cookie doesn't matter?
     }
 
-    private static void h_FUN_00a48910(uint chr_id, int node_idx) {
+    private static void h_MsSetSaveParam(uint chr_id) {
+        logger.Debug("Calculating base stats and equipment");
+        _MsSetSaveParam.orig_fptr(chr_id);
+
+        return;
+        PlySave ply = save_data->ply_arr[(int)chr_id];
+        Equipment*[] equips =
+        [
+            (Equipment*)_MsGetSaveWeapon(ply.wpn_inv_idx, 0x0),
+            (Equipment*)_MsGetSaveWeapon(ply.arm_inv_idx, 0x0),
+        ];
+        int strength_mult = 0;
+        int defense_mult = 0;
+        int magic_mult = 0;
+        int magic_defense_mult = 0;
+        int agility_mult = 0;
+        int luck_mult = 0;
+        int evasion_mult = 0;
+        int accuracy_mult = 0;
+        int hp_mult = 0;
+        int mp_mult = 0;
+        int strength_bonus_mult = 0;
+        int defense_bonus_mult = 0;
+        int magic_bonus_mult = 0;
+        int magic_defense_bonus_mult = 0;
+
+        foreach (Equipment* equip in equips) {
+            for (int i = 0; i < 4; i++) {
+                if (equip->abilities[i] == 0 || equip->abilities[i] == 0xFF) continue;
+                AutoAbility* a_ability = (AutoAbility*)_MsGetExcelData(equip->abilities[i] & 0xFFF, btl->ptr_a_ability_bin, (int*)0x0);
+                strength_mult            += a_ability->stat_inc_flags.strength()            ? a_ability->stat_inc_amount : 0;
+                defense_mult             += a_ability->stat_inc_flags.defense()             ? a_ability->stat_inc_amount : 0;
+                magic_mult               += a_ability->stat_inc_flags.magic()               ? a_ability->stat_inc_amount : 0;
+                magic_defense_mult       += a_ability->stat_inc_flags.magic_defense()       ? a_ability->stat_inc_amount : 0;
+                agility_mult             += a_ability->stat_inc_flags.agility()             ? a_ability->stat_inc_amount : 0;
+                luck_mult                += a_ability->stat_inc_flags.luck()                ? a_ability->stat_inc_amount : 0;
+                evasion_mult             += a_ability->stat_inc_flags.evasion()             ? a_ability->stat_inc_amount : 0;
+                accuracy_mult            += a_ability->stat_inc_flags.accuracy()            ? a_ability->stat_inc_amount : 0;
+                hp_mult                  += a_ability->stat_inc_flags.hp()                  ? a_ability->stat_inc_amount : 0;
+                mp_mult                  += a_ability->stat_inc_flags.mp()                  ? a_ability->stat_inc_amount : 0;
+                strength_bonus_mult      += a_ability->stat_inc_flags.strength_bonus()      ? a_ability->stat_inc_amount : 0;
+                defense_bonus_mult       += a_ability->stat_inc_flags.defense_bonus()       ? a_ability->stat_inc_amount : 0;
+                magic_bonus_mult         += a_ability->stat_inc_flags.magic_bonus()         ? a_ability->stat_inc_amount : 0;
+                magic_defense_bonus_mult += a_ability->stat_inc_flags.magic_defense_bonus() ? a_ability->stat_inc_amount : 0;
+            }
+        }
+
+        ply.strength =      (byte)Math.Clamp(ply.strength      * strength_mult      / 100, 0, 255);
+        ply.defense =       (byte)Math.Clamp(ply.defense       * defense_mult       / 100, 0, 255);
+        ply.magic =         (byte)Math.Clamp(ply.magic         * magic_mult         / 100, 0, 255);
+        ply.magic_defense = (byte)Math.Clamp(ply.magic_defense * magic_defense_mult / 100, 0, 255);
+        ply.agility =       (byte)Math.Clamp(ply.agility       * agility_mult       / 100, 0, 255);
+        ply.luck =          (byte)Math.Clamp(ply.luck          * luck_mult          / 100, 0, 255);
+        ply.evasion =       (byte)Math.Clamp(ply.evasion       * evasion_mult       / 100, 0, 255);
+        ply.accuracy =      (byte)Math.Clamp(ply.accuracy      * accuracy_mult      / 100, 0, 255);
+        ply.hp =            (uint)Math.Clamp(ply.hp            * hp_mult            / 100, 0, ply.auto_ability_effects.has_break_hp_limit ? 99999 : 9999);
+        ply.mp =            (uint)Math.Clamp(ply.mp            * mp_mult            / 100, 0, ply.auto_ability_effects.has_break_mp_limit ?  9999 :  999);
+    }
+
+    public static void h_FUN_00a48910(uint chr_id, int node_idx) {
         // TODO: Send Archipelago location when node is unlocked (if option enabled)
-        FhLog.Debug($"Unlock node {node_idx} for {(PlySaveId)chr_id}");
+        logger.Debug($"Unlock node {node_idx} for {id_to_character[chr_id]}");
         _FUN_00a48910.orig_fptr(chr_id, node_idx);
     }
 
-    private static nint h_MsApUp(uint chr_id, Chr* chr, uint base_ap_add, nint param_4) {
-        FhLog.Debug($"AP gain: character={(PlySaveId)chr_id}, ap={base_ap_add}");
-        uint new_ap = (uint)Math.Min(Math.BigMul(base_ap_add, ap_multiplier), 999_999_999);
+    private static uint h_MsApUp(int chr_id, Chr* chr, int base_ap_add, uint param_4) {
+        logger.Debug($"AP gain: character={id_to_character[chr_id]}, ap={base_ap_add}");
+        int new_ap = (int)Math.Min(Math.BigMul(base_ap_add, ap_multiplier), 999_999_999);
         return _MsApUp.orig_fptr(chr_id, chr, new_ap, param_4);
     }
 
@@ -1240,7 +1506,7 @@ public unsafe partial class ArchipelagoFFXModule {
     private static uint h_MsCheckLeftWindow(uint chr_id) {
         bool bVar1;
         Chr* chr;
-        Command* command;
+        PCommand* command;
         uint com_id;
         uint uVar2;
         int iVar3;
@@ -1250,7 +1516,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         chr = _MsGetChr(chr_id);
         if (_fullOverdrive != 0) {
-            chr->ovr_charge = chr->ovr_charge_max;
+            chr->limit_charge = chr->limit_charge_max;
         }
 
         uVar2 = 0;
@@ -1259,9 +1525,9 @@ public unsafe partial class ArchipelagoFFXModule {
             com_id = *(ushort*)(btl_ply_win + iVar3);
             if (com_id != 0xff) {
                 command = _MsGetComData(com_id, (int*)0x0);
-                bVar1 = _MsGetCommandUse(chr_id, com_id);
+                bVar1 = _MsGetCommandUse(chr_id, com_id) != 0;
                 if (!bVar1) {
-                    if (command->limit_cost == 0) {
+                    if (command->command.limit_cost == 0) {
                         uVar2 = uVar2 | 1;
                     }
                     else {
@@ -1274,7 +1540,7 @@ public unsafe partial class ArchipelagoFFXModule {
         return uVar2;
     }
 
-    private static uint h_MsCheckUseCommand(uint chr_id, Command* command, int param_3) {
+    private static uint h_MsCheckUseCommand(uint chr_id, PCommand* command, int param_3) {
         Chr* chr;
         uint uVar1;
         uint uVar2;
@@ -1283,11 +1549,11 @@ public unsafe partial class ArchipelagoFFXModule {
             return 0xffffffff;
         }
         chr = _MsGetChr(chr_id);
-        if ( (command->limit_cost == 0 || ((command->limit_cost <= chr->ovr_charge && (*(ushort*)((int)chr + 0x616) & 0x400) == 0 ) || btl->debug_always_available_overdrive)
-             ) && ((command->flags_misc & 0x20000) == 0 || chr->status_suffer_turns_left.silence == 0)) {
+        if ( (command->command.limit_cost == 0 || ((command->command.limit_cost <= chr->limit_charge && (*(ushort*)((int)chr + 0x616) & 0x400) == 0 ) || btl->debug.always_available_overdrive)
+             ) && ((command->command.flags_misc & 0x20000) == 0 || chr->status_suffer_turns_left.silence == 0)) {
             uVar1 = _MsGetCommandMP(chr_id, (uint)command);
             uVar2 = _MsGetRamChrMonster(chr_id);
-            if (uVar2 == 1 || btl->debug_no_mp_cost) {
+            if (uVar2 == 1 || btl->debug.no_mp_cost) {
                 uVar1 = 0;
                 param_3 = 0;
             }
@@ -1312,21 +1578,21 @@ public unsafe partial class ArchipelagoFFXModule {
         if (curr_draw_char < 0 || curr_draw_char > 3) return; // Not a player
         if (btl->frontline[curr_draw_char] != cur_btl_window->cur_chr_id && (cur_btl_window->cur_chr_id < 8 || cur_btl_window->cur_chr_id > 0x11)) return; // Not current character and not Aeon
 
-        Command* hovered_command = _MsGetComData(cur_btl_window->command_list[cur_btl_window->sel_idx], (int*)0x0);
-        if (hovered_command->limit_cost > 0) {
+        PCommand* hovered_command = _MsGetComData(cur_btl_window->command_list[cur_btl_window->sel_idx], (int*)0x0);
+        if (hovered_command->command.limit_cost > 0) {
             short gauge_parts = FhUtil.get_at<short>(0x21d0aa4);
             Chr* chr = _MsGetChr(cur_btl_window->cur_chr_id);
-            float parts_ratio = (float)gauge_parts / chr->ovr_charge_max;
+            float parts_ratio = (float)gauge_parts / chr->limit_charge_max;
 
             float gauge_start = _graphicUiRemapX2(1f) + param_2;
             float y = _graphicUiRemapY2(1f) + param_3;
             float h = param_5 - _graphicUiRemapY2(2f);
-            if (chr->ovr_charge >= hovered_command->limit_cost) {
+            if (chr->limit_charge >= hovered_command->command.limit_cost) {
                 var variance = ((Math.Sin(cur_btl_window->seconds_spent_in_menu * 4) + 1) / 2);
                 byte alpha = (byte)(0x80 * variance);
                 int rgba = 0xff | (0xff << 8) | (0xff << 16) | (alpha << 24); // RGBA
 
-                float used_start = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * (chr->ovr_charge - hovered_command->limit_cost) * parts_ratio) / gauge_parts;
+                float used_start = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * (chr->limit_charge - hovered_command->command.limit_cost) * parts_ratio) / gauge_parts;
                 float used_end = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * current_parts) / gauge_parts;
                 float used_width = used_end - used_start;
                 _TODrawCrossBoxXYWHC2(used_start, y, used_width, h, (uint)rgba, (uint)rgba);
@@ -1335,7 +1601,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 int rgba = 128 | (16 << 8) | (16 << 16) | (0x80 << 24); // RGBA
 
                 float overflow_start = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * (current_parts+1)) / gauge_parts;
-                float overflow_end = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * hovered_command->limit_cost * parts_ratio) / gauge_parts;
+                float overflow_end = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * hovered_command->command.limit_cost * parts_ratio) / gauge_parts;
                 float overflow_width = overflow_end - overflow_start;
                 _TODrawCrossBoxXYWHC2(overflow_start, y, overflow_width, h, (uint)rgba, (uint)rgba);
             }
