@@ -55,36 +55,18 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         init_hooks();
     }
 
-    static ArchipelagoFFXModule() {
-        var current_version_match = RegexSemVer().Match(VersionString);
-        if (current_version_match.Success) {
-            int major = int.Parse(current_version_match.Groups["major"].Value);
-            int minor = int.Parse(current_version_match.Groups["minor"].Value);
-            int patch = int.Parse(current_version_match.Groups["patch"].Value);
-            string prerelease = current_version_match.Groups["prerelease"].Value;
-            string buildmetadata = current_version_match.Groups["buildmetadata"].Value;
-            Version = new(major, minor, patch, prerelease, buildmetadata);
-        }
-    }
-
     private class ArchipelagoState {
         public Dictionary<RegionEnum, ArchipelagoRegion> region_states         { get; set; }
         public Dictionary<RegionEnum, bool>              region_is_unlocked    { get; set; }
         public Dictionary<int,        bool>              character_is_unlocked { get; set; }
 
-        public  bool   skip_state_updates  { get; set; }
-        private ushort last_story_progress { get; set; }
-        private ushort last_room_id        { get; set; }
-        private ushort last_entrance_id    { get; set; }
+        public bool skip_state_updates { get; set; }
 
         public ArchipelagoState() {
             this.region_states         = ArchipelagoFFXModule.region_states;
             this.region_is_unlocked    = ArchipelagoFFXModule.region_is_unlocked;
             this.character_is_unlocked = ArchipelagoFFXModule.character_is_unlocked;
             this.skip_state_updates    = ArchipelagoFFXModule.skip_state_updates;
-            this.last_story_progress   = ArchipelagoFFXModule.last_story_progress;
-            this.last_room_id          = ArchipelagoFFXModule.last_room_id;
-            this.last_entrance_id      = ArchipelagoFFXModule.last_entrance_id;
         }
     }
 
@@ -105,31 +87,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             }
             // Until Archipelago handles this
             character_is_unlocked[PlySaveId.PC_TIDUS] = true;
-
-            SemVer[] sampleVersions = [
-                new("1.0.0-alpha"),
-                new("1.0.0-alpha.1"),
-                new("1.0.0-alpha.beta"),
-                new("1.0.0-beta"),
-                new("1.0.0-beta.2"),
-                new("1.0.0-beta.11"),
-                new("1.0.0-rc.1"),
-                new("1.0.0"),
-                ];
-
-            for (int i = 0; i < sampleVersions.Length; i++) {
-                for (int j = 0; j < sampleVersions.Length; j++) {
-                    if (i == j) {
-                        logger.Debug($"{sampleVersions[i]} == {sampleVersions[j]}: {sampleVersions[i] == sampleVersions[j]}");
-                    } else
-                    if (i < j) {
-                        logger.Debug($"{sampleVersions[i]} < {sampleVersions[j]}: {sampleVersions[i] < sampleVersions[j]}");
-                    } else
-                    if (i > j) {
-                        logger.Debug($"{sampleVersions[i]} > {sampleVersions[j]}: {sampleVersions[i] > sampleVersions[j]}");
-                    }
-                }
-            }
         }
         return hook();
     }
@@ -140,7 +97,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
     private static readonly string VersionString = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
-    private static readonly SemVer Version;
+    private static readonly SemVer Version = new(VersionString);
 
     private record SemVer(int major,
                           int minor,
@@ -228,22 +185,12 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         local_state_file.SetLength(local_state_file.Position);
     }
     public override void load_local_state(FileStream local_state_file, FhLocalStateInfo local_state_info) {
-        var save_version_match = RegexSemVer().Match(local_state_info.Version);
-        
-        if (save_version_match.Success) {
-            int major = int.Parse(save_version_match.Groups["major"].Value);
-            int minor = int.Parse(save_version_match.Groups["minor"].Value);
-            int patch = int.Parse(save_version_match.Groups["patch"].Value);
-            string prerelease = save_version_match.Groups["prerelease"].Value;
-            string buildmetadata = save_version_match.Groups["buildmetadata"].Value;
-            logger.Debug($"Version {major}.{minor}.{patch}-{prerelease}+{buildmetadata}");
-
-            SemVer save_version = new(major, minor, patch, prerelease, buildmetadata);
-
-            logger.Debug($"Version comparison: {Version} > {save_version} is {Version > save_version}");
+        SemVer save_version = new(local_state_info.Version);
+        if (save_version != Version) {
+            logger.Warning($"Saved with different AP version: current:{Version} save:{save_version}");
         }
+
         var loaded_state = JsonSerializer.Deserialize<ArchipelagoState>(local_state_file);
-        //var loaded_regions = JsonSerializer.Deserialize<Dictionary<RegionEnum, ArchipelagoRegion>>(local_state_file);
         if (loaded_state != null) {
             foreach (var region in loaded_state.region_states) {
                 region_states[region.Key].story_progress = region.Value.story_progress;
@@ -257,9 +204,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 character_is_unlocked[character.Key] = character.Value;
             }
             skip_state_updates = loaded_state.skip_state_updates;
-            //last_story_progress = loaded_state.last_story_progress;
-            //last_room_id = loaded_state.last_room_id;
-            //last_entrance_id = loaded_state.last_entrance_id;
         }
     }
 
@@ -301,9 +245,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             }
              */
         }
-        /*
-         */
-        //h_eiAbmParaGet();
     }
 
     public override void handle_input() {
@@ -311,7 +252,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         if (Globals.Input.select.held) {
             if (Globals.Input.l1.just_pressed) {
                 transitionsEnabled = !transitionsEnabled;
-                _logger.Debug($"transitionsEnableD = {transitionsEnabled}");
+                _logger.Debug($"transitionsEnabled = {transitionsEnabled}");
             }
         }
          */
@@ -327,10 +268,9 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
         if (Globals.Input.select.held && Globals.Input.l1.just_pressed) {
             //var region_to_id = ArchipelagoData.id_to_region.ToLookup(id => id.Value, id => id.Key);
-            if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out var current_state)) {
-                // _logger.Debug($"{current_region}: story_progress={current_state.story_progress}, room_id={current_state.room_id}, entrance={current_state.entrance}");
-                _logger.Debug(JsonSerializer.Serialize(current_state));
-            }
+            //if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out var current_state)) {
+            //    _logger.Debug($"{current_region}: story_progress={current_state.story_progress}, room_id={current_state.room_id}, entrance={current_state.entrance}");
+            //}
             //h_MsBattleLabelExe(0x00AC0000, 1, 1);
 
 
@@ -394,7 +334,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
         if (Globals.Input.select.held && Globals.Input.r1.just_pressed) {
             _logger.Info($"Resetting party");
-
             reset_party();
         }
         if (Globals.Input.select.held && Globals.Input.l2.just_pressed) {
@@ -411,16 +350,11 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             _logger.Debug($"bank: {bank[0]} {bank[1]} {bank[2]} {bank[3]}");
              */
             //get_party_frontline();
-            if (Globals.SphereGrid.lpamng != null) {
-                for (int i = 0; i < Globals.SphereGrid.lpamng->node_count; i++) {
-                    Globals.SphereGrid.lpamng->nodes[i].activated_by = 0x7f;
-                }
-            }
 
         }
         if (Globals.Input.select.held && Globals.Input.r2.just_pressed) {
-            _logger.Debug("Warp to Airship");
-            call_warp_to_map(382, 0);
+            //_logger.Debug("Warp to Airship");
+            //call_warp_to_map(382, 0);
         }
     }
 

@@ -329,7 +329,7 @@ public unsafe partial class ArchipelagoFFXModule {
             && _Common_putPartyMemberInSlot.hook() && _Common_pushParty.hook() && _Common_popParty.hook() && _MsBattleExe.hook() && _FUN_00791820.hook()
             && _MsApUp.hook() && _MsBtlReadSetScene.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
             && _eiAbmParaGet.hook() // && _FUN_00a48910.hook()
-            && _FUN_0086bec0.hook() && _FUN_0086bea0.hook();
+            && _FUN_0086bec0.hook() && _FUN_0086bea0.hook(); // Custom strings
         //&& _openFile.hook() && _FUN_0070aec0.hook();
         //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
 
@@ -470,29 +470,33 @@ public unsafe partial class ArchipelagoFFXModule {
 
         string event_name = Marshal.PtrToStringAnsi((nint)get_event_name((uint)event_id))!;
         logger.Debug($"atel_event_setup: {event_name}");
-        if (event_name == "hiku2100") {
-            logger.Debug($"atel_event_setup: Inject set_airship_destinations call");
-            byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
-            set(code_ptr, 0x26D1, [
-                AtelInst.PUSHII  .build(0x0001),
-                AtelInst.CALLPOPA.build(0x01B8) // Common.obtainBrotherhood(1) = set_airship_destinations
-                ]);
+        byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
+        switch (event_name) {
+            case "hiku2100":
+                logger.Debug($"atel_event_setup: Inject set_airship_destinations call");
+                set(code_ptr, 0x26D1, [
+                    AtelInst.PUSHII  .build(0x0001),
+                    AtelInst.CALLPOPA.build(0x01B8) // Common.obtainBrotherhood(1) = set_airship_destinations
+                    ]);
 
-            set(code_ptr, 0x4028, AtelInst.JMP.build(0x013A));
-        } else if (event_name == "hiku0801") {
-            logger.Debug($"atel_event_setup: Inject Cid talk hook");
-            byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
-            set(code_ptr, 0x4DC5, [
-                AtelInst.PUSHII  .build(0x0002),
-                AtelInst.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0, 2) = jump to customScripts[0]
+                set(code_ptr, 0x4028, AtelInst.JMP.build(0x013A));
+                break;
+            case "hiku0801":
+                logger.Debug($"atel_event_setup: Inject Cid talk hook");
+                set(code_ptr, 0x4DC5, [
+                    AtelInst.PUSHII  .build(0x0002),
+                    AtelInst.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0, 2) = jump to customScripts[0]
                 ]);
-
+                break;
+            case "ssbt0300":
+                logger.Debug($"atel_event_setup: Redirect Overdrive Sin post-battle warp");
+                set(code_ptr, 0x500E, AtelInst.PUSHII.build(382));
+                break;
         }
         // Inject save sphere hook
         {
             AtelOpCode? previous_op = null;
             AtelOpCode? current_op = null;
-            byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
             uint code_length = Atel.controllers[0].worker(0)->script_chunk->code_length;
             int i = 0;
             while (i < code_length) {
@@ -504,7 +508,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     current_op = inst.build();
                 }
                 if (current_op == save_sphere_load_model[1] && previous_op == save_sphere_load_model[0]) {
-                    logger.Debug($"Detected save sphere init at {i-6}");
+                    logger.Info($"Detected save sphere init at {i-6}");
                     int save_sphere_offset = i - 6;
                     set(code_ptr, save_sphere_offset + 0x48, AtelInst.JMP.build(0x0007)); // Always all options
 
@@ -977,7 +981,7 @@ public unsafe partial class ArchipelagoFFXModule {
         return result;
     }
 
-    // Post-battle
+    // Battle loop?
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
         string encounter_name = Marshal.PtrToStringAnsi((nint)btl->field_name);
