@@ -4,7 +4,7 @@ using Fahrenheit.Core.FFX.Atel;
 using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
 using Fahrenheit.Modules.ArchipelagoFFX.GUI;
-using Fahrenheit.Core.ImGuiNET;
+//using Fahrenheit.Core.ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,11 +22,16 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Collections;
+using Fahrenheit.Core.FFX.Battle;
+using static Fahrenheit.Core.FFX.Globals;
+using System.Numerics;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 
 [FhLoad(FhGameType.FFX)]
 public unsafe partial class ArchipelagoFFXModule : FhModule {
+
+    public static FhModContext mod_context;
 
     public  static bool   skip_state_updates = false;
     private static ushort last_story_progress = 0;
@@ -37,8 +42,11 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     public static Dictionary<RegionEnum, bool> region_is_unlocked = [];
     public static Dictionary<RegionEnum, ArchipelagoRegion> region_states = [];
 
-    public static Dictionary<int, bool> character_is_unlocked = [];
+    public const int NUM_CHARACTERS = 0x12;
+    public static Dictionary<int, bool> unlocked_characters = [];
+    public static Dictionary<int, bool> locked_characters = []; // Overrides unlocked characters
     public static bool party_overridden = false;
+    public static bool is_character_unlocked(int character) => unlocked_characters[character] && !locked_characters[character];
 
     public static int ap_multiplier = 1;
 
@@ -56,39 +64,127 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     }
 
     private class ArchipelagoState {
-        public Dictionary<RegionEnum, ArchipelagoRegion> region_states         { get; set; }
-        public Dictionary<RegionEnum, bool>              region_is_unlocked    { get; set; }
-        public Dictionary<int,        bool>              character_is_unlocked { get; set; }
+        public Dictionary<RegionEnum, ArchipelagoRegion> region_states           { get; set; }
+        public Dictionary<RegionEnum, bool>              region_is_unlocked      { get; set; }
+        public Dictionary<int,        bool>              unlocked_characters     { get; set; }
+        public List<long>                                local_checked_locations { get; set; }
 
         public bool skip_state_updates { get; set; }
 
         public ArchipelagoState() {
             this.region_states         = ArchipelagoFFXModule.region_states;
             this.region_is_unlocked    = ArchipelagoFFXModule.region_is_unlocked;
-            this.character_is_unlocked = ArchipelagoFFXModule.character_is_unlocked;
+            this.unlocked_characters   = ArchipelagoFFXModule.unlocked_characters;
             this.skip_state_updates    = ArchipelagoFFXModule.skip_state_updates;
+            this.local_checked_locations = ArchipelagoClient.local_checked_locations;
         }
     }
 
-    public override bool init(FileStream global_state_file) {
-        // Initialize Archipelago Client
-        if (region_is_unlocked.Count == 0) {
-            logger = _logger;
-            foreach (var region in region_to_ids) {
-                _logger.Debug(region.Key.ToString());
-                region_is_unlocked.Add(region.Key, region.Key == RegionEnum.DreamZanarkand);
-            }
-            foreach (var region in region_starting_state) {
-                _logger.Debug(region.Key.ToString());
-                region_states.Add(region.Key, region.Value);
-            }
-            for (int i = 0; i < 0x12; i++) {
-                character_is_unlocked.Add(i, false);
-            }
-            // Until Archipelago handles this
-            character_is_unlocked[PlySaveId.PC_TIDUS] = true;
+    private const int TreasureOffset = 0x1000;
+    private const int BossOffset = 0x2000;
+    private const int PartyMemberOffset = 0x3000;
+    private const int OverdriveOffset = 0x4000;
+    private const int OverdriveModeOffset = 0x5000;
+    private const int OtherOffset = 0x6000;
+    private const int SphereGridOffset = 0x7000;
+    public record Location(string location_name, int location_id, uint item_id, string item_name);
+    public struct ArchipelagoSeed {
+        [JsonInclude]
+        public List<uint>     StartingItems;
+        [JsonInclude]
+        public List<Location> Treasure;
+        [JsonInclude]
+        public List<Location> Boss;
+        [JsonInclude]
+        public List<Location> PartyMember;
+        [JsonInclude]
+        public List<Location> Overdrive;
+        [JsonInclude]
+        public List<Location> OverdriveMode;
+        [JsonInclude]
+        public List<Location> Other;
+        [JsonInclude]
+        public List<Location> SphereGrid;
+        //public Dictionary<int, Location> Treasure;
+        //public Dictionary<int, Location> Boss;
+        //public Dictionary<int, Location> PartyMember;
+        //public Dictionary<int, Location> Overdrive;
+        //public Dictionary<int, Location> OverdriveMode;
+        //public Dictionary<int, Location> Other;
+        //public Dictionary<int, Location> SphereGrid;
+
+        public ArchipelagoSeed() {
+            StartingItems = [];
+            Treasure = [];
+            Boss = [];
+            PartyMember = [];
+            Overdrive = [];
+            OverdriveMode = [];
+            Other = [];
+            SphereGrid = [];
         }
+    }
+    public record ArchipelagoItem(uint id, string name) {
+        //public GCHandle name_handle = GCHandle.Alloc(FhCharset.Us.to_bytes(name), GCHandleType.Pinned);
+    }
+
+    public static List<GCHandle> cached_handles = [];
+    public record ArchipelagoLocations(ArchipelagoSeed seed) {
+        public Dictionary<int, ArchipelagoItem> treasure  =      seed.Treasure.ToDictionary(     x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name));
+        public Dictionary<int, ArchipelagoItem> boss =           seed.Boss.ToDictionary(         x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name));
+        public Dictionary<int, ArchipelagoItem> party_member =   seed.PartyMember.ToDictionary(  x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name));
+        public Dictionary<int, ArchipelagoItem> overdrive =      seed.Overdrive.ToDictionary(    x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name));
+        public Dictionary<int, ArchipelagoItem> overdrive_mode = seed.OverdriveMode.ToDictionary(x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name));
+        public Dictionary<int, ArchipelagoItem> other =          seed.Other.ToDictionary(        x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name));
+        public Dictionary<int, ArchipelagoItem> sphere_grid =    seed.SphereGrid.ToDictionary(   x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name));
+    }
+
+    public static ArchipelagoSeed seed;
+    public static ArchipelagoLocations item_locations = new(new());
+
+    public static void loadSeed() {
+        var files = mod_context.Paths.ResourcesDir.GetFiles();
+        foreach (var file in files) {
+            if (file.Name != "locations.json") continue;
+            try {
+                using (FileStream stream = File.Open(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                    var loaded_seed = JsonSerializer.Deserialize<ArchipelagoSeed>(stream);
+                    item_locations = new ArchipelagoLocations(loaded_seed);
+                    foreach (uint item in loaded_seed.StartingItems) obtain_item(item, 1);
+                }
+            }   
+            catch {
+                logger.Warning("Failed to load seed");
+            }
+            break;
+        }
+    }
+
+    public override bool init(FhModContext mod_context, FileStream global_state_file) {
+        ArchipelagoFFXModule.mod_context = mod_context;
+        // Initialize Archipelago Client
+        logger = _logger;
+        initalize_states();
         return hook();
+    }
+
+    public static void initalize_states() {
+        region_is_unlocked.Clear();
+        foreach (var region in region_to_ids) {
+            region_is_unlocked.Add(region.Key, region.Key == RegionEnum.DreamZanarkand);
+        }
+        region_states.Clear();
+        foreach (var region in region_starting_state) {
+            region_states.Add(region.Key, region.Value);
+        }
+        unlocked_characters.Clear();
+        locked_characters.Clear();
+        for (int i = 0; i < NUM_CHARACTERS; i++) {
+            unlocked_characters.Add(i, false);
+            locked_characters.Add(i, false);
+        }
+        // Until Archipelago handles this
+        unlocked_characters[PlySaveId.PC_TIDUS] = true;
     }
 
 
@@ -97,8 +193,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
     private static readonly string VersionString = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
-    private static readonly SemVer Version = new(VersionString);
-
+    private static readonly SemVer FullVersion = new(VersionString);
+    private static readonly SemVer Version = FullVersion.WithoutMetadata();
     private record SemVer(int major,
                           int minor,
                           int patch,
@@ -111,6 +207,10 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             patch = int.Parse(version_match.Groups["patch"].Value);
             prerelease = version_match.Groups["prerelease"].Value;
             buildmetadata = version_match.Groups["buildmetadata"].Value;
+        }
+
+        public SemVer WithoutMetadata() {
+            return new SemVer(major, minor, patch, "", "");
         }
 
         public override string ToString() {
@@ -200,9 +300,13 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             foreach (var region in loaded_state.region_is_unlocked) {
                 region_is_unlocked[region.Key] = region.Value;
             }
-            foreach (var character in loaded_state.character_is_unlocked) {
-                character_is_unlocked[character.Key] = character.Value;
+            foreach (var character in loaded_state.unlocked_characters) {
+                unlocked_characters[character.Key] = character.Value;
+                locked_characters[character.Key] = false;
             }
+            ArchipelagoClient.local_checked_locations.Clear();
+            ArchipelagoClient.local_checked_locations.AddRange(loaded_state.local_checked_locations);
+            ArchipelagoClient.local_locations_updated = true;
             skip_state_updates = loaded_state.skip_state_updates;
         }
     }
@@ -226,7 +330,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                     region.story_progress = storyCheck.next_story_progress ?? region.story_progress;
                     region.room_id = storyCheck.next_room_id ?? region.room_id;
                     region.entrance = storyCheck.next_entrance ?? region.entrance;
-                    skip_state_updates = true;
+                    skip_state_updates = storyCheck.next_story_progress.HasValue || storyCheck.next_room_id.HasValue || storyCheck.next_entrance.HasValue;
                 }
             }
             last_story_progress = story_progress;
@@ -267,6 +371,25 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
         }
         if (Globals.Input.select.held && Globals.Input.l1.just_pressed) {
+            AtelBasicWorker* worker0 = Atel.controllers[0].worker(0);
+
+            float minDistance = -1;
+            int closestEntranceIndex = -1;
+            for (int i = 0; i < worker0->script_chunk->map_entrances.Length; i++) {
+                MapEntrance entrance = worker0->script_chunk->map_entrances[i];
+                Vector4 pos = new(entrance.x, entrance.y, entrance.z, 0);
+                float distance = (Globals.actors->chr_pos_vec - pos).Length();
+                logger.Debug($"Entrance: pos:({entrance.x}, {entrance.y}, {entrance.z}) distance:{distance}");
+                if (closestEntranceIndex == -1 || distance < minDistance) {
+                    minDistance = distance;
+                    closestEntranceIndex = i;
+                }
+            }
+            MapEntrance closestEntrance = worker0->script_chunk->map_entrances[closestEntranceIndex];
+            logger.Debug($"Closest Entrance: pos:({closestEntrance.x}, {closestEntrance.y}, {closestEntrance.z}) distance:{minDistance}");
+
+
+
             //var region_to_id = ArchipelagoData.id_to_region.ToLookup(id => id.Value, id => id.Key);
             //if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out var current_state)) {
             //    _logger.Debug($"{current_region}: story_progress={current_state.story_progress}, room_id={current_state.room_id}, entrance={current_state.entrance}");
@@ -334,6 +457,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
         if (Globals.Input.select.held && Globals.Input.r1.just_pressed) {
             _logger.Info($"Resetting party");
+            save_party();
             reset_party();
         }
         if (Globals.Input.select.held && Globals.Input.l2.just_pressed) {
@@ -413,12 +537,12 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     public static void save_party() {
         //Globals.save_data->atel_is_push_member = 1;
 
-        foreach (var pair in character_is_unlocked) {
-            if (pair.Value) {
-                Globals.save_data->atel_push_party |= (byte)(1 << (byte)pair.Key);
+        for (int character = 0; character < NUM_CHARACTERS; character++) {
+            if (is_character_unlocked(character)) {
+                Globals.save_data->atel_push_party |= (byte)(1 << (byte)character);
             }
             else {
-                Globals.save_data->atel_push_party &= (byte)(0xff ^ (1 << (byte)pair.Key));
+                Globals.save_data->atel_push_party &= (byte)(0xff ^ (1 << (byte)character));
             }
         }
         var party_formation = get_party_frontline();
@@ -434,10 +558,10 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         //int slot = 0;
         byte[] unlocked = {0xff, 0xff, 0xff};
         int slot = 0;
-        foreach (var pair in character_is_unlocked) {
-            if (pair.Value) {
-                call_add_party_member(pair.Key);
-                if (slot < 3) unlocked[slot++] = (byte)pair.Key;
+        for (int character = 0; character < NUM_CHARACTERS; character++) {
+            if (is_character_unlocked(character)) {
+                call_add_party_member(character);
+                if (slot < 3) unlocked[slot++] = (byte)character;
                 /*
                 if (slot < 3) {
                     call_put_party_member_in_slot(slot, pair.Key);
@@ -445,14 +569,14 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 }
                  */
             } else {
-                call_remove_party_member(pair.Key, true);
+                call_remove_party_member(character, !locked_characters[character]);
             }
         }
         slot = 0;
         List<byte> frontline = [];
         for (int i = 0; i < 3; i++) {
             byte character = Globals.save_data->atel_push_frontline[i];
-            if (character == 0xff || !character_is_unlocked[character] || frontline.Contains(character)) {
+            if (character == 0xff || !is_character_unlocked(character) || frontline.Contains(character)) {
                 while (slot < 3 && (frontline.Contains(unlocked[slot]) || unlocked[slot] > 7)) slot++;
                 if (slot < 3) character = unlocked[slot++];
                 else character = 0xff;
@@ -478,10 +602,16 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
         var slot = 0;
         foreach (int character in characters) {
-            if (onlyUnlocked && character_is_unlocked.TryGetValue(character, out bool is_unlocked) && !is_unlocked) continue;
+            if (onlyUnlocked && !is_character_unlocked(character)) continue;
             call_add_party_member(character);
             if (slot < 3 && character <= PlySaveId.PC_SEYMOUR) {
                 call_put_party_member_in_slot(slot++, character);
+            }
+        }
+        foreach (var pair in locked_characters) {
+            if (pair.Value) {
+                call_add_party_member(pair.Key);
+                call_remove_party_member(pair.Key, false);
             }
         }
     }

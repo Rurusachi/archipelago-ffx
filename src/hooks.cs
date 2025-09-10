@@ -12,9 +12,14 @@ using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using System.Linq;
 using System.Numerics;
-using Fahrenheit.Core.ImGuiNET;
+//using Fahrenheit.Core.ImGuiNET;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using TerraFX.Interop.Windows;
 
 //[assembly: DisableRuntimeMarshalling]
 namespace Fahrenheit.Modules.ArchipelagoFFX;
@@ -25,14 +30,16 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
     // AtelEventSetUp
-    private static FhMethodHandle<FhCall.AtelEventSetUp> _AtelEventSetUp;
+    private static FhMethodHandle<AtelEventSetUp> _AtelEventSetUp;
 
     public static char* get_event_name(uint event_id) => FhUtil.get_fptr<AtelGetEventName>(0x4796e0)(event_id);
     public static int atel_stack_pop(int* param_1, AtelStack* atelStack) => FhUtil.get_fptr<AtelStackPop>(0x0046de90)(param_1, atelStack);
 
     private static FhMethodHandle<Common_obtainTreasureInit> _Common_obtainTreasureInit;
     private static FhMethodHandle<Common_obtainTreasureSilentlyInit> _Common_obtainTreasureSilentlyInit;
-    private static FhMethodHandle<Common_obtainBrotherhood> _Common_obtainBrotherhood;
+    private static FhMethodHandle<CT_RetInt_01B6> _Common_isBrotherhoodUnpoweredRetInt;
+    private static FhMethodHandle<CT_RetInt_01B7> _Common_upgradeBrotherhoodRetInt;
+    private static FhMethodHandle<Common_obtainBrotherhoodRetInt> _Common_obtainBrotherhoodRetInt;
     private static FhMethodHandle<Common_grantCelestialUpgrade> _Common_grantCelestialUpgrade;
     private static FhMethodHandle<Common_setPrimerCollected> _Common_setPrimerCollected;
     private static FhMethodHandle<Common_transitionToMap> _Common_transitionToMap;
@@ -70,11 +77,11 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhMethodHandle<Common_popParty> _Common_popParty;
 
     // getCurrentPartySlots
-    private static FhMethodHandle<FhCall.MsGetSavePartyMember> _MsGetSavePartyMember;
+    private static FhMethodHandle<MsGetSavePartyMember> _MsGetSavePartyMember;
 
-    private static FhCall.MsBtlListGroup _MsBtlListGroup;
-    private static FhMethodHandle<FhCall.MsBattleExe> _MsBattleExe;
-    private static FhMethodHandle<MsBattleLabelExe> _MsBattleLabelExe;
+    private static MsBtlListGroup _MsBtlListGroup;
+    private static FhMethodHandle<MsBattleExe> _MsBattleExe;
+    public static MsBattleLabelExe _MsBattleLabelExe;
     private static FhMethodHandle<FUN_00791820> _FUN_00791820;
 
     private static FhMethodHandle<MsBtlGetPos> _MsBtlGetPos;
@@ -84,9 +91,7 @@ public unsafe partial class ArchipelagoFFXModule {
     // giveItem
     private static FhMethodHandle<FUN_007905a0> _FUN_007905a0;
     // giveKeyItem
-    private static FhMethodHandle<FUN_0088e700> _FUN_0088e700;
     // takeGil
-    private static FhMethodHandle<FUN_00785a60> _FUN_00785a60;
 
 
     // readFromBin
@@ -96,17 +101,8 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhMethodHandle<FUN_007a0d10> _FUN_007a0d10;
     // getWeaponModel
     private static FhMethodHandle<FUN_007a0c70> _FUN_007a0c70;
-    // giveWeapon
-    private static FhMethodHandle<FUN_007ab930> _FUN_007ab930;
     // obtainTreasureCleanup
     private static FhMethodHandle<FUN_007993f0> _FUN_007993f0;
-
-
-
-    // Overdrive Experiment
-    private static FhMethodHandle<FhCall.MsCheckLeftWindow> _MsCheckLeftWindow;
-    private static FhMethodHandle<FhCall.MsCheckUseCommand> _MsCheckUseCommand;
-    private static FhMethodHandle<FhCall.TOBtlDrawStatusLimitGauge> _TOBtlDrawStatusLimitGauge;
 
     private static FhCall.MsGetChr _MsGetChr;
     private static FhCall.MsGetComData _MsGetComData;
@@ -117,10 +113,10 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
     // Sphere Grid Experiment
-    private static FhMethodHandle<FhCall.eiAbmParaGet> _eiAbmParaGet;
+    private static FhMethodHandle<eiAbmParaGet> _eiAbmParaGet;
     private static FhMethodHandle<FUN_00a48910> _FUN_00a48910;
 
-    private static FhMethodHandle<FhCall.MsApUp> _MsApUp;
+    private static FhMethodHandle<MsApUp> _MsApUp;
 
 
     private static FhMethodHandle<openFile> _openFile;
@@ -132,37 +128,66 @@ public unsafe partial class ArchipelagoFFXModule {
     private static Common_0043 _Common_0043;
     private static Common_linkFieldToBattleActor _Common_linkFieldToBattleActor;
     private static FhCall.SndSepPlay _SndSepPlay;
-    private static FhCall.SndSepPlaySimple _SndSepPlaySimple;
 
 
-    private static FhMethodHandle<FhCall.MsSetSaveParam> _MsSetSaveParam;
-    public static FhCall.MsGetExcelData _MsGetExcelData;
-    public static FhCall.MsGetSaveWeapon _MsGetSaveWeapon;
+    private static FhMethodHandle<MsSetSaveParam> _MsSetSaveParam;
+    public static MsGetExcelData _MsGetExcelData;
 
     private static FhMethodHandle<Map_800F> _Map_800F;
 
     private static FhMethodHandle<FUN_0086bec0> _FUN_0086bec0;
     private static FhMethodHandle<FUN_0086bea0> _FUN_0086bea0;
 
+    private static FhMethodHandle<graphicInitFMVPlayer> _graphicInitFMVPlayer;
+
+    private static FhMethodHandle<FUN_00656c90> _FUN_00656c90;
+    private static FUN_0065ee30 _FUN_0065ee30;
+    private static ClusterManager_loadPCluster _ClusterManager_loadPCluster;
+    private static Phyre_PFramework_PApplication_FixupClusters _Phyre_PFramework_PApplication_FixupClusters;
+    private static ClusterManager_releasePCluster _ClusterManager_releasePCluster;
+
+
+    // ObtainTreasure related
+    private static FhMethodHandle<TkMsImportantSet> _TkMsImportantSet;
+    private static MsPayGIL _MsPayGIL;
+    private static SndSepPlaySimple _SndSepPlaySimple;
+    private static MsGetSaveWeapon _MsGetSaveWeapon;
+    private static FUN_007ab930 _FUN_007ab930; // giveWeapon?
+    private static AtelGetCurCtrlWork _AtelGetCurCtrlWork;
+    private static MsFieldItemGet _MsFieldItemGet;
+    private static TkMsGetRomItem _TkMsGetRomItem;
+    private static MsSaveItemUse _MsSaveItemUse;
+    private static MsImportantName _MsImportantName;
+    private static CT_RetInt_0065 _CT_RetInt_0065;
+    private static CT_RetInt_006A _CT_RetInt_006A;
+    private static FhCall.MsBtlGetInit _MsBtlGetInit;
+    private static AtelGetMesWinWork _AtelGetMesWinWork;
+    private static FUN_008b8910 _FUN_008b8910; // setMessageWindowVariableType? (0: text*, 1: int)
+    private static FUN_008bda20 _FUN_008bda20; // getMenuText
+    private static FUN_008b8930 _FUN_008b8930; // setMessageWindowVariable
+    private static FUN_0086a0c0 _FUN_0086a0c0;
+
     public void init_hooks() {
         const string game = "FFX.exe";
 
-        _AtelEventSetUp = new FhMethodHandle<FhCall.AtelEventSetUp>(this, game, h_AtelEventSetUp, offset: FhCall.__addr_AtelEventSetUp);
+        _AtelEventSetUp = new FhMethodHandle<AtelEventSetUp>(this, game, __addr_AtelEventSetUp, h_AtelEventSetUp);
 
-        _Common_obtainTreasureInit = new FhMethodHandle<Common_obtainTreasureInit>(this, game, h_Common_obtainTreasureInit, offset: 0x0045a740);
+        _Common_obtainTreasureInit = new FhMethodHandle<Common_obtainTreasureInit>(this, game, 0x0045a740, h_Common_obtainTreasureInit);
 
-        _Common_obtainTreasureSilentlyInit = new FhMethodHandle<Common_obtainTreasureSilentlyInit>(this, game, h_Common_obtainTreasureSilentlyInit, offset: 0x004579e0);
+        _Common_obtainTreasureSilentlyInit = new FhMethodHandle<Common_obtainTreasureSilentlyInit>(this, game, 0x004579e0, h_Common_obtainTreasureSilentlyInit);
 
-        _Common_obtainBrotherhood = new FhMethodHandle<Common_obtainBrotherhood>(this, game, h_Common_obtainBrotherhood, offset: 0x00459a40);
+        _Common_isBrotherhoodUnpoweredRetInt = new FhMethodHandle<CT_RetInt_01B6>(this, game, __addr_CT_RetInt_01B6, h_Common_isBrotherhoodUnpoweredRetInt);
+        _Common_upgradeBrotherhoodRetInt = new FhMethodHandle<CT_RetInt_01B7>(this, game, __addr_CT_RetInt_01B7, h_Common_upgradeBrotherhoodRetInt);
+        _Common_obtainBrotherhoodRetInt = new FhMethodHandle<Common_obtainBrotherhoodRetInt>(this, game, 0x00459a40, h_Common_obtainBrotherhoodRetInt);
 
-        _Common_grantCelestialUpgrade = new FhMethodHandle<Common_grantCelestialUpgrade>(this, game, h_Common_grantCelestialUpgrade, offset: 0x0045cfe0);
+        _Common_grantCelestialUpgrade = new FhMethodHandle<Common_grantCelestialUpgrade>(this, game, 0x0045cfe0, h_Common_grantCelestialUpgrade);
 
-        _Common_setPrimerCollected = new FhMethodHandle<Common_setPrimerCollected>(this, game, h_Common_setPrimerCollected, offset: 0x0045ab30);
+        _Common_setPrimerCollected = new FhMethodHandle<Common_setPrimerCollected>(this, game, 0x0045ab30, h_Common_setPrimerCollected);
 
-        _Common_transitionToMap = new FhMethodHandle<Common_transitionToMap>(this, game, h_Common_transitionToMap, offset: 0x004580c0);
-        _Common_warpToMap = new FhMethodHandle<Common_warpToMap>(this, game, h_Common_warpToMap, offset: 0x00458370);
+        _Common_transitionToMap = new FhMethodHandle<Common_transitionToMap>(this, game, 0x004580c0, h_Common_transitionToMap);
+        _Common_warpToMap = new FhMethodHandle<Common_warpToMap>(this, game, 0x00458370, h_Common_warpToMap);
 
-        _SgEvent_showModularMenuInit = new FhMethodHandle<SgEvent_showModularMenuInit>(this, game, h_SgEvent_showModularMenuInit, offset: 0x00678210);
+        _SgEvent_showModularMenuInit = new FhMethodHandle<SgEvent_showModularMenuInit>(this, game, 0x00678210, h_SgEvent_showModularMenuInit);
 
 
         //_Common_playFieldVoiceLineInit = new FhMethodHandle<Common_playFieldVoiceLineInit>(this, game, h_Common_playFieldVoiceLineInit, offset: 0x0045cb70);
@@ -187,59 +212,47 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
 
-        _Common_addPartyMember = new FhMethodHandle<Common_addPartyMember>(this, game, h_Common_addPartyMember, offset: 0x0045b5a0);
-        _Common_removePartyMember = new FhMethodHandle<Common_removePartyMember>(this, game, h_Common_removePartyMember, offset: 0x0045b6c0);
-        _Common_removePartyMemberLongTerm = new FhMethodHandle<Common_removePartyMemberLongTerm>(this, game, h_Common_removePartyMemberLongTerm, offset: 0x0045aaf0);
-        _Common_setWeaponVisibilty = new FhMethodHandle<Common_setWeaponInvisible>(this, game, h_Common_setWeaponInvisible, offset: 0x00456770);
-        _Common_putPartyMemberInSlot = new FhMethodHandle<Common_putPartyMemberInSlot>(this, game, h_Common_putPartyMemberInSlot, offset: 0x0045bc90);
+        _Common_addPartyMember = new FhMethodHandle<Common_addPartyMember>(this, game, 0x0045b5a0, h_Common_addPartyMember);
+        _Common_removePartyMember = new FhMethodHandle<Common_removePartyMember>(this, game, 0x0045b6c0, h_Common_removePartyMember);
+        _Common_removePartyMemberLongTerm = new FhMethodHandle<Common_removePartyMemberLongTerm>(this, game, 0x0045aaf0, h_Common_removePartyMemberLongTerm);
+        _Common_setWeaponVisibilty = new FhMethodHandle<Common_setWeaponInvisible>(this, game, 0x00456770, h_Common_setWeaponInvisible);
+        _Common_putPartyMemberInSlot = new FhMethodHandle<Common_putPartyMemberInSlot>(this, game, 0x0045bc90, h_Common_putPartyMemberInSlot);
 
 
-        _Common_pushParty = new FhMethodHandle<Common_pushParty>(this, game, h_Common_pushParty, offset: 0x0045b350);
-        _Common_popParty = new FhMethodHandle<Common_popParty>(this, game, h_Common_popParty, offset: 0x0045b3c0);
+        _Common_pushParty = new FhMethodHandle<Common_pushParty>(this, game, 0x0045b350, h_Common_pushParty);
+        _Common_popParty = new FhMethodHandle<Common_popParty>(this, game, 0x0045b3c0, h_Common_popParty);
 
         // getCurrentPartySlots
-        _MsGetSavePartyMember = new FhMethodHandle<FhCall.MsGetSavePartyMember>(this, game, h_MsGetSavePartyMember, offset: FhCall.__addr_MsGetSavePartyMember);
+        _MsGetSavePartyMember = new FhMethodHandle<MsGetSavePartyMember>(this, game, __addr_MsGetSavePartyMember, h_MsGetSavePartyMember);
 
 
-        _MsBtlListGroup = FhUtil.get_fptr<FhCall.MsBtlListGroup>(FhCall.__addr_MsBtlListGroup);
-        _MsBattleExe = new FhMethodHandle<FhCall.MsBattleExe>(this, game, h_MsBattleExe, offset: FhCall.__addr_MsBattleExe);
-        _MsBattleLabelExe = new FhMethodHandle<MsBattleLabelExe>(this, game, h_MsBattleLabelExe, offset: 0x00381d60);
-        _FUN_00791820 = new FhMethodHandle<FUN_00791820>(this, game, h_FUN_00791820, offset: 0x00391820);
+        _MsBtlListGroup = FhUtil.get_fptr<MsBtlListGroup>(__addr_MsBtlListGroup);
+        _MsBattleExe = new FhMethodHandle<MsBattleExe>(this, game, __addr_MsBattleExe, h_MsBattleExe);
+        _MsBattleLabelExe = FhUtil.get_fptr<MsBattleLabelExe>(__addr_MsBattleLabelExe);
+        _FUN_00791820 = new FhMethodHandle<FUN_00791820>(this, game, 0x00391820, h_FUN_00791820);
 
-        _MsBtlGetPos = new FhMethodHandle<MsBtlGetPos>(this, game, h_MsBtlGetPos, offset: 0x003ac000);
+        _MsBtlGetPos = new FhMethodHandle<MsBtlGetPos>(this, game, 0x003ac000, h_MsBtlGetPos);
 
-        _MsBtlReadSetScene = new FhMethodHandle<MsBtlReadSetScene>(this, game, h_MsBtlReadSetScene, offset: 0x00383ed0);
+        _MsBtlReadSetScene = new FhMethodHandle<MsBtlReadSetScene>(this, game, 0x00383ed0, h_MsBtlReadSetScene);
 
 
 
 
         // giveItem
-        _FUN_007905a0 = new FhMethodHandle<FUN_007905a0>(this, game, h_give_item, offset: 0x003905a0);
+        _FUN_007905a0 = new FhMethodHandle<FUN_007905a0>(this, game, 0x003905a0, h_give_item);
 
-        // giveKeyItem
-        _FUN_0088e700 = new FhMethodHandle<FUN_0088e700>(this, game, h_give_key_item, offset: 0x0048e700);
 
-        // takeGil
-        _FUN_00785a60 = new FhMethodHandle<FUN_00785a60>(this, game, h_take_gil, offset: 0x00385a60);
-
-        // giveWeapon
-        _FUN_007ab930 = new FhMethodHandle<FUN_007ab930>(this, game, h_give_weapon, offset: 0x003ab930);
 
         // readFromBin
-        _FUN_007ab890 = new FhMethodHandle<FUN_007ab890>(this, game, h_read_from_bin, offset: 0x003ab890);
+        _FUN_007ab890 = new FhMethodHandle<FUN_007ab890>(this, game, 0x003ab890, h_read_from_bin);
 
         // getWeaponName
-        _FUN_007a0d10 = new FhMethodHandle<FUN_007a0d10>(this, game, h_get_weapon_name, offset: 0x003a0d10);
+        _FUN_007a0d10 = new FhMethodHandle<FUN_007a0d10>(this, game, 0x003a0d10, h_get_weapon_name);
         // getWeaponModel
-        _FUN_007a0c70 = new FhMethodHandle<FUN_007a0c70>(this, game, h_get_weapon_model, offset: 0x003a0c70);
+        _FUN_007a0c70 = new FhMethodHandle<FUN_007a0c70>(this, game, 0x003a0c70, h_get_weapon_model);
         // obtainTreasureCleanup
-        _FUN_007993f0 = new FhMethodHandle<FUN_007993f0>(this, game, h_obtain_treasure_cleanup, offset: 0x003993f0);
+        _FUN_007993f0 = new FhMethodHandle<FUN_007993f0>(this, game, 0x003993f0, h_obtain_treasure_cleanup);
 
-
-        // Overdrive Experiment
-        _MsCheckLeftWindow = new FhMethodHandle<FhCall.MsCheckLeftWindow>(this, game, h_MsCheckLeftWindow, offset: 0x0038f750);
-        _MsCheckUseCommand = new FhMethodHandle<FhCall.MsCheckUseCommand>(this, game, h_MsCheckUseCommand, offset: 0x0038c750);
-        _TOBtlDrawStatusLimitGauge = new FhMethodHandle<FhCall.TOBtlDrawStatusLimitGauge>(this, game, h_TOBtlDrawStatusLimitGauge, offset: 0x00496050);
 
         _MsGetChr = FhUtil.get_fptr<FhCall.MsGetChr>(0x00394030);
         _MsGetComData = FhUtil.get_fptr<FhCall.MsGetComData>(0x0039a4c0);
@@ -248,18 +261,18 @@ public unsafe partial class ArchipelagoFFXModule {
         _MsGetRamChrMonster = FhUtil.get_fptr<FhCall.MsGetRamChrMonster>(0x0039af00);
         _TODrawCrossBoxXYWHC2 = FhUtil.get_fptr<FhCall.TODrawCrossBoxXYWHC2>(0x004f4b20);
 
-        _eiAbmParaGet = new FhMethodHandle<FhCall.eiAbmParaGet>(this, game, h_eiAbmParaGet, offset: FhCall.__addr_eiAbmParaGet);
-        _FUN_00a48910 = new FhMethodHandle<FUN_00a48910>(this, game, h_FUN_00a48910, offset: 0x00648910);
+        _eiAbmParaGet = new FhMethodHandle<eiAbmParaGet>(this, game, __addr_eiAbmParaGet, h_eiAbmParaGet);
+        _FUN_00a48910 = new FhMethodHandle<FUN_00a48910>(this, game, 0x00648910, h_FUN_00a48910);
 
-        _MsApUp = new FhMethodHandle<FhCall.MsApUp>(this, game, h_MsApUp, offset: 0x00398a10);
+        _MsApUp = new FhMethodHandle<MsApUp>(this, game, 0x00398a10, h_MsApUp);
 
         //delegate* unmanaged[Thiscall]<nint, nint, bool, bool> ph_openFile = &h_openFile;
         //openFile p_openFile = (x, y, z) => d_openFile(ph_openFile, x, y, z);
         //openFile temp = Marshal.GetDelegateForFunctionPointer<openFile>((nint)ph_openFile);
-        _openFile = new FhMethodHandle<openFile>(this, game, h_openFile, offset: 0x00208100);
+        _openFile = new FhMethodHandle<openFile>(this, game, 0x00208100, h_openFile);
         _readFile = FhUtil.get_fptr<readFile>(0x00208250);
 
-        _FUN_0070aec0 = new FhMethodHandle<FUN_0070aec0>(this, game, h_FUN_0070aec0, offset: 0x0030aec0);
+        _FUN_0070aec0 = new FhMethodHandle<FUN_0070aec0>(this, game, 0x0030aec0, h_FUN_0070aec0);
 
 
         _ChN_ReadSystemMGRP = FhUtil.get_fptr<FhCall.ChN_ReadSystemMGRP>(FhCall.__addr_ChN_ReadSystemMGRP);
@@ -269,19 +282,50 @@ public unsafe partial class ArchipelagoFFXModule {
         _Common_linkFieldToBattleActor = FhUtil.get_fptr<Common_linkFieldToBattleActor>(0x0045ca00);
 
         _SndSepPlay = FhUtil.get_fptr<FhCall.SndSepPlay>(FhCall.__addr_SndSepPlay);
-        _SndSepPlaySimple = FhUtil.get_fptr<FhCall.SndSepPlaySimple>(FhCall.__addr_SndSepPlaySimple);
 
 
-        _Map_800F = new FhMethodHandle<Map_800F>(this, game, h_Map_800F, offset: 0x0051b1a0);
+        _Map_800F = new FhMethodHandle<Map_800F>(this, game, 0x0051b1a0, h_Map_800F);
 
 
-        _MsSetSaveParam = new FhMethodHandle<FhCall.MsSetSaveParam>(this, game, h_MsSetSaveParam, offset: FhCall.__addr_MsSetSaveParam);
-        _MsGetExcelData = FhUtil.get_fptr<FhCall.MsGetExcelData>(FhCall.__addr_MsGetExcelData);
-        _MsGetSaveWeapon = FhUtil.get_fptr<FhCall.MsGetSaveWeapon>(FhCall.__addr_MsGetSaveWeapon);
+        _MsSetSaveParam = new FhMethodHandle<MsSetSaveParam>(this, game, __addr_MsSetSaveParam, h_MsSetSaveParam);
+        _MsGetExcelData = FhUtil.get_fptr<MsGetExcelData>(__addr_MsGetExcelData);
 
 
-        _FUN_0086bec0 = new FhMethodHandle<FUN_0086bec0>(this, game, h_FUN_0086bec0, offset: 0x0046bec0);
-        _FUN_0086bea0 = new FhMethodHandle<FUN_0086bea0>(this, game, h_FUN_0086bea0, offset: 0x0046bea0);
+        // obtainTreasure related
+        _TkMsImportantSet = new FhMethodHandle<TkMsImportantSet>(this, game, __addr_TkMsImportantSet, h_TkMsImportantSet);
+        _MsPayGIL = FhUtil.get_fptr<MsPayGIL>(__addr_MsPayGIL); // takeGil
+        _SndSepPlaySimple = FhUtil.get_fptr<SndSepPlaySimple>(__addr_SndSepPlaySimple);
+        _MsGetSaveWeapon = FhUtil.get_fptr<MsGetSaveWeapon>(__addr_MsGetSaveWeapon);
+        _FUN_007ab930 = FhUtil.get_fptr<FUN_007ab930>(0x003ab930); // giveWeapon
+        _AtelGetCurCtrlWork = FhUtil.get_fptr<AtelGetCurCtrlWork>(__addr_AtelGetCurCtrlWork);
+        _MsFieldItemGet = FhUtil.get_fptr<MsFieldItemGet>(__addr_MsFieldItemGet);
+        _TkMsGetRomItem = FhUtil.get_fptr<TkMsGetRomItem>(__addr_TkMsGetRomItem);
+        _MsSaveItemUse = FhUtil.get_fptr<MsSaveItemUse>(__addr_MsSaveItemUse);
+        _MsImportantName = FhUtil.get_fptr<MsImportantName>(__addr_MsImportantName);
+        _CT_RetInt_0065 = FhUtil.get_fptr<CT_RetInt_0065>(__addr_CT_RetInt_0065);
+        _CT_RetInt_006A = FhUtil.get_fptr<CT_RetInt_006A>(__addr_CT_RetInt_006A);
+        _MsBtlGetInit = FhUtil.get_fptr<FhCall.MsBtlGetInit>(FhCall.__addr_MsBtlGetInit);
+        _AtelGetMesWinWork = FhUtil.get_fptr<AtelGetMesWinWork>(__addr_AtelGetMesWinWork);
+        _FUN_008b8910 = FhUtil.get_fptr<FUN_008b8910>(__addr_FUN_008b8910);
+        _FUN_008bda20 = FhUtil.get_fptr<FUN_008bda20>(__addr_FUN_008bda20);
+        _FUN_008b8930 = FhUtil.get_fptr<FUN_008b8930>(__addr_FUN_008b8930);
+        _FUN_0086a0c0 = FhUtil.get_fptr<FUN_0086a0c0>(__addr_FUN_0086a0c0);
+
+
+        _FUN_0086bec0 = new FhMethodHandle<FUN_0086bec0>(this, game, 0x0046bec0, h_FUN_0086bec0);
+        _FUN_0086bea0 = new FhMethodHandle<FUN_0086bea0>(this, game, 0x0046bea0, h_FUN_0086bea0);
+
+
+        _FUN_00656c90 = new FhMethodHandle<FUN_00656c90>(this, game, 0x00256c90, h_FUN_00656c90);
+
+        // For loading texture from game
+        _FUN_0065ee30 = FhUtil.get_fptr<FUN_0065ee30>(__addr_ClusterManager_FUN_0065ee30);
+        _ClusterManager_loadPCluster = FhUtil.get_fptr<ClusterManager_loadPCluster>(__addr_ClusterManager_loadPCluster);
+        _Phyre_PFramework_PApplication_FixupClusters = FhUtil.get_fptr<Phyre_PFramework_PApplication_FixupClusters>(__addr_Phyre_PFramework_PApplication_FixupClusters);
+        _ClusterManager_releasePCluster = FhUtil.get_fptr<ClusterManager_releasePCluster>(__addr_ClusterManager_releasePCluster);
+
+        // Non-loading FMV
+        _graphicInitFMVPlayer = new FhMethodHandle<graphicInitFMVPlayer>(this, game, __addr_graphicInitFMVPlayer, h_graphicInitFMVPlayer);
 
         foreach (byte[] script in customScripts) {
             customScriptHandles.Add(GCHandle.Alloc(script, GCHandleType.Pinned));
@@ -321,7 +365,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
     public bool hook() {
 
-        return _Common_obtainTreasureInit.hook() && _Common_obtainTreasureSilentlyInit.hook() && _Common_obtainBrotherhood.hook()
+        return _Common_obtainTreasureInit.hook() && _Common_obtainTreasureSilentlyInit.hook() && _Common_obtainBrotherhoodRetInt.hook()
             && _Common_grantCelestialUpgrade.hook() && _Common_setPrimerCollected.hook()
             && _AtelEventSetUp.hook() && _Common_transitionToMap.hook() && _Common_warpToMap.hook()
             && _SgEvent_showModularMenuInit.hook()
@@ -329,22 +373,24 @@ public unsafe partial class ArchipelagoFFXModule {
             && _Common_putPartyMemberInSlot.hook() && _Common_pushParty.hook() && _Common_popParty.hook() && _MsBattleExe.hook() && _FUN_00791820.hook()
             && _MsApUp.hook() && _MsBtlReadSetScene.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
             && _eiAbmParaGet.hook() // && _FUN_00a48910.hook()
-            && _FUN_0086bec0.hook() && _FUN_0086bea0.hook(); // Custom strings
-        //&& _openFile.hook() && _FUN_0070aec0.hook();
-        //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
+            && _FUN_0086bec0.hook() && _FUN_0086bea0.hook() // Custom strings
+            && _graphicInitFMVPlayer.hook();
+            //&& _FUN_00656c90.hook() && _FUN_0065ee30.hook();
+            //&& _openFile.hook() && _FUN_0070aec0.hook();
+            //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
 
     }
 
-    private static void set(byte* code_ptr, int offset, AtelOpCode opcode) {
+    private static void set(byte* code_ptr, int offset, AtelInst opcode) {
         byte* ptr = code_ptr + offset;
         foreach (byte b in opcode.to_bytes()) {
             *ptr = b;
             ptr++;
         }
     }
-    private static void set(byte* code_ptr, int offset, AtelOpCode[] opcodes) {
+    private static void set(byte* code_ptr, int offset, AtelInst[] opcodes) {
         byte* ptr = code_ptr + offset;
-        foreach (AtelOpCode op in opcodes) {
+        foreach (AtelInst op in opcodes) {
             foreach (byte b in op.to_bytes()) {
                 *ptr = b;
                 ptr++;
@@ -397,76 +443,106 @@ public unsafe partial class ArchipelagoFFXModule {
 
     };
 
+    private static readonly GCHandle APItemString = GCHandle.Alloc(FhCharset.Us.to_bytes("Archipelago Item"), GCHandleType.Pinned);
+
+
+
     private static readonly List<GCHandle> customScriptHandles = [];
     private static readonly byte[][] customScripts = {
         // Cid talk hook
-        new AtelOpCode[]{
+        new AtelInst[]{
             // If GameMoment < 2970 or GameMoment >= 3120: Jump to j01 (return)
-            AtelInst.PUSHV   .build(0x0000),
-            AtelInst.POPY    .build(      ),
+            AtelOp.PUSHV   .build(0x0000),
+            AtelOp.POPY    .build(      ),
 
-            AtelInst.PUSHY   .build(      ),
-            AtelInst.PUSHII  .build(2970  ),
-            AtelInst.LS      .build(      ),
+            AtelOp.PUSHY   .build(      ),
+            AtelOp.PUSHII  .build(2970  ),
+            AtelOp.LS      .build(      ),
 
-            AtelInst.PUSHY   .build(      ),
-            AtelInst.PUSHII  .build(3210  ),
-            AtelInst.GTE     .build(      ),
+            AtelOp.PUSHY   .build(      ),
+            AtelOp.PUSHII  .build(3210  ),
+            AtelOp.GTE     .build(      ),
 
-            AtelInst.LOR     .build(      ),
-            AtelInst.POPXCJMP.build(0x0001),
+            AtelOp.LOR     .build(      ),
+            AtelOp.POPXCJMP.build(0x0001),
 
 
             // call Common.disablePlayerControl? [005Eh]();
-            AtelInst.CALLPOPA.build(0x005e),
+            AtelOp.CALLPOPA.build(0x005e),
             // call Common.displayFieldChoice [013Bh](boxIndex=1 [01h], string="{TIME:00}{CHOICE:00}Save{\n}{CHOICE:01}Cancel" [D4h], p3=0 [00h], p4=1 [01h], x=280 [0118h], y=224 [E0h], align=Center [04h]);
-            AtelInst.PUSHII  .build(0x0001),
-            AtelInst.PUSHII  .build(0x8000),
-            AtelInst.PUSHII  .build(0x0000),
-            AtelInst.PUSHII  .build(0x0001),
-            AtelInst.PUSHII  .build(0x0100),
-            AtelInst.PUSHII  .build(0x00e0),
-            AtelInst.PUSHII  .build(0x0004),
-            AtelInst.CALLPOPA.build(0x013b),
-            AtelInst.PUSHA.build(),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x8000),
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x0100),
+            AtelOp.PUSHII  .build(0x00e0),
+            AtelOp.PUSHII  .build(0x0004),
+            AtelOp.CALLPOPA.build(0x013b),
+            AtelOp.PUSHA.build(),
             // call Common.waitForText [0084h](boxIndex=1 [01h], p2=1 [01h]);
-            AtelInst.PUSHII  .build(0x0001),
-            AtelInst.PUSHII  .build(0x0001),
-            AtelInst.CALLPOPA.build(0x0084),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x0084),
             // call Common.enablePlayerControl? [005Dh]();
-            AtelInst.CALLPOPA.build(0x005d),
+            AtelOp.CALLPOPA.build(0x005d),
             // call Common.obtainBrotherhood(choice, 1, 3) i.e. if !choice jump to customscripts[1]
-            AtelInst.PUSHII  .build(0x0103),
-            AtelInst.CALLPOPA.build(0x01B8),
+            AtelOp.PUSHII  .build(0x0103),
+            AtelOp.CALLPOPA.build(0x01B8),
 
             
             //// Jump to j01 (return)
-            AtelInst.JMP     .build(0x0001),
+            AtelOp.JMP     .build(0x0001),
         }.SelectMany(x => x.to_bytes()).ToArray(),
 
         // Start Airship Sin fights
-        new AtelOpCode[]{
+        new AtelInst[]{
             // Set GameMoment = 3085
-            AtelInst.PUSHII  .build(  3085),
-            AtelInst.POPV    .build(0x0000),
+            AtelOp.PUSHII  .build(  3085),
+            AtelOp.POPV    .build(0x0000),
             // call Common.transitionToMap? [0011h](map=199, entranceIndex=0);
-            AtelInst.PUSHII  .build(   199),
-            AtelInst.PUSHII  .build(     0),
-            AtelInst.CALLPOPA.build(0x0011),
+            AtelOp.PUSHII  .build(   199),
+            AtelOp.PUSHII  .build(     0),
+            AtelOp.CALLPOPA.build(0x0011),
             // Return;
-            AtelInst.RET.build(),
+            AtelOp.RET.build(),
+
+        }.SelectMany(x => x.to_bytes()).ToArray(),
+
+        // Remove defeated Aeon
+        new AtelInst[]{
+            // call Common.obtainBrotherhood(privBA98, 8) = lock party member privBA98
+            AtelOp.PUSHV   .build(0x000B),
+            AtelOp.PUSHII  .build(0x0008),
+            AtelOp.CALLPOPA.build(0x01B8),
+
+            // switch privBA98
+            AtelOp.PUSHV   .build(0x000B),
+            AtelOp.POPY    .build(),
+            // Jump to j04 (6758)
+            AtelOp.JMP     .build(0x0004),
 
         }.SelectMany(x => x.to_bytes()).ToArray(),
     };
 
-    private static readonly AtelOpCode[] save_sphere_load_model = [
-        AtelInst.PUSHII  .build(0x5001),
-        AtelInst.CALLPOPA.build(0x0001),
+    private static readonly AtelInst[] save_sphere_load_model = [
+        AtelOp.PUSHII  .build(0x5001),
+        AtelOp.CALLPOPA.build(0x0001),
+    ];
+
+
+    private static readonly AtelInst[] save_sphere_load_underwater_model = [
+        AtelOp.PUSHII  .build(0x50AB),
+        AtelOp.CALLPOPA.build(0x0001),
     ];
 
     private static string current_event_name = "";
     private static void h_AtelEventSetUp(int event_id) {
         _AtelEventSetUp.orig_fptr(event_id);
+
+        foreach (var handle in cached_handles) {
+            handle.Free();
+        }
+        cached_handles.Clear();
 
         string event_name = Marshal.PtrToStringAnsi((nint)get_event_name((uint)event_id))!;
         logger.Debug($"atel_event_setup: {event_name}");
@@ -475,67 +551,274 @@ public unsafe partial class ArchipelagoFFXModule {
             case "hiku2100":
                 logger.Debug($"atel_event_setup: Inject set_airship_destinations call");
                 set(code_ptr, 0x26D1, [
-                    AtelInst.PUSHII  .build(0x0001),
-                    AtelInst.CALLPOPA.build(0x01B8) // Common.obtainBrotherhood(1) = set_airship_destinations
+                    AtelOp.PUSHII  .build(0x0001),
+                    AtelOp.CALLPOPA.build(0x01B8) // Common.obtainBrotherhood(1) = set_airship_destinations
                     ]);
 
-                set(code_ptr, 0x4028, AtelInst.JMP.build(0x013A));
+                set(code_ptr, 0x4028, AtelOp.JMP.build(0x013A));
+
+
+                // Fix Bevelle destination
+                set(code_ptr, 0x4326, AtelOp.PUSHII.build(0x000C)); // Point destination 12 (Bevelle Temple) to destination 18's warp (Highbridge) 
+                set(code_ptr, 0x4118, AtelOp.JMP.build(0x0141)); // Skip setting GameMoment when choosing destination 18
+
                 break;
             case "hiku0801":
                 logger.Debug($"atel_event_setup: Inject Cid talk hook");
                 set(code_ptr, 0x4DC5, [
-                    AtelInst.PUSHII  .build(0x0002),
-                    AtelInst.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0, 2) = jump to customScripts[0]
+                    AtelOp.PUSHII  .build(0x0002),
+                    AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0002) = jump to customScripts[0]
                 ]);
                 break;
             case "ssbt0300":
                 logger.Debug($"atel_event_setup: Redirect Overdrive Sin post-battle warp");
-                set(code_ptr, 0x500E, AtelInst.PUSHII.build(382));
+                set(code_ptr, 0x500E, AtelOp.PUSHII.build(382));
+                break;
+            case "sins0700":
+                logger.Debug($"atel_event_setup: Handle removing Aeons");
+                set(code_ptr, 0x5972, [
+                    AtelOp.PUSHII  .build(0x0202),
+                    AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0202) = jump to customScripts[2]
+                    ]);
                 break;
         }
+
         // Inject save sphere hook
-        {
-            AtelOpCode? previous_op = null;
-            AtelOpCode? current_op = null;
+        if (event_name == "nagi0000") {
+            int save_sphere_offset = 0x1BB69;
+            logger.Info($"Save sphere init at {save_sphere_offset}");
+            set(code_ptr, save_sphere_offset + 0x48, AtelOp.JMP.build(0x0007)); // Always all options
+
+            // Update region state. Also skips save sphere tutorial
+            set(code_ptr, save_sphere_offset + 0x59B, [
+                AtelOp.PUSHII  .build(0x0007),
+                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+
+                AtelOp.JMP     .build(0x0023),
+                ]);
+
+            // Board Airship option
+            set(code_ptr, save_sphere_offset + 0x695, [
+                // call Common.00BB(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BB),
+                // call Common.00BC(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BC),
+                // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                AtelOp.PUSHII  .build(   382),
+                AtelOp.PUSHII  .build(     0),
+                AtelOp.CALLPOPA.build(0x010B),
+                ]);
+
+        } else if (event_name == "cdsp0700") {
+            int save_sphere_offset = 0x2AA3;
+            logger.Info($"Underwater save sphere init at {save_sphere_offset}");
+            set(code_ptr, save_sphere_offset + 0x5A, AtelOp.JMP.build(0x0002)); // Always all options
+
+            // Update region state. Also skips save sphere tutorial
+            set(code_ptr, save_sphere_offset + 0x542, [
+                AtelOp.PUSHII  .build(0x0007),
+                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+
+                AtelOp.JMP     .build(0x001D),
+                ]);
+
+            // Board Airship option
+            set(code_ptr, save_sphere_offset + 0x628, [
+                // call Common.00BB(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BB),
+                // call Common.00BC(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BC),
+                // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                AtelOp.PUSHII  .build(   382),
+                AtelOp.PUSHII  .build(     0),
+                AtelOp.CALLPOPA.build(0x010B),
+                ]);
+
+        } else if (event_name == "stbv0000") {
+            int save_sphere_offset = 0x2982;
+            logger.Info($"Underwater save sphere init at {save_sphere_offset}");
+            set(code_ptr, save_sphere_offset + 0x5A, AtelOp.JMP.build(0x0002)); // Always all options
+
+            // Update region state. Also skips save sphere tutorial
+            set(code_ptr, save_sphere_offset + 0x542, [
+                AtelOp.PUSHII  .build(0x0007),
+                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+
+                AtelOp.JMP     .build(0x001D),
+                ]);
+
+            // Board Airship option
+            set(code_ptr, save_sphere_offset + 0x628, [
+                // call Common.00BB(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BB),
+                // call Common.00BC(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BC),
+                // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                AtelOp.PUSHII  .build(   382),
+                AtelOp.PUSHII  .build(     0),
+                AtelOp.CALLPOPA.build(0x010B),
+                ]);
+
+
+            save_sphere_offset = 0x3168;
+            logger.Info($"Underwater save sphere init at {save_sphere_offset}");
+            set(code_ptr, save_sphere_offset + 0x5A, AtelOp.JMP.build(0x0002)); // Always all options
+
+            // Update region state. Also skips save sphere tutorial
+            set(code_ptr, 0x3746, [
+                AtelOp.PUSHII  .build(0x0007),
+                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+
+                AtelOp.JMP     .build(0x001E),
+                ]);
+
+            // Board Airship option
+            set(code_ptr, 0x382C, [
+                // call Common.00BB(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BB),
+                // call Common.00BC(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BC),
+                // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                AtelOp.PUSHII  .build(   382),
+                AtelOp.PUSHII  .build(     0),
+                AtelOp.CALLPOPA.build(0x010B),
+                ]);
+        } else if (false && event_name == "stbv0100") {
+            int save_sphere_offset = 0xF07F;
+            logger.Info($"Save sphere init at {save_sphere_offset}");
+            set(code_ptr, save_sphere_offset + 0x48, AtelOp.JMP.build(0x0007)); // Always all options
+
+            // Update region state. Also skips save sphere tutorial
+            set(code_ptr, save_sphere_offset + 0x571, [
+                AtelOp.PUSHII  .build(0x0007),
+                        AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+
+                        AtelOp.JMP     .build(0x0023),
+                        ]);
+
+            // Board Airship option
+            set(code_ptr, save_sphere_offset + 0x657, [
+                // call Common.00BB(0);
+                AtelOp.PUSHII  .build(0x0000),
+                        AtelOp.CALLPOPA.build(0x00BB),
+                        // call Common.00BC(0);
+                        AtelOp.PUSHII  .build(0x0000),
+                        AtelOp.CALLPOPA.build(0x00BC),
+                        // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                        AtelOp.PUSHII  .build(   382),
+                        AtelOp.PUSHII  .build(     0),
+                        AtelOp.CALLPOPA.build(0x010B),
+                        ]);
+
+
+            save_sphere_offset = 0xFCF1;
+            logger.Info($"Save sphere init at {save_sphere_offset}");
+            set(code_ptr, save_sphere_offset + 0x48, AtelOp.JMP.build(0x0007)); // Always all options
+
+            // Update region state. Also skips save sphere tutorial
+            set(code_ptr, 0x10278, [
+                AtelOp.PUSHII  .build(0x0007),
+                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+
+                AtelOp.JMP     .build(0x0025),
+                ]);
+
+            // Board Airship option
+            set(code_ptr, 0x1035E, [
+                // call Common.00BB(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BB),
+                // call Common.00BC(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BC),
+                // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                AtelOp.PUSHII  .build(   382),
+                AtelOp.PUSHII  .build(     0),
+                AtelOp.CALLPOPA.build(0x010B),
+                ]);
+
+        } else {
+            AtelInst? previous_op = null;
+            AtelInst? current_op = null;
             uint code_length = Atel.controllers[0].worker(0)->script_chunk->code_length;
             int i = 0;
+            int save_spheres_detected = 0;
+            int sphere_level_offset = 0x48;
+            int tutorial_offset = 0x571;
+            ushort tutorial_jump = 0x23;
+            int airship_warp_offset = 0x657;
             while (i < code_length) {
                 previous_op = current_op;
-                AtelInst inst = (AtelInst)code_ptr[i];
+                AtelOp inst = (AtelOp)code_ptr[i];
                 if (inst.has_operand()) {
                     current_op = inst.build(*(ushort*)(code_ptr + i + 1));
                 } else {
                     current_op = inst.build();
                 }
                 if (current_op == save_sphere_load_model[1] && previous_op == save_sphere_load_model[0]) {
-                    logger.Info($"Detected save sphere init at {i-6}");
+                    if (save_spheres_detected == 1) {
+                        // Additional save spheres usually have different offsets
+                        sphere_level_offset = 0x48;
+                        tutorial_offset = 0x587;
+                        tutorial_jump = 0x25;
+                        airship_warp_offset = 0x66D;
+                    }
+                    else if (save_spheres_detected > 1) {
+                        // Potentially incorrect offsets
+                        logger.Info("Potentially incorrect Save Sphere offsets");
+                    }
+                    save_spheres_detected++;
+                    logger.Info($"Detected save sphere init at {i - 6}");
                     int save_sphere_offset = i - 6;
-                    set(code_ptr, save_sphere_offset + 0x48, AtelInst.JMP.build(0x0007)); // Always all options
 
+                    AtelOp someInst = (AtelOp)code_ptr[save_sphere_offset + sphere_level_offset];
+                    if (!someInst.has_operand() || someInst.build(*(ushort*)(code_ptr + save_sphere_offset + sphere_level_offset + 1)) != AtelOp.PUSHV.build(0x0000)) {
+                        logger.Warning($"Unexpected instruction at {save_sphere_offset + sphere_level_offset}");
+                    }
+                    set(code_ptr, save_sphere_offset + sphere_level_offset, AtelOp.JMP.build(0x0007)); // Always all options
+
+
+
+                    someInst = (AtelOp)code_ptr[save_sphere_offset + tutorial_offset + 13];
+                    if (!someInst.has_operand() || someInst.build(*(ushort*)(code_ptr + save_sphere_offset + tutorial_offset + 13 + 1)) != AtelOp.POPXNCJMP.build(tutorial_jump)) {
+                        logger.Warning($"Unexpected instruction at {save_sphere_offset + tutorial_offset + 13}");
+                    }
                     // Update region state. Also skips save sphere tutorial
-                    set(code_ptr, save_sphere_offset + 0x571, [
-                        AtelInst.PUSHII  .build(0x0007),
-                        AtelInst.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
+                    set(code_ptr, save_sphere_offset + tutorial_offset, [
+                        AtelOp.PUSHII  .build(0x0007),
+                        AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(7) = update_region_state
 
-                        AtelInst.JMP     .build(0x0023),
+                        AtelOp.JMP     .build(tutorial_jump),
                         ]);
 
+
+                    someInst = (AtelOp)code_ptr[save_sphere_offset + airship_warp_offset];
+                    if (!someInst.has_operand() || someInst.build(*(ushort*)(code_ptr + save_sphere_offset + airship_warp_offset + 1)) != AtelOp.PUSHV.build(0x0000)) {
+                        logger.Warning($"Unexpected instruction at {save_sphere_offset + airship_warp_offset}");
+                    }
                     // Board Airship option
-                    set(code_ptr, save_sphere_offset + 0x657, [
+                    set(code_ptr, save_sphere_offset + airship_warp_offset, [
                         // call Common.00BB(0);
-                        AtelInst.PUSHII  .build(0x0000),
-                        AtelInst.CALLPOPA.build(0x00BB),
+                        AtelOp.PUSHII  .build(0x0000),
+                        AtelOp.CALLPOPA.build(0x00BB),
                         // call Common.00BC(0);
-                        AtelInst.PUSHII  .build(0x0000),
-                        AtelInst.CALLPOPA.build(0x00BC),
+                        AtelOp.PUSHII  .build(0x0000),
+                        AtelOp.CALLPOPA.build(0x00BC),
                         // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
-                        AtelInst.PUSHII  .build(   382),
-                        AtelInst.PUSHII  .build(     0),
-                        AtelInst.CALLPOPA.build(0x010B),
+                        AtelOp.PUSHII  .build(   382),
+                        AtelOp.PUSHII  .build(     0),
+                        AtelOp.CALLPOPA.build(0x010B),
                         ]);
-
-
                 }
+
                 i += inst.has_operand() ? 3 : 1;
             }
         }
@@ -547,21 +830,151 @@ public unsafe partial class ArchipelagoFFXModule {
         int treasure_id = atelStack->values_as_int[1];
         //ArchipelagoGUI.lastTreasure = treasure_id;
         logger.Debug($"obtain_treasure: {treasure_id}");
-        ArchipelagoClient.sendTreasureLocation(treasure_id);
+        //ArchipelagoClient.sendTreasureLocation(treasure_id);
+        ArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure);
 
-        _Common_obtainTreasureInit.orig_fptr(work, storage, atelStack);
+        //_Common_obtainTreasureInit.orig_fptr(work, storage, atelStack);
+        obtainTreasureInitReimplement(work, storage, atelStack);
+    }
+
+
+    private static void obtainTreasureInitReimplement(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        byte* item_name = (byte*)0;
+
+        int treasure_id = atelStack->pop_int();
+        int window_id = atelStack->pop_int();
+        logger.Debug($"window_id:{window_id}, treasure_id:{treasure_id}");
+
+        _SndSepPlaySimple(0x80000026);
+        AtelWorkerController* pAVar2 = (AtelWorkerController*)_AtelGetCurCtrlWork();
+        ((byte*)pAVar2)[3] |= 4;
+        _MsFieldItemGet(treasure_id);
+        _FUN_008b8910(window_id, 0, 0);
+        _FUN_008b8910(window_id, 1, 1);
+        bool gear_inv_is_full = false;
+        uint weapon_id = 0;
+        byte* message_text = _FUN_008bda20(0x401d); // "Nothing"
+
+
+        if (item_locations.treasure.TryGetValue(treasure_id, out var item)) {
+            //item_name = (byte*)APItemString.AddrOfPinnedObject();
+            obtain_item(item.id, 1);
+            GCHandle name_handle = GCHandle.Alloc(FhCharset.Us.to_bytes(item.name), GCHandleType.Pinned);
+            cached_handles.Add(name_handle);
+            item_name = (byte*)name_handle.AddrOfPinnedObject();
+            message_text = _FUN_008bda20(0x4018); // "Obtained %0!"
+        } else
+        if (btl_reward_data->item_count != 0) {
+            _TkMsGetRomItem(btl_reward_data->items[0], (int*)&item_name);
+            _FUN_008b8930(window_id, 1, btl_reward_data->items_amounts[0]);
+            if (btl_reward_data->items_amounts[0] == 1) {
+                message_text = _FUN_008bda20(0x4018); // "Obtained %0!"
+            }
+            else {
+                message_text = _FUN_008bda20(0x4019); // "Obtained %0 x%1!"
+            }
+
+            string decoded = FhCharset.Us.to_string(item_name);
+            logger.Info(decoded);
+
+            _MsSaveItemUse(btl_reward_data->items[0], btl_reward_data->items_amounts[0]);
+        }
+        else if (btl_reward_data->key_item_count != 0) {
+            item_name = _MsImportantName(btl_reward_data->key_item);
+            message_text = _FUN_008bda20(0x4017); // "Obtained %0!"
+            _TkMsImportantSet.hook_fptr(btl_reward_data->key_item);
+        }
+        else if (btl_reward_data->gear_count != 0) {
+            weapon_id = btl_reward_data->gear_inv_idx;
+            message_text = _FUN_008bda20(0x4016); // "Obtained %0!"
+            Equipment* weapon = (Equipment*)_MsGetSaveWeapon(weapon_id, (nint)(&item_name));
+            int inv_id = _FUN_007ab930(weapon); // giveWeapon?
+            gear_inv_is_full = inv_id == 0;
+        }
+        else if (btl_reward_data->gil != 0) {
+            _FUN_008b8930(window_id, 1, (int)btl_reward_data->gil);
+            message_text = _FUN_008bda20(0x401a); // "Obtained %1 Gil!"
+            _MsPayGIL(-(int)btl_reward_data->gil);
+        }
+
+        _FUN_008b8930(window_id, 0, (int)item_name);
+
+        atelStack->push_int(window_id);
+        atelStack->push_int(0x100);
+        atelStack->push_int(0xd0);
+        atelStack->push_int(4);
+        _CT_RetInt_0065((nint)work, storage, (nint)atelStack);
+
+        TOMesWinWork* mesageWindowWorker = _AtelGetMesWinWork(window_id);
+        mesageWindowWorker->_0x20 = 0;
+        mesageWindowWorker->text = message_text;
+        mesageWindowWorker->_0xc = message_text;
+        mesageWindowWorker->_0x16 = 0;
+        mesageWindowWorker->_0x18 = 0;
+
+        atelStack->push_int(window_id);
+        atelStack->push_int(0);
+        _CT_RetInt_006A((nint)work, storage, (nint)atelStack);
+
+        *storage = window_id;
+        storage[1] = 1;
+        storage[2] = gear_inv_is_full ? 1 : 0;
+        storage[3] = (int)weapon_id;
+
+        if (!gear_inv_is_full) {
+            _MsBtlGetInit();
+        }
+        _FUN_0086a0c0();
+        mesageWindowWorker->_0x1d |= 0x10;
     }
 
     private static void h_Common_obtainTreasureSilentlyInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int treasure_id = atelStack->values_as_int[0];
         //ArchipelagoGUI.lastTreasure = treasure_id;
         logger.Debug($"obtain_treasure_silently: {treasure_id}");
-        ArchipelagoClient.sendTreasureLocation(treasure_id);
-        _Common_obtainTreasureSilentlyInit.orig_fptr(work, storage, atelStack);
+        ArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure);
+        //_Common_obtainTreasureSilentlyInit.orig_fptr(work, storage, atelStack);
+        obtainTreasureSilentlyInitReimplement(work, storage, atelStack);
     }
 
-    private static void h_Common_obtainBrotherhood(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug($"obtain_brotherhood");
+    private static void obtainTreasureSilentlyInitReimplement(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+
+        int treasure_id = atelStack->pop_int();
+        logger.Debug($"treasure_id:{treasure_id}");
+        _MsFieldItemGet(treasure_id);
+        bool gear_inv_is_full = false;
+        uint weapon_id = 0;
+
+        if (item_locations.treasure.TryGetValue(treasure_id, out var item)) {
+            obtain_item(item.id, 1);
+        }
+        else
+        if (btl_reward_data->item_count != 0) {
+            _MsSaveItemUse(btl_reward_data->items[0], btl_reward_data->items_amounts[0]);
+        }
+        else if (btl_reward_data->key_item_count != 0) {
+            _TkMsImportantSet.hook_fptr(btl_reward_data->key_item);
+        }
+        else if (btl_reward_data->gear_count != 0) {
+            weapon_id = btl_reward_data->gear_inv_idx;
+            Equipment* weapon = (Equipment*)_MsGetSaveWeapon(weapon_id, 0);
+            int inv_id = _FUN_007ab930(weapon); // giveWeapon?
+            gear_inv_is_full = inv_id == 0;
+        }
+        else if (btl_reward_data->gil != 0) {
+            _MsPayGIL(-(int)btl_reward_data->gil);
+        }
+
+        storage[2] = gear_inv_is_full ? 1 : 0;
+        storage[3] = (int)weapon_id;
+
+        if (!gear_inv_is_full) {
+            _MsBtlGetInit();
+        }
+    }
+
+    private static int h_Common_obtainBrotherhoodRetInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug($"obtain_brotherhoodRetInt");
         if (atelStack->size > 0) {
             int param = atelStack->pop_int();
             int call_type = param & 0xff;
@@ -599,12 +1012,41 @@ public unsafe partial class ArchipelagoFFXModule {
                     work->current_thread.pc += offset - 3;
                 }
             } else if (call_type == 7) { // Update region state
+                Vector3 playerPos = Globals.actors->chr_pos_vec.AsVector3();
+                var closestEntrance = Atel.controllers[0].worker(0)->script_chunk->map_entrances.ToArray()
+                    .Select((entrance, index) => new {Index=index, Entrance=entrance, Distance=(playerPos - entrance.pos).Length()})
+                    .MinBy(tuple => tuple.Distance);
+                if (closestEntrance?.Distance < 100) {
+                    last_entrance_id = (ushort)closestEntrance.Index;
+                    logger.Debug($"Entrance within 100: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
+                }
+
                 update_region_state(false);
+            } else if (call_type == 8) { // Lock party member
+                int party_member = atelStack->pop_int();
+                locked_characters[party_member] = true;
             }
-            return;
+            return 1;
+        }
+        if (item_locations.other.TryGetValue(0, out var item)) {
+            obtain_item(item.id, 1);
+            return 1;
+        }
+        return _Common_obtainBrotherhoodRetInt.orig_fptr(work, storage, atelStack);
+    }
+    private static int h_Common_upgradeBrotherhoodRetInt(nint work, int* storage, nint atelStack) {
+        logger.Debug($"upgrade_brotherhoodRetInt");
+        if (item_locations.other.TryGetValue(37, out var item)) {
+            obtain_item(item.id, 1);
+            return 1;
         }
 
-        _Common_obtainBrotherhood.orig_fptr(work, storage, atelStack);
+        return _Common_upgradeBrotherhoodRetInt.orig_fptr(work, storage, atelStack);
+    }
+    private static int h_Common_isBrotherhoodUnpoweredRetInt(nint work, int* storage, nint atelStack) {
+        logger.Debug($"isBrotherhoodUnpoweredRetInt");
+
+        return _Common_isBrotherhoodUnpoweredRetInt.orig_fptr(work, storage, atelStack);
     }
     private static int h_Common_grantCelestialUpgrade(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int character = atelStack->values_as_int[0];
@@ -616,6 +1058,10 @@ public unsafe partial class ArchipelagoFFXModule {
     private static int h_Common_setPrimerCollected(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int primer = atelStack->values_as_int[0];
         logger.Debug($"set_primer_collected: Al Bhed Primer {primer + 1}");
+
+        if (item_locations.other.TryGetValue(primer + 1, out var item)) {
+            obtain_item(item.id, 1);
+        }
 
         return _Common_setPrimerCollected.orig_fptr(work, storage, atelStack);
     }
@@ -629,7 +1075,7 @@ public unsafe partial class ArchipelagoFFXModule {
         // Update region state
         if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out ArchipelagoData.ArchipelagoRegion? current_state)) {
             current_state = region_states[current_region];
-            current_state.room_id  = map_changed ? last_room_id     : save_data->current_room_id;
+            current_state.room_id = map_changed ? last_room_id : save_data->current_room_id;
             current_state.entrance = map_changed ? last_entrance_id : save_data->current_spawnpoint;
             current_state.story_progress = save_data->story_progress;
         }
@@ -639,7 +1085,10 @@ public unsafe partial class ArchipelagoFFXModule {
         if (id_to_regions.Contains(save_data->current_room_id)) {
 
             // New Game
-            if (save_data->last_room_id == 0 && save_data->current_room_id == 132) current_region = RegionEnum.DreamZanarkand;
+            if (save_data->last_room_id == 0 && save_data->current_room_id == 132) {
+                initalize_states();
+                current_region = RegionEnum.DreamZanarkand;
+            }
 
             var regions = id_to_regions[save_data->current_room_id];
             RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();
@@ -685,6 +1134,7 @@ public unsafe partial class ArchipelagoFFXModule {
                         reset_party();
                     }
                      */
+                    save_party();
                     reset_party();
 
                     /*
@@ -840,7 +1290,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && !is_unlocked) {
+            if (!is_character_unlocked(character)) {
                 atelStack->pop_int();
                 return 1;
             }
@@ -854,7 +1304,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && is_unlocked) {
+            if (is_character_unlocked(character)) {
                 atelStack->pop_int();
                 return 1;
             }
@@ -868,7 +1318,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && is_unlocked) {
+            if (is_character_unlocked(character)) {
                 atelStack->pop_int();
                 return 1;
             }
@@ -881,7 +1331,7 @@ public unsafe partial class ArchipelagoFFXModule {
         int character = (byte)atelStack->values_as_int[0];
         int state = atelStack->values_as_int[1];
         logger.Debug($"character={id_to_character[character]}, state={state}");
-        if (state != 0 && character_is_unlocked.TryGetValue(character, out bool is_unlocked) && is_unlocked) {
+        if (state != 0 && is_character_unlocked(character)) {
             atelStack->pop_int();
             atelStack->pop_int();
             return 0;
@@ -893,7 +1343,7 @@ public unsafe partial class ArchipelagoFFXModule {
         int character = (byte)atelStack->values_as_int[1];
         //if (!party_overridden && !(save_data->atel_is_push_member == 1)) {
         if (!party_overridden) {
-            if (character == 0xff || (character_is_unlocked.TryGetValue(character, out bool is_unlocked) && !is_unlocked)) {
+            if (character == 0xff || (!is_character_unlocked(character))) {
                 // Ignore call
                 atelStack->pop_int();
                 atelStack->pop_int();
@@ -948,37 +1398,14 @@ public unsafe partial class ArchipelagoFFXModule {
             }
         }
          */
-        if (encounterToActionDict.TryGetValue(encounter_name, out Action action)) action();
-        else reset_party();
-        _MsBattleExe.orig_fptr(param_1, field_idx, group_idx, formation_idx);
-    }
-
-    // Pre-battle (only battles launched from Atel script?)
-    public static int h_MsBattleLabelExe(uint encounter_id, byte param_2, byte screen_transition) {
-        var result = _MsBattleLabelExe.orig_fptr(encounter_id, param_2, screen_transition);
-
-        var field_ptr = btl->ptr_btl_bin_fields + btl->field_idx * 0xe;
-        string field_name = Marshal.PtrToStringAnsi((nint)(field_ptr+6));
-
-        var group_ptr = _MsBtlListGroup(btl->field_idx, btl->group_idx);
-        byte group_name = *(byte*)(group_ptr+5 + btl->formation_idx * 2);
-
-        string encounter_name = $"{field_name}_{group_name:00}";
-        logger.Debug($"{encounter_name}: encounter ={encounter_id}, transition={screen_transition}, param_2={param_2}");
-        /*
-        if (encounterToPartyDict.TryGetValue(encounter_name, out List<PlySaveId> characters)) {
-            if (characters.Count > 0) {
-                save_party();
-                set_party(characters);
-            } else {
-                reset_party();
-            }
+        if (encounterToActionDict.TryGetValue(encounter_name, out Action? action)) {
+            action();
         }
-         */
-        if (encounterToActionDict.TryGetValue(encounter_name, out Action action)) action();
-        else reset_party();
-
-        return result;
+        else {
+            save_party(); // Probably?
+            reset_party();
+        }
+        _MsBattleExe.orig_fptr(param_1, field_idx, group_idx, formation_idx);
     }
 
     // Battle loop?
@@ -995,15 +1422,17 @@ public unsafe partial class ArchipelagoFFXModule {
                     btl->frontline[i] = save_data->party_order[i];
                 }
                 for (int i = 0; i < 4; i++) {
-                    btl->backline[i] = save_data->party_order[i+3];
+                    btl->backline[i] = save_data->party_order[i + 3];
                 }
                 party_overridden = false;
             }
-            if (encounterVictoryActions.TryGetValue(encounter_name, out Action action)) {
+            if (encounterVictoryActions.TryGetValue(encounter_name, out Action? action)) {
                 action();
             }
-            if (encounterToLocationDict.TryGetValue(encounter_name, out int location_id)) {
-                sendLocation(location_id);
+            if (encounterToLocationDict.TryGetValue(encounter_name, out int[]? boss_locations)) {
+                foreach (int location_id in boss_locations) {
+                    sendLocation(location_id, ArchipelagoLocationType.Boss);
+                }
             }
         }
     }
@@ -1011,8 +1440,9 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void* curr_pos_area_ptr = null;
     public static byte h_MsBtlReadSetScene() {
         byte result = _MsBtlReadSetScene.orig_fptr();
-        ref BtlAreas original_pos_struct = ref *btl->ptr_pos_def;
-        if (original_pos_struct.area_count == 0) return result;
+        //ref BtlAreas original_pos_struct = ref *btl->ptr_pos_def;
+        BtlAreasHelper original_pos_struct = new BtlAreasHelper(btl->ptr_pos_def);
+        if (original_pos_struct.areas.Length == 0) return result;
         if (curr_pos_area_ptr != null) {
             NativeMemory.Free(curr_pos_area_ptr);
             curr_pos_area_ptr = null;
@@ -1020,50 +1450,54 @@ public unsafe partial class ArchipelagoFFXModule {
         }
         int total_size = 0;
         int total_info_count = 0;
-        for (int i = 0; i < original_pos_struct.area_count; i++) {
+        for (int i = 0; i < original_pos_struct.areas.Length; i++) {
             total_size += 0x60;
-            total_size += Math.Max(original_pos_struct[i].count_party_pos, (byte)3) * 0x20;
-            total_size += Math.Max(original_pos_struct[i].count_aeon_pos, (byte)0xC) * 0x20;
-            total_size += original_pos_struct[i].count_enemy_pos * 0x20;
-            total_size += original_pos_struct[i].count_some_info * 0x10; // some_info
-            total_info_count += original_pos_struct[i].count_some_info;
-            for (int j = 0; j < original_pos_struct[i].count_some_info; j++) {
-                total_size += original_pos_struct.some_info(i)[j].count_something * 0x10;
+            total_size += Math.Max(original_pos_struct.areas[i].party_pos.Length, (byte)3) * 0x20;
+            total_size += Math.Max(original_pos_struct.areas[i].aeon_pos.Length, (byte)0xC) * 0x20;
+            total_size += original_pos_struct.areas[i].enemy_pos.Length * 0x20;
+            total_size += original_pos_struct.areas[i].some_info.Length * 0x10; // some_info
+            total_info_count += original_pos_struct.areas[i].some_info.Length;
+            for (int j = 0; j < original_pos_struct.areas[i].some_info.Length; j++) {
+                total_size += original_pos_struct.areas[i].something[j].Length * 0x10;
             }
         }
         total_size += 0x10; //chunk_end
         curr_pos_area_ptr = NativeMemory.AllocZeroed((uint)total_size);
         //curr_pos_area = (PosArea*)Marshal.AllocHGlobal(total_size);
 
-        BtlAreas* curr_pos_struct_ptr = (BtlAreas*)curr_pos_area_ptr;
-
-        ref BtlAreas curr_pos_struct = ref *curr_pos_struct_ptr;
+        BtlArea* curr_pos_struct_ptr = (BtlArea*)curr_pos_area_ptr;
+        BtlAreasHelper curr_pos_struct = new BtlAreasHelper(curr_pos_struct_ptr);
+        //
+        //ref BtlAreas curr_pos_struct = ref *curr_pos_struct_ptr;
+        curr_pos_struct.area_count = original_pos_struct.area_count;
+        curr_pos_struct.area_type = original_pos_struct.area_type;
 
         // Copy
-        int some_info_start = original_pos_struct.area_count * 0x60;
+        int some_info_start = original_pos_struct.areas.Length * 0x60;
         int curr_info_count = 0;
         int positions_start = some_info_start + total_info_count * 0x10;
         int curr_position_count = 0;
-        for (int i = 0; i < original_pos_struct.area_count; i++) {
-            curr_pos_struct[i] = original_pos_struct[i];
+        for (int i = 0; i < original_pos_struct.areas.Length; i++) {
+            //curr_pos_struct.areas[i] = original_pos_struct.areas[i];
+            curr_pos_struct.areas[i].btlArea = original_pos_struct.areas[i].btlArea;
 
-            curr_pos_struct[i].count_party_pos = Math.Max(curr_pos_struct[i].count_party_pos, (byte)3);
-            curr_pos_struct[i].count_aeon_pos = Math.Max(curr_pos_struct[i].count_aeon_pos, (byte)0xc);
-            curr_pos_struct[i].count_enemy_pos = curr_pos_struct[i].count_enemy_pos;
+            curr_pos_struct.areas[i].btlArea.count_party_pos = Math.Max(curr_pos_struct.areas[i].btlArea.count_party_pos, (byte)3);
+            curr_pos_struct.areas[i].btlArea.count_aeon_pos = Math.Max(curr_pos_struct.areas[i].btlArea.count_aeon_pos, (byte)0xc);
+            curr_pos_struct.areas[i].btlArea.count_enemy_pos = curr_pos_struct.areas[i].btlArea.count_enemy_pos;
 
-            curr_pos_struct[i].offset_party_pos = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].count_party_pos; j++) {
+            curr_pos_struct.areas[i].btlArea.offset_party_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct.areas[i].party_pos.Length; j++) {
 
-                if (original_pos_struct[i].count_party_pos <= 2 || (original_pos_struct.party_pos(i)[0] - original_pos_struct.party_pos(i)[original_pos_struct[i].count_party_pos - 1]).Length() < 10) {
+                if (original_pos_struct.areas[i].party_pos.Length <= 2 || (original_pos_struct.areas[i].party_pos[0] - original_pos_struct.areas[i].party_pos[original_pos_struct.areas[i].party_pos.Length - 1]).Length() < 10) {
                     // TODO: Calculate positions
-                    if (original_pos_struct[i].count_party_pos == 1 || original_pos_struct[i].count_party_pos >= 3) {
+                    if (original_pos_struct.areas[i].party_pos.Length == 1 || original_pos_struct.areas[i].party_pos.Length >= 3) {
                         if (j > 2) {
                             //logger.Warning($"Unexpected position: {param_1}, {btl_pos_a}, {btl_pos_b}, {btl_pos_c}");
                         }
-                        curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[0];
+                        curr_pos_struct.areas[i].party_pos[j] = original_pos_struct.areas[i].party_pos[0];
                         if (j != 1) {
-                            Vector4 enemy_pos = original_pos_struct.enemy_pos(i)[0];
-                            Vector4 enemy_to_party = curr_pos_struct.party_pos(i)[j] - enemy_pos;
+                            Vector4 enemy_pos = original_pos_struct.areas[i].enemy_pos[0];
+                            Vector4 enemy_to_party = curr_pos_struct.areas[i].party_pos[j] - enemy_pos;
                             Vector3 enemy_to_party_3d = new(enemy_to_party.X, enemy_to_party.Y, enemy_to_party.Z);
                             Vector3 rotation_axis = new(0, 1, 0);
                             double angle = j == 0 ? -(Math.PI / 2) : (Math.PI / 2);
@@ -1071,25 +1505,25 @@ public unsafe partial class ArchipelagoFFXModule {
                             Vector3 x = Vector3.Cross(rotation_axis, enemy_to_party_3d);
                             Vector3 y = Vector3.Cross(rotation_axis, x);
                             Vector3 rotated = enemy_to_party_3d + (float)Math.Sin(angle) * x + (float)(1 - Math.Cos(angle)) * y;
-                            curr_pos_struct.party_pos(i)[j] += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.party_pos(i)[j].W);
+                            curr_pos_struct.areas[i].party_pos[j] += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.areas[i].party_pos[j].W);
                         }
                     }
                     else {
                         //if (j > 2) return -1;
-                        Vector4 ally_1 = original_pos_struct.party_pos(i)[0];
-                        Vector4 line = curr_pos_struct.party_pos(i)[1] - ally_1;
+                        Vector4 ally_1 = original_pos_struct.areas[i].party_pos[0];
+                        Vector4 line = curr_pos_struct.areas[i].party_pos[1] - ally_1;
                         if (line.Length() > 10) {
                             if (j == 2) {
-                                curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[1];
-                                curr_pos_struct.party_pos(i)[j] += line;
+                                curr_pos_struct.areas[i].party_pos[j] = original_pos_struct.areas[i].party_pos[1];
+                                curr_pos_struct.areas[i].party_pos[j] += line;
                             }
                             else {
-                                curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[j];
+                                curr_pos_struct.areas[i].party_pos[j] = original_pos_struct.areas[i].party_pos[j];
                             }
                         }
                         else if (j != 1) {
-                            Vector4 enemy_pos = original_pos_struct.enemy_pos(i)[0];
-                            Vector4 enemy_to_party = curr_pos_struct.party_pos(i)[j] - enemy_pos;
+                            Vector4 enemy_pos = original_pos_struct.areas[i].enemy_pos[0];
+                            Vector4 enemy_to_party = curr_pos_struct.areas[i].party_pos[j] - enemy_pos;
                             Vector3 enemy_to_party_3d = new(enemy_to_party.X, enemy_to_party.Y, enemy_to_party.Z);
                             Vector3 rotation_axis = new(0, 1, 0);
                             double angle = j == 0 ? -(Math.PI / 2) : (Math.PI / 2);
@@ -1097,81 +1531,81 @@ public unsafe partial class ArchipelagoFFXModule {
                             Vector3 x = Vector3.Cross(rotation_axis, enemy_to_party_3d);
                             Vector3 y = Vector3.Cross(rotation_axis, x);
                             Vector3 rotated = enemy_to_party_3d + (float)Math.Sin(angle) * x + (float)(1 - Math.Cos(angle)) * y;
-                            curr_pos_struct.party_pos(i)[j] += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.party_pos(i)[j].W);
+                            curr_pos_struct.areas[i].party_pos[j] += new Vector4(Vector3.Normalize(rotated) * 30, curr_pos_struct.areas[i].party_pos[j].W);
                         }
                     }
                 }
                 else {
                     // Copy
-                    curr_pos_struct.party_pos(i)[j] = original_pos_struct.party_pos(i)[j];
+                    curr_pos_struct.areas[i].party_pos[j] = original_pos_struct.areas[i].party_pos[j];
                 }
                 curr_position_count++;
             }
-            curr_pos_struct[i].offset_party_run_pos = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].count_party_pos; j++) {
-                if (original_pos_struct[i].count_party_pos <= j) {
-                    curr_pos_struct.party_run_pos(i)[j] = original_pos_struct.party_run_pos(i)[0];
+            curr_pos_struct.areas[i].btlArea.offset_party_run_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct.areas[i].party_pos.Length; j++) {
+                if (original_pos_struct.areas[i].party_pos.Length <= j) {
+                    curr_pos_struct.areas[i].party_run_pos[j] = original_pos_struct.areas[i].party_run_pos[0];
                 }
                 else {
-                    curr_pos_struct.party_run_pos(i)[j] = original_pos_struct.party_run_pos(i)[j];
+                    curr_pos_struct.areas[i].party_run_pos[j] = original_pos_struct.areas[i].party_run_pos[j];
                 }
-                if (curr_pos_struct.party_run_pos(i)[j] == Vector4.Zero) {
-                    curr_pos_struct.party_run_pos(i)[j] = original_pos_struct.party_pos(i)[0];
-                    Vector4 enemy_pos = original_pos_struct.enemy_pos(i)[0];
-                    Vector4 enemy_to_party = curr_pos_struct.party_run_pos(i)[j] - enemy_pos;
-                    curr_pos_struct.party_run_pos(i)[j] += Vector4.Normalize(enemy_to_party) * 0x30;
+                if (curr_pos_struct.areas[i].party_run_pos[j] == Vector4.Zero) {
+                    curr_pos_struct.areas[i].party_run_pos[j] = original_pos_struct.areas[i].party_pos[0];
+                    Vector4 enemy_pos = original_pos_struct.areas[i].enemy_pos[0];
+                    Vector4 enemy_to_party = curr_pos_struct.areas[i].party_run_pos[j] - enemy_pos;
+                    curr_pos_struct.areas[i].party_run_pos[j] += Vector4.Normalize(enemy_to_party) * 0x30;
                 }
                 curr_position_count++;
             }
 
-            curr_pos_struct[i].offset_aeon_pos = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].count_aeon_pos; j++) {
+            curr_pos_struct.areas[i].btlArea.offset_aeon_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct.areas[i].aeon_pos.Length; j++) {
                 if (j == 7) {
-                    curr_pos_struct.aeon_pos(i)[j] = curr_pos_struct.party_pos(i)[0];
+                    curr_pos_struct.areas[i].aeon_pos[j] = curr_pos_struct.areas[i].party_pos[0];
                 }
                 else if (j == 9) {
-                    curr_pos_struct.aeon_pos(i)[j] = curr_pos_struct.party_pos(i)[2];
+                    curr_pos_struct.areas[i].aeon_pos[j] = curr_pos_struct.areas[i].party_pos[2];
                 }
                 else {
-                    curr_pos_struct.aeon_pos(i)[j] = curr_pos_struct.party_pos(i)[1];
+                    curr_pos_struct.areas[i].aeon_pos[j] = curr_pos_struct.areas[i].party_pos[1];
                 }
                 curr_position_count++;
             }
-            curr_pos_struct[i].offset_aeon_run_pos = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].count_aeon_pos; j++) {
-                curr_pos_struct.aeon_run_pos(i)[j] = curr_pos_struct.party_run_pos(i)[0];
+            curr_pos_struct.areas[i].btlArea.offset_aeon_run_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct.areas[i].aeon_pos.Length; j++) {
+                curr_pos_struct.areas[i].aeon_run_pos[j] = curr_pos_struct.areas[i].party_run_pos[0];
                 curr_position_count++;
             }
 
-            curr_pos_struct[i].offset_enemy_pos = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].count_enemy_pos; j++) {
-                curr_pos_struct.enemy_pos(i)[j] = original_pos_struct.enemy_pos(i)[j];
+            curr_pos_struct.areas[i].btlArea.offset_enemy_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct.areas[i].enemy_pos.Length; j++) {
+                curr_pos_struct.areas[i].enemy_pos[j] = original_pos_struct.areas[i].enemy_pos[j];
                 curr_position_count++;
             }
-            curr_pos_struct[i].offset_enemy_run_pos = (uint)(positions_start + curr_position_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].count_enemy_pos; j++) {
-                curr_pos_struct.enemy_run_pos(i)[j] = original_pos_struct.enemy_run_pos(i)[j];
+            curr_pos_struct.areas[i].btlArea.offset_enemy_run_pos = (uint)(positions_start + curr_position_count * 0x10);
+            for (int j = 0; j < curr_pos_struct.areas[i].enemy_pos.Length; j++) {
+                curr_pos_struct.areas[i].enemy_run_pos[j] = original_pos_struct.areas[i].enemy_run_pos[j];
                 curr_position_count++;
             }
 
-            curr_pos_struct[i].offset_some_info = (uint)(some_info_start + curr_info_count * 0x10);
-            for (int j = 0; j < curr_pos_struct[i].count_some_info; j++) {
-                curr_pos_struct.some_info(i)[j] = original_pos_struct.some_info(i)[j];
+            curr_pos_struct.areas[i].btlArea.offset_some_info = (uint)(some_info_start + curr_info_count * 0x10);
+            for (int j = 0; j < curr_pos_struct.areas[i].some_info.Length; j++) {
+                curr_pos_struct.areas[i].some_info[j] = original_pos_struct.areas[i].some_info[j];
                 curr_info_count++;
             }
         }
 
-        for (int i = 0; i < original_pos_struct.area_count; i++) {
-            for (int j = 0; j < curr_pos_struct[i].count_some_info; j++) {
-                curr_pos_struct.some_info(i)[j].offset_something = (uint)(positions_start + curr_position_count * 0x10);
-                for (int k = 0; k < curr_pos_struct.some_info(i)[j].count_something; k++) {
-                    curr_pos_struct.something(i, j)[k] = original_pos_struct.something(i, j)[k];
+        for (int i = 0; i < original_pos_struct.areas.Length; i++) {
+            for (int j = 0; j < curr_pos_struct.areas[i].some_info.Length; j++) {
+                curr_pos_struct.areas[i].some_info[j].offset_something = (uint)(positions_start + curr_position_count * 0x10);
+                for (int k = 0; k < curr_pos_struct.areas[i].something[j].Length; k++) {
+                    curr_pos_struct.areas[i].something[j][k] = original_pos_struct.areas[i].something[j][k];
                     curr_position_count++;
                 }
             }
         }
-        for (int i = 0; i < original_pos_struct.area_count; i++) {
-            curr_pos_struct[i].offset_chunk_end = (uint)(positions_start + curr_position_count * 0x10);
+        for (int i = 0; i < original_pos_struct.areas.Length; i++) {
+            curr_pos_struct.areas[i].btlArea.offset_chunk_end = (uint)(positions_start + curr_position_count * 0x10);
         }
         *curr_pos_struct.chunk_end = *original_pos_struct.chunk_end;
 
@@ -1199,20 +1633,10 @@ public unsafe partial class ArchipelagoFFXModule {
 
         return _FUN_007905a0.orig_fptr(param_1, param_2);
     }
-    private static void h_give_key_item(uint param_1) {
+    private static void h_TkMsImportantSet(uint param_1) {
         logger.Debug($"give_key_item: {param_1}");
 
-        _FUN_0088e700.orig_fptr(param_1);
-    }
-    private static void h_take_gil(int param_1) {
-        logger.Debug($"take_gil: {param_1}");
-
-        _FUN_00785a60.orig_fptr(param_1);
-    }
-    private static int h_give_weapon(Equipment* param_1) {
-        logger.Debug($"give_weapon: {(int)param_1}");
-
-        return _FUN_007ab930.orig_fptr(param_1);
+        _TkMsImportantSet.orig_fptr(param_1);
     }
     private static byte* h_read_from_bin(int param_1, short* param_2, int param_3) {
         logger.Debug($"get_from_bin: {param_1}, {(int)param_2}, {param_3}");
@@ -1248,7 +1672,7 @@ public unsafe partial class ArchipelagoFFXModule {
         switch (item_type) {
             case 0xA:
                 // Key Item
-                h_give_key_item(item_id);
+                h_TkMsImportantSet(item_id);
                 // TODO: Handle Jecht Spheres and Al Bhed Primers
                 break;
             case 0x2:
@@ -1268,7 +1692,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 new_weapon.flags = weapon_data->flags;
                 new_weapon.owner = weapon_data->owner;
                 new_weapon.type = weapon_data->type;
-                new_weapon.__0x6 = 0xff;
+                new_weapon.equipped_by = 0xff;
                 new_weapon.dmg_formula = weapon_data->dmg_formula;
                 new_weapon.power = weapon_data->power;
                 new_weapon.crit_bonus = weapon_data->crit_bonus;
@@ -1285,14 +1709,14 @@ public unsafe partial class ArchipelagoFFXModule {
                 new_weapon.slot_count = (byte)Math.Max(weapon_data->slot_count, count);
                 new_weapon.name_id = h_get_weapon_name(&new_weapon);
                 h_get_weapon_model(new_weapon.name_id, new_weapon.owner, 0, &new_weapon.model_id);
-                var result = h_give_weapon(&new_weapon);
+                var result = _FUN_007ab930(&new_weapon); // giveWeapon?
                 if (result != 0) {
                     h_obtain_treasure_cleanup(&rewardData, 7);
                 }
                 break;
             case 0x1:
                 // Gil
-                h_take_gil(-1000 * amount);
+                _MsPayGIL(-1000 * amount);
                 break;
             case 0xE:
                 // Region Unlock
@@ -1304,73 +1728,14 @@ public unsafe partial class ArchipelagoFFXModule {
                 // Party Member
                 int char_id = (int)(item_id & 0xFF);
                 logger.Debug($"Character: {id_to_character[char_id]}");
-                character_is_unlocked[char_id] = true;
+                unlocked_characters[char_id] = true;
                 if (char_id == 0xF) {
                     // Magus sisters
-                    character_is_unlocked[PlySaveId.PC_MAGUS2] = true;
-                    character_is_unlocked[PlySaveId.PC_MAGUS3] = true;
+                    unlocked_characters[PlySaveId.PC_MAGUS2] = true;
+                    unlocked_characters[PlySaveId.PC_MAGUS3] = true;
                 }
                 break;
         }
-        /*
-        if (item_type == 0xA000) {
-            give_key_item(item_id);
-        }
-        else if (item_type == 0x2000) {
-            give_item(item_id, amount);
-        }
-        else if (item_type == 0x5000) {
-            item_id &= 0xff;
-            UnownedEquipment* weapon_data = (UnownedEquipment*)read_from_bin((int)item_id, (short*)(*buki_get_pointer), 0);
-            //var data = get_from_bin((int)item_id, (short*)0x12000C00, 0);
-            logger.Debug($"obtain_item: Weapon {(int)weapon_data}");
-            BtlRewardData rewardData = new BtlRewardData();
-            rewardData.gear_count = 1;
-            Equipment new_weapon = rewardData.gear[0];
-            new_weapon.exists = true;
-            new_weapon.flags = weapon_data->flags;
-            new_weapon.owner = weapon_data->owner;
-            new_weapon.type = weapon_data->type;
-            new_weapon.__0x6 = 0xff;
-            new_weapon.dmg_formula = weapon_data->dmg_formula;
-            new_weapon.power = weapon_data->power;
-            new_weapon.crit_bonus = weapon_data->crit_bonus;
-            int count = 0;
-            for (int i = 0; i < 4; i++) {
-                if (weapon_data->abilities[i] == 0) {
-                    new_weapon.abilities[i] = 0xff;
-                } else {
-                    new_weapon.abilities[i] = weapon_data->abilities[i];
-                    count++;
-                }
-            }
-            new_weapon.slot_count = (byte)Math.Max(weapon_data->slot_count, count);
-            new_weapon.name_id = get_weapon_name(&new_weapon);
-            get_weapon_model(new_weapon.name_id, new_weapon.owner, 0, &new_weapon.model_id);
-            var result = give_weapon(&new_weapon);
-            if (result != 0) {
-                obtain_treasure_cleanup(&rewardData, 7);
-            }
-        } else if (item_type == 0x1000) {
-            // Gil
-            take_gil(-1000 * amount);
-        } else if (item_type == 0xE000) {
-            // Region unlock
-            item_id &= 0xff;
-            logger.Debug($"Region: {(RegionEnum)item_id}");
-            region_is_unlocked[(RegionEnum)item_id] = true;
-        } else if (item_type == 0xF000) {
-            // Party member
-            var char_id = item_id & 0xFF;
-            logger.Debug($"Character: {(PlySaveId)char_id}");
-            character_is_unlocked[(PlySaveId)char_id] = true;
-            if (char_id == 0xF) {
-                // Magus sisters
-                character_is_unlocked[PlySaveId.PC_MAGUS2] = true;
-                character_is_unlocked[PlySaveId.PC_MAGUS3] = true;
-            }
-        }
-         */
     }
 
     public static void call_obtain_brotherhood() {
@@ -1379,7 +1744,7 @@ public unsafe partial class ArchipelagoFFXModule {
         int param_1 = 0;
         int param_2 = 0;
 
-        h_Common_obtainBrotherhood((AtelBasicWorker*)&param_1, &param_2, &stack);
+        h_Common_obtainBrotherhoodRetInt((AtelBasicWorker*)&param_1, &param_2, &stack);
     }
 
     public static void receive_treasure(int id) {
@@ -1413,8 +1778,8 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
             }
         }
-        *airshipDestinationCount = curr-1;
-        *airshipDestinationLength = curr-1;
+        *airshipDestinationCount = curr - 1;
+        *airshipDestinationLength = curr - 1;
         /*
         airshipDestinations[0] = 2;
         airshipDestinations[1] = 6;
@@ -1462,33 +1827,33 @@ public unsafe partial class ArchipelagoFFXModule {
             for (int i = 0; i < 4; i++) {
                 if (equip->abilities[i] == 0 || equip->abilities[i] == 0xFF) continue;
                 AutoAbility* a_ability = (AutoAbility*)_MsGetExcelData(equip->abilities[i] & 0xFFF, btl->ptr_a_ability_bin, (int*)0x0);
-                strength_mult            += a_ability->stat_inc_flags.strength()            ? a_ability->stat_inc_amount : 0;
-                defense_mult             += a_ability->stat_inc_flags.defense()             ? a_ability->stat_inc_amount : 0;
-                magic_mult               += a_ability->stat_inc_flags.magic()               ? a_ability->stat_inc_amount : 0;
-                magic_defense_mult       += a_ability->stat_inc_flags.magic_defense()       ? a_ability->stat_inc_amount : 0;
-                agility_mult             += a_ability->stat_inc_flags.agility()             ? a_ability->stat_inc_amount : 0;
-                luck_mult                += a_ability->stat_inc_flags.luck()                ? a_ability->stat_inc_amount : 0;
-                evasion_mult             += a_ability->stat_inc_flags.evasion()             ? a_ability->stat_inc_amount : 0;
-                accuracy_mult            += a_ability->stat_inc_flags.accuracy()            ? a_ability->stat_inc_amount : 0;
-                hp_mult                  += a_ability->stat_inc_flags.hp()                  ? a_ability->stat_inc_amount : 0;
-                mp_mult                  += a_ability->stat_inc_flags.mp()                  ? a_ability->stat_inc_amount : 0;
-                strength_bonus_mult      += a_ability->stat_inc_flags.strength_bonus()      ? a_ability->stat_inc_amount : 0;
-                defense_bonus_mult       += a_ability->stat_inc_flags.defense_bonus()       ? a_ability->stat_inc_amount : 0;
-                magic_bonus_mult         += a_ability->stat_inc_flags.magic_bonus()         ? a_ability->stat_inc_amount : 0;
+                strength_mult += a_ability->stat_inc_flags.strength() ? a_ability->stat_inc_amount : 0;
+                defense_mult += a_ability->stat_inc_flags.defense() ? a_ability->stat_inc_amount : 0;
+                magic_mult += a_ability->stat_inc_flags.magic() ? a_ability->stat_inc_amount : 0;
+                magic_defense_mult += a_ability->stat_inc_flags.magic_defense() ? a_ability->stat_inc_amount : 0;
+                agility_mult += a_ability->stat_inc_flags.agility() ? a_ability->stat_inc_amount : 0;
+                luck_mult += a_ability->stat_inc_flags.luck() ? a_ability->stat_inc_amount : 0;
+                evasion_mult += a_ability->stat_inc_flags.evasion() ? a_ability->stat_inc_amount : 0;
+                accuracy_mult += a_ability->stat_inc_flags.accuracy() ? a_ability->stat_inc_amount : 0;
+                hp_mult += a_ability->stat_inc_flags.hp() ? a_ability->stat_inc_amount : 0;
+                mp_mult += a_ability->stat_inc_flags.mp() ? a_ability->stat_inc_amount : 0;
+                strength_bonus_mult += a_ability->stat_inc_flags.strength_bonus() ? a_ability->stat_inc_amount : 0;
+                defense_bonus_mult += a_ability->stat_inc_flags.defense_bonus() ? a_ability->stat_inc_amount : 0;
+                magic_bonus_mult += a_ability->stat_inc_flags.magic_bonus() ? a_ability->stat_inc_amount : 0;
                 magic_defense_bonus_mult += a_ability->stat_inc_flags.magic_defense_bonus() ? a_ability->stat_inc_amount : 0;
             }
         }
 
-        ply.strength =      (byte)Math.Clamp(ply.strength      * strength_mult      / 100, 0, 255);
-        ply.defense =       (byte)Math.Clamp(ply.defense       * defense_mult       / 100, 0, 255);
-        ply.magic =         (byte)Math.Clamp(ply.magic         * magic_mult         / 100, 0, 255);
+        ply.strength = (byte)Math.Clamp(ply.strength * strength_mult / 100, 0, 255);
+        ply.defense = (byte)Math.Clamp(ply.defense * defense_mult / 100, 0, 255);
+        ply.magic = (byte)Math.Clamp(ply.magic * magic_mult / 100, 0, 255);
         ply.magic_defense = (byte)Math.Clamp(ply.magic_defense * magic_defense_mult / 100, 0, 255);
-        ply.agility =       (byte)Math.Clamp(ply.agility       * agility_mult       / 100, 0, 255);
-        ply.luck =          (byte)Math.Clamp(ply.luck          * luck_mult          / 100, 0, 255);
-        ply.evasion =       (byte)Math.Clamp(ply.evasion       * evasion_mult       / 100, 0, 255);
-        ply.accuracy =      (byte)Math.Clamp(ply.accuracy      * accuracy_mult      / 100, 0, 255);
-        ply.hp =            (uint)Math.Clamp(ply.hp            * hp_mult            / 100, 0, ply.auto_ability_effects.has_break_hp_limit ? 99999 : 9999);
-        ply.mp =            (uint)Math.Clamp(ply.mp            * mp_mult            / 100, 0, ply.auto_ability_effects.has_break_mp_limit ?  9999 :  999);
+        ply.agility = (byte)Math.Clamp(ply.agility * agility_mult / 100, 0, 255);
+        ply.luck = (byte)Math.Clamp(ply.luck * luck_mult / 100, 0, 255);
+        ply.evasion = (byte)Math.Clamp(ply.evasion * evasion_mult / 100, 0, 255);
+        ply.accuracy = (byte)Math.Clamp(ply.accuracy * accuracy_mult / 100, 0, 255);
+        ply.hp = (uint)Math.Clamp(ply.hp * hp_mult / 100, 0, ply.auto_ability_effects.has_break_hp_limit ? 99999 : 9999);
+        ply.mp = (uint)Math.Clamp(ply.mp * mp_mult / 100, 0, ply.auto_ability_effects.has_break_mp_limit ? 9999 : 999);
     }
 
     public static void h_FUN_00a48910(uint chr_id, int node_idx) {
@@ -1505,113 +1870,98 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
 
-    // Overdrive Experiment
-
-    private static uint h_MsCheckLeftWindow(uint chr_id) {
-        bool bVar1;
-        Chr* chr;
-        PCommand* command;
-        uint com_id;
-        uint uVar2;
-        int iVar3;
-        int _fullOverdrive = FhUtil.get_at<int>(0xD333E8);
-        byte* btl_ply_win = (byte*)FhUtil.get_at<uint>(0x1F10CD8);
-
-
-        chr = _MsGetChr(chr_id);
-        if (_fullOverdrive != 0) {
-            chr->limit_charge = chr->limit_charge_max;
-        }
-
-        uVar2 = 0;
-        iVar3 = (int)chr_id * 0x478 + 0x28;
-        for (int i = 0; i < 8; i++) {
-            com_id = *(ushort*)(btl_ply_win + iVar3);
-            if (com_id != 0xff) {
-                command = _MsGetComData(com_id, (int*)0x0);
-                bVar1 = _MsGetCommandUse(chr_id, com_id) != 0;
-                if (!bVar1) {
-                    if (command->command.limit_cost == 0) {
-                        uVar2 = uVar2 | 1;
-                    }
-                    else {
-                        uVar2 = uVar2 | 2;
-                    }
-                }
-            }
-            iVar3 = iVar3 + 2;
-        }
-        return uVar2;
+    // Non-loading FMV
+    private static bool h_graphicInitFMVPlayer(int movie_id, int param_2) {
+        bool result = _graphicInitFMVPlayer.orig_fptr(movie_id, param_2);
+        return !result;
     }
 
-    private static uint h_MsCheckUseCommand(uint chr_id, PCommand* command, int param_3) {
-        Chr* chr;
-        uint uVar1;
-        uint uVar2;
+    // Texture experiments
+    private static void h_FUN_00656c90(int param_1, int param_2, char* fileName) {
+        //logger.Debug($"{param_1}, {param_2}, {(nint)fileName}");
+        //
+        //string nameString = Marshal.PtrToStringAnsi((nint)fileName);
+        //
+        //logger.Debug(nameString);
 
-        if (command == (Command*)0x0) {
-            return 0xffffffff;
+
+        _FUN_00656c90.orig_fptr(param_1, param_2, fileName);
+    }
+
+    //private static void h_FUN_0065ee30(FixedClusterData* data) {
+    //    _FUN_0065ee30.orig_fptr(data);
+    //
+    //    //if (data->_0x0c != 0) {
+    //    //    logger.Debug($"Data exists {(uint)data}");
+    //    //
+    //    //    nint* _this = (nint*)(data->_0x00 + data->_0x10);
+    //    //
+    //    //    var g_mainTexString = Marshal.StringToHGlobalAnsi("g_mainTex");
+    //    //    var g_widthSizeString = Marshal.StringToHGlobalAnsi("g_widthSize");
+    //    //    var g_heightSizeString = Marshal.StringToHGlobalAnsi("g_heightSize");
+    //    //
+    //    //    var g_mainTex    = h_FUN_0056cd50(*_this, g_mainTexString);
+    //    //    var g_widthSize  = h_FUN_0056cd50(*_this, g_widthSizeString);
+    //    //    var g_heightSize = h_FUN_0056cd50(*_this, g_heightSizeString);
+    //    //
+    //    //    if (g_mainTex != null) {
+    //    //        logger.Debug($"g_mainTex exists {*g_mainTex}");
+    //    //        if (g_widthSize != null) {
+    //    //            logger.Debug($"g_widthSize exists {*g_widthSize}");
+    //    //            if (g_heightSize != null) {
+    //    //                logger.Debug($"g_heightSize exists {*g_heightSize}");
+    //    //                if (_this[1] != 0) {
+    //    //                    nint* _this2 = (nint*)_this[1];
+    //    //                    byte[] widthBytes = new byte[g_widthSize->size];
+    //    //                    for (int i = 0; i < widthBytes.Length; i++) {
+    //    //                        widthBytes[i] = *(byte*)(_this2 + g_widthSize->offset + i);
+    //    //                    }
+    //    //                    logger.Debug("Copied width");
+    //    //                    //FhModule.some_image_tex = g_mainTex;
+    //    //                    //FhModule.some_image_dimensions.X = g_widthSize;
+    //    //                    //FhModule.some_image_dimensions.Y = g_heightSize;
+    //    //                }
+    //    //            }
+    //    //        }
+    //    //    }
+    //    //
+    //    //    Marshal.FreeHGlobal(g_mainTexString);
+    //    //    Marshal.FreeHGlobal(g_widthSizeString);
+    //    //    Marshal.FreeHGlobal(g_heightSizeString);
+    //    //}
+    //}
+
+    public static List<nint> loaded_clusters = [];
+    public static PTexture2DBase* loadCluster(string file) {
+        //var filePath = Marshal.StringToHGlobalAnsi("/FFX_Data/GameData/PS3Data/map/hiku/hiku22/2d/tex/D3D11/0_11_132_16_12.dds.phyre");
+        if (file == "") return null;
+        var filePath = Marshal.StringToHGlobalAnsi(file);
+        nint clusterManager = FhUtil.get_at<nint>(0x008cca44);
+        var cluster = _ClusterManager_loadPCluster(clusterManager, filePath);
+        Marshal.FreeHGlobal(filePath);
+        if (cluster == 0) return null;
+        loaded_clusters.Add(cluster);
+
+        int fixedClusterResult = _Phyre_PFramework_PApplication_FixupClusters(cluster, 1);
+        if (fixedClusterResult != 0) return null;
+
+        FixedClusterData data = new();
+        data._0x14 = *(nint*)cluster + 0x1c;
+        data._0x18 = *(nint*)data._0x14 != data._0x14 ? *(nint*)data._0x14 : 0;
+        data._0x1c = (nint)FhUtil.ptr_at<nint>(0x008a3738); // PTexture2DBase vftable?
+        _FUN_0065ee30(&data);
+        if (data._0x0c == 0) {
+            return null;
         }
-        chr = _MsGetChr(chr_id);
-        if ( (command->command.limit_cost == 0 || ((command->command.limit_cost <= chr->limit_charge && (*(ushort*)((int)chr + 0x616) & 0x400) == 0 ) || btl->debug.always_available_overdrive)
-             ) && ((command->command.flags_misc & 0x20000) == 0 || chr->status_suffer_turns_left.silence == 0)) {
-            uVar1 = _MsGetCommandMP(chr_id, (uint)command);
-            uVar2 = _MsGetRamChrMonster(chr_id);
-            if (uVar2 == 1 || btl->debug.no_mp_cost) {
-                uVar1 = 0;
-                param_3 = 0;
-            }
-            if ((int)(param_3 + uVar1) <= chr->mp) {
-                return uVar1;
-            }
-        }
-        return 0xffffffff;
+
+        PTexture2DBase* _this = (PTexture2DBase*)(data._0x00 + data._0x10);
+        return _this;
     }
 
-    private static float _graphicUiRemapX2(float x) {
-        return (x * 512.0f) / 1920.0f;
+    public static void releaseCluster(nint cluster) {
+        nint clusterManager = FhUtil.get_at<nint>(0x008cca44); //var clusterManager = getClusterManager();
+        _ClusterManager_releasePCluster(clusterManager, cluster);
+
     }
-    private static float _graphicUiRemapY2(float y) {
-        return (y * 416.0f) / 1080.0f;
-    }
-    private static void h_TOBtlDrawStatusLimitGauge(int current_parts, float param_2, float param_3, float param_4, float param_5) {
-        _TOBtlDrawStatusLimitGauge.orig_fptr(current_parts, param_2, param_3, param_4, param_5);
-
-        if (cur_btl_window == null || cur_btl_window->command_list_len == 0) return;
-        int curr_draw_char = ((int)param_3 - 335) / 20; // 335.1111, 355.14075, 375.17038
-        if (curr_draw_char < 0 || curr_draw_char > 3) return; // Not a player
-        if (btl->frontline[curr_draw_char] != cur_btl_window->cur_chr_id && (cur_btl_window->cur_chr_id < 8 || cur_btl_window->cur_chr_id > 0x11)) return; // Not current character and not Aeon
-
-        PCommand* hovered_command = _MsGetComData(cur_btl_window->command_list[cur_btl_window->sel_idx], (int*)0x0);
-        if (hovered_command->command.limit_cost > 0) {
-            short gauge_parts = FhUtil.get_at<short>(0x21d0aa4);
-            Chr* chr = _MsGetChr(cur_btl_window->cur_chr_id);
-            float parts_ratio = (float)gauge_parts / chr->limit_charge_max;
-
-            float gauge_start = _graphicUiRemapX2(1f) + param_2;
-            float y = _graphicUiRemapY2(1f) + param_3;
-            float h = param_5 - _graphicUiRemapY2(2f);
-            if (chr->limit_charge >= hovered_command->command.limit_cost) {
-                var variance = ((Math.Sin(cur_btl_window->seconds_spent_in_menu * 4) + 1) / 2);
-                byte alpha = (byte)(0x80 * variance);
-                int rgba = 0xff | (0xff << 8) | (0xff << 16) | (alpha << 24); // RGBA
-
-                float used_start = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * (chr->limit_charge - hovered_command->command.limit_cost) * parts_ratio) / gauge_parts;
-                float used_end = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * current_parts) / gauge_parts;
-                float used_width = used_end - used_start;
-                _TODrawCrossBoxXYWHC2(used_start, y, used_width, h, (uint)rgba, (uint)rgba);
-            }
-            else {
-                int rgba = 128 | (16 << 8) | (16 << 16) | (0x80 << 24); // RGBA
-
-                float overflow_start = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * (current_parts+1)) / gauge_parts;
-                float overflow_end = gauge_start + ((param_4 - _graphicUiRemapX2(2f)) * hovered_command->command.limit_cost * parts_ratio) / gauge_parts;
-                float overflow_width = overflow_end - overflow_start;
-                _TODrawCrossBoxXYWHC2(overflow_start, y, overflow_width, h, (uint)rgba, (uint)rgba);
-            }
-        }
-    }
-
-
 }
 

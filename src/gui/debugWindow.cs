@@ -5,7 +5,8 @@ using Fahrenheit.Core.FFX.Atel;
 using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
-using Fahrenheit.Core.ImGuiNET;
+//using Fahrenheit.Core.ImGuiNET;
+using Hexa.NET.ImGui;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,10 +16,16 @@ using System.Runtime.InteropServices;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using Color = Archipelago.MultiClient.Net.Models.Color;
 using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
+using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoFFXModule;
+using System.IO;
+using TerraFX.Interop.DirectX;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.GUI;
 public unsafe static class ArchipelagoGUI {
     public delegate void OnRenderDelegate();
+
+    public const ImGuiKey archipelago_gui_key = ImGuiKey.F8;
+    public const ImGuiKey experimental_gui_key = ImGuiKey.F9;
 
     public static bool enabled = false;
     public static bool experiments_enabled = false;
@@ -57,6 +64,8 @@ public unsafe static class ArchipelagoGUI {
     private static Equipment* armor = null;
 
     private static int clickedNodeIndex = -1;
+
+
     public static void render() {
         //ImGui.ShowDebugLogWindow();
         //ImGui.ShowStyleEditor();
@@ -77,11 +86,64 @@ public unsafe static class ArchipelagoGUI {
         //ImGui.PopStyleColor();
     }
 
+    private static string cluster_file_name = "";
+    //private static PTexture2DBase* loaded_texture2d;
+    private static FhTexture? loaded_image;
+    
+    private static FhTexture? shiori_image;
+    private static FhTexture? bevelle_image;
+
     private static void render_experiments() {
-        experiments_enabled ^= ImGui.IsKeyPressed(ImGuiKey.F8);
+        experiments_enabled ^= ImGui.IsKeyPressed(experimental_gui_key);
         if (!experiments_enabled) return;
 
         ImGuiStylePtr style = ImGui.GetStyle();
+
+
+        if (ImGui.Begin("Archipelago###Archipelago.Experiments.GUI")) {
+            if (ImGui.Button("Load seed")) {
+                ArchipelagoFFXModule.loadSeed();
+            }
+            //ImGui.InputText("fileName", ref cluster_file_name, 256);
+            //if (ImGui.Button("Load cluster")) {
+            //    loaded_texture2d = ArchipelagoFFXModule.loadCluster(cluster_file_name);
+            //}
+            //if (ImGui.Button("Unload cluster") && loaded_clusters.Count > 0) {
+            //    releaseCluster(loaded_clusters[0]);
+            //    loaded_clusters.RemoveAt(0);
+            //}
+            //
+            //if (loaded_texture2d != null && loaded_image == null) {
+            //    loaded_image = loadTexture(loaded_texture2d);
+            //}
+            //if (loaded_image != null) {
+            //    ImGui.Image(loaded_image.imTextureRef, new(loaded_image.width, loaded_image.height), new(0, 1), new(1, 0));
+            //}
+            //if (shiori_image == null || bevelle_image == null) {
+            //    var resources = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles();
+            //    var shiori_file = Array.Find(resources, file => file.Name == "shiori.png");
+            //    if (shiori_file != null) {
+            //        FhApi.ResourceLoader.load_png_from_disk(shiori_file.FullName, out shiori_image);
+            //    }
+            //}
+            //if (shiori_image != null) {
+            //    ImGui.Image(shiori_image.TextureRef, new(shiori_image.Metadata.width, shiori_image.Metadata.height));
+            //}
+
+            ImGui.Text($"Tidus overdrive uses: {Globals.save_data->tidus_limit_uses}");
+
+            //for (int i = 0; i < 18; i++) {
+            //    string name = Globals.save_data->character_names[i].name;
+            //    if (ImGui.InputText($"Name {i}", ref name, 20)) {
+            //        Globals.save_data->character_names[i].name = name;
+            //    }
+            //}
+
+
+        }
+        ImGui.End();
+
+        return;
 
         if (Globals.SphereGrid.lpamng == null) return;
 
@@ -337,8 +399,8 @@ public unsafe static class ArchipelagoGUI {
                 //ImGui.SetScrollY(curr_scroll * ImGui.GetScrollMaxY());
             }
             //ImGui.TextWrapped(string.Join("\n", client_log));
-            ImGui.EndChild();
         }
+        ImGui.EndChild();
 
 
         bool process_input = ImGui.InputText("Input", ref client_input_command, 50, ImGuiInputTextFlags.EnterReturnsTrue);
@@ -450,7 +512,7 @@ public unsafe static class ArchipelagoGUI {
         fixed (int* ap_mult = &ArchipelagoFFXModule.ap_multiplier) {
             uint step = 1;
             uint step_fast = 10;
-            ImGui.InputScalar("AP multiplier", ImGuiDataType.U32, (nint)ap_mult, (nint)(&step), (nint)(&step_fast));
+            ImGui.InputScalar("AP multiplier", ImGuiDataType.U32, ap_mult, &step, &step_fast);
         }
 
         ImGui.Text($"Current room: {Globals.save_data->current_room_id} ({Marshal.PtrToStringAnsi((nint)ArchipelagoFFXModule.get_event_name(*(uint*)Globals.event_id))!})");
@@ -481,10 +543,10 @@ public unsafe static class ArchipelagoGUI {
             fixed (uint* battle_input = &LaunchBattleInput) {
                 uint p_step = 1;
                 uint p_step_fast = 10;
-                ImGui.InputScalar("launchBattleInput", ImGuiDataType.U32, (nint)battle_input, (nint)(&p_step), (nint)(&p_step_fast), "%x");
+                ImGui.InputScalar("launchBattleInput", ImGuiDataType.U32, battle_input, &p_step, &p_step_fast, "%x");
             }
             if (ImGui.Button("launchBattleButton")) {
-                ArchipelagoFFXModule.h_MsBattleLabelExe(LaunchBattleInput, 1, 1);
+                ArchipelagoFFXModule._MsBattleLabelExe(LaunchBattleInput, 1, 1);
             }
         }
 
@@ -513,64 +575,70 @@ public unsafe static class ArchipelagoGUI {
     }
 
     private static void render_client() {
-        enabled ^= ImGui.IsKeyPressed(ImGuiKey.F7);
+        enabled ^= ImGui.IsKeyPressed(archipelago_gui_key);
         if (!enabled) return;
         ImGuiStylePtr style = ImGui.GetStyle();
 
-        if (!ImGui.Begin("Archipelago###Archipelago.GUI")){
-            ImGui.End();
-            return;
-        }
+        if (ImGui.Begin("Archipelago###Archipelago.GUI")){
 
-        if (ImGui.BeginTabBar("TabBar###Archipelago.GUI.TabBar")) {
-            if (ImGui.BeginTabItem("Main###Archipelago.GUI.TabBar.Main")) {
-                //render_connection();
+            if (shiori_image == null) {
+                var resources = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles();
+                var shiori_file = Array.Find(resources, file => file.Name == "shiori.png");
+                if (shiori_file != null) {
+                    FhApi.ResourceLoader.load_png_from_disk(shiori_file.FullName, out shiori_image);
+                }
+            }   
+            if (shiori_image != null) {
+                ImGui.GetWindowDrawList().AddImage(shiori_image.TextureRef, ImGui.GetWindowPos(), ImGui.GetWindowPos() + ImGui.GetWindowSize(), 0x55555555);
+            }
+            if (ImGui.BeginTabBar("TabBar###Archipelago.GUI.TabBar")) {
+                if (ImGui.BeginTabItem("Main###Archipelago.GUI.TabBar.Main")) {
+                    //render_connection();
 
-                string s = "Unlocked regions:";
-                ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
-                ImGui.Text(s);
-                int counter = 0;
-                int length = ArchipelagoFFXModule.region_is_unlocked.Count;
-                foreach (var (region, i) in ArchipelagoFFXModule.region_is_unlocked.Select((value, i) => (value, i))) {
-                    ArchipelagoFFXModule.region_is_unlocked[region.Key] ^= ImGui.Button($"{region.Key} unlocked: {region.Value}");
-                    if (counter < 3 && i < length - 1) {
-                        ImGui.SameLine();
+                    string s = "Unlocked regions:";
+                    ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
+                    ImGui.Text(s);
+                    int counter = 0;
+                    int length = ArchipelagoFFXModule.region_is_unlocked.Count;
+                    foreach (var (region, i) in ArchipelagoFFXModule.region_is_unlocked.Select((value, i) => (value, i))) {
+                        ArchipelagoFFXModule.region_is_unlocked[region.Key] ^= ImGui.Button($"{region.Key} unlocked: {region.Value}");
+                        if (counter < 3 && i < length - 1) {
+                            ImGui.SameLine();
+                        }
+                        counter = ++counter % 4;
                     }
-                    counter = ++counter % 4;
+
+                    s = "Unlocked characters:";
+                    ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
+                    ImGui.Text(s);
+                    counter = 0;
+                    length = ArchipelagoFFXModule.unlocked_characters.Count;
+                    foreach (var (character, i) in ArchipelagoFFXModule.unlocked_characters.Select((value, i) => (value, i))) {
+                        ArchipelagoFFXModule.unlocked_characters[character.Key] ^= ImGui.Button($"{id_to_character[character.Key]} unlocked: {character.Value}");
+                        if (counter < 3 && i < length - 1) {
+                            ImGui.SameLine();
+                        }
+                        counter = ++counter % 4;
+                    }
+
+                    render_console();
+                    ImGui.EndTabItem();
                 }
 
-                s = "Unlocked characters:";
-                ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
-                ImGui.Text(s);
-                counter = 0;
-                length = ArchipelagoFFXModule.character_is_unlocked.Count;
-                foreach (var (character, i) in ArchipelagoFFXModule.character_is_unlocked.Select((value, i) => (value, i))) {
-                    ArchipelagoFFXModule.character_is_unlocked[character.Key] ^= ImGui.Button($"{id_to_character[character.Key]} unlocked: {character.Value}");
-                    if (counter < 3 && i < length - 1) {
-                        ImGui.SameLine();
-                    }
-                    counter = ++counter % 4;
+                if (ImGui.BeginTabItem("Debug###Archipelago.GUI.TabBar.Debug")) {
+                    render_debug_tab();
+                    ImGui.EndTabItem();
                 }
 
-                render_console();
-                ImGui.EndTabItem();
+                if (Globals.SphereGrid.lpamng != null && *Globals.SphereGrid.is_open && ImGui.BeginTabItem("Sphere Grid###Archipelago.GUI.TabBar.SphereGrid")) {
+                    render_sphere_grid_editor();
+                    ImGui.EndTabItem();
+                }
+
+
+                ImGui.EndTabBar();
             }
-
-            if (ImGui.BeginTabItem("Debug###Archipelago.GUI.TabBar.Debug")) {
-                render_debug_tab();
-                ImGui.EndTabItem();
-            }
-
-            if (Globals.SphereGrid.lpamng != null && *Globals.SphereGrid.is_open && ImGui.BeginTabItem("Sphere Grid###Archipelago.GUI.TabBar.SphereGrid")) {
-                render_sphere_grid_editor();
-                ImGui.EndTabItem();
-            }
-
-
-            ImGui.EndTabBar();
         }
-
-
         ImGui.End();
 
     }

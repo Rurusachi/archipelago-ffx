@@ -518,9 +518,9 @@ public static class ArchipelagoData {
                 { 2075, new() {next_story_progress = 2970, next_room_id = 255, next_entrance = 0, return_if_locked = RegionEnum.Bevelle, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Airship visit 1 complete"); } } },
                 //{ 3135, new() {next_story_progress = 3210, next_room_id = 255, next_entrance = 0, return_if_locked = RegionEnum.Sin, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Airship visit 2 complete"); } } },
             } } },
-        {RegionEnum.Bevelle, new(){ story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 18, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
+        {RegionEnum.Bevelle, new(){ story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 12, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
             story_checks = {
-                { 2385, new() {next_story_progress = 2920, next_room_id = 227, next_entrance = 0, return_if_locked = RegionEnum.CalmLands, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 1 complete"); } } },
+                { 2385, new() {next_story_progress = 2920, next_room_id = 208, next_entrance = 1, return_if_locked = RegionEnum.CalmLands, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 1 complete"); } } },
                 { 2945, new() {next_story_progress = 3210, next_room_id = 208, next_entrance = 1, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 2 complete"); } } },
             } } }, 
         {RegionEnum.CalmLands, new(){ story_progress = 2385, room_id = 223, entrance = 0, airship_destination_index = 13,
@@ -656,6 +656,7 @@ public static class ArchipelagoData {
         {"cdsp00_00", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp00_01", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp00_02", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"cdsp01_01", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp07_00", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp07_01", () => ArchipelagoFFXModule.set_underwater_party()},
         // Gagazet. Probably the underwater fights
@@ -682,13 +683,60 @@ public static class ArchipelagoData {
     };
 
 
+    public static Dictionary<string, int[]> encounterToLocationDict = new(){
+    {"bjyt04_00",  [0]}, // Baaj Temple: Klikk Defeated
+    {"cdsp07_00",  [1]}, // Al Bhed Ship: Tros Defeated
+    {"bsil07_70",  [2]}, // Besaid: Dark Valefor
+    {"slik02_00",  [3]}, // S.S. Liki: Sin Fin
+    {"slik02_01",  [4]}, // S.S. Liki: Sinspawn Echuilles
+    {"klyt00_00",  [5]}, // Kilika: Lord Ochu
+    {"klyt01_00",  [6]}, // Kilika: Sinspawn Geneaux
+    {"cdsp02_00",  [7]}, // Luca: Oblitzerator defeated
+    {"mihn02_00",  [8]}, // Mi'Hen Highroad: Chocobo Eater
+    {"kino03_10",  [9]}, // Mushroom Rock Road: Sinspawn Gui
+    {"kino02_00", [10]}, // Mushroom Rock Road: Sinspawn Gui 2
+    {"genk09_00", [12]}, // Moonflow: Extractor
+    {"kami03_71", [13]}, // Thunder Plains: Dark Ixion
+    {"mcfr03_00", [14]}, // Macalania Woods: Spherimorph
+    {"maca02_00", [15]}, // Lake Macalania: Crawler
+    {"mcyt06_00", [16]}, // Lake Macalania: Seymour/Anima
+    {"maca02_01", [17]}, // Lake Macalania: Wendigo
+    {"mcyt00_70", [18]}, // Lake Macalania: Dark Shiva
+    {"bika03_70", [19]}, // Bikanel: Dark Ifrit
+    {"hiku15_00", [20]}, // Airship: Evrae
+    {"ssbt00_00", [21]}, // Airship: Sin Left Fin
+    {"ssbt01_00", [22]}, // Airship: Sin Right Fin
+    {"ssbt02_00", [23]}, // Airship: Sinspawn Genais
+    {"ssbt03_00", [24]}, // Airship: Overdrive Sin
+    {"hiku15_70", [25]}, // Airship: Penance
+    {"bvyt09_12", [26]}, // Bevelle: Isaaru (probably?)
+    {"stbv00_10", [27]}, // Bevelle: Evrae Altana
+    {"stbv01_10", [28]}, // Bevelle: Seymour Natus
+    {"nagi01_00", [29]}, // Calm Lands: Defender X
+    {"zzzz02_76", [30]}, // Monster Arena: Nemesis
+    {"nagi05_74", [31]}, // Cavern of the Stolen Fayth: Dark Yojimbo
+    {"mtgz01_10", [32]}, // Gagazet (Outside): Biran and Yenke
+    {"mtgz02_00", [33]}, // Gagazet (Outside): Seymour Flux
+    {"mtgz01_70", [34]}, // Gagazet (Outside): Dark Anima
+    {"mtgz08_00", [35]}, // Gagazet: Sanctuary Keeper
+    {"dome02_00", [36]}, // Zanarkand: Spectral Keeper
+    {"dome06_00", [37]}, // Zanarkand: Yunalesca
+    {"dome06_70", [38]}, // Zanarkand: Dark Bahamut
+    {"sins03_00", [39]}, // Sin: Seymour Omnis
+    {"sins06_00", [40]}, // Sin: Braska's Final Aeon
+    {"sins07_0x", [41]}, // Sin: Contest of Aeons
+    {"sins07_10", [42]}, // Sin: Yu Yevon
+    {"omeg00_10", [43]}, // Omega Ruins: Ultima Weapon
+    {"omeg01_10", [44]}, // Omega Ruins: Omega Weapon
+    {"kino00_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
+    {"kino01_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
+    {"kino01_72", [45, 46]}, // Dark Mindy, Dark Sandy
+    {"kino05_71", [45]}, // Dark Mindy
+    {"kino05_70", [46]}, // Dark Sandy
+    {"kino01_71", [47]}, // Dark Cindy
 
-
-
-    // TODO: Populate battle checks
-    public static Dictionary<string, int> encounterToLocationDict => new() {
-        //{"ssbt03_00",  } // Overdrive Sin
-        //{"hiku15_00",  } // Evrae airship battle
-    };
-    
+    //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
+    //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy
+    //{"kino00_70", 47}, {"kino01_70", 47}, {"kino01_71", 47},                    // Dark Cindy
+        };
 }

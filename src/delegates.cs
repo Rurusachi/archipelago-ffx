@@ -2,9 +2,13 @@
 using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Atel;
 using Fahrenheit.Core.FFX.Battle;
+using Hexa.NET.DirectXTex;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using static Fahrenheit.Core.FFX.FhCall;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.ArchipelagoClient;
+using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 public static unsafe class delegates {
@@ -26,7 +30,7 @@ public static unsafe class delegates {
 
     // Common.obtainBrotherhood
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void Common_obtainBrotherhood(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public delegate int Common_obtainBrotherhoodRetInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
 
     // Common.grantCelestialUpgrade
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -106,6 +110,7 @@ public static unsafe class delegates {
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int MsBattleLabelExe(uint encounter_id, byte param_2, byte screen_transition);
+    public const nint __addr_MsBattleLabelExe = 0x00381d60;
 
     // EndOfBattle?
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -121,14 +126,6 @@ public static unsafe class delegates {
     // giveItem
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint FUN_007905a0(uint param_1, int param_2);
-
-    // giveKeyItem
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_0088e700(uint param_1);
-
-    // takeGil
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate void FUN_00785a60(int param_1);
 
 
     // readFromBin
@@ -185,4 +182,231 @@ public static unsafe class delegates {
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate short FUN_0086bea0(int param_1);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    public delegate void FUN_00656c90(int param_1, int param_2, char* fileName);
+
+    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x74)]
+    public struct PTexture2DBase {
+        [FieldOffset(0x00)] public nint            unknown1;
+        [FieldOffset(0x0c)] public nint            unknown2;
+        [FieldOffset(0x10)] public int             mipCount;
+        [FieldOffset(0x14)] public int             flags;
+        [FieldOffset(0x1c)] public uint            width;
+        [FieldOffset(0x20)] public uint            height;
+        [FieldOffset(0x24)] public int             num_buffers; //??
+        [FieldOffset(0x28)] public ID3D11Resource* buffer;
+        [FieldOffset(0x70)] public int             isBound;
+
+    }
+
+    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x800)]
+    public struct PhyFMVPlayerManager {
+        [FieldOffset(0x38c)] public PTexture2DBase fmv_texture1;
+        [FieldOffset(0x400)] public PTexture2DBase fmv_texture2;
+        [FieldOffset(0x474)] public PTexture2DBase fmv_texture3;
+        [FieldOffset(0x4f0)] public nint                           fmv_path;
+
+        [FieldOffset(0x6e4)] public byte                           _0x6e4;
+        [FieldOffset(0x6fc)] public byte                           _0x6fc;
+        [FieldOffset(0x6fd)] public byte                           _0x6fd;
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public delegate int PhyFMVPlayerManager_initialize(PhyFMVPlayerManager* phyFMVPlayerManager, int movie_id, byte zero, byte param_3);
+    public const    nint __addr_PhyFMVPlayerManager_initialize = 0x002d9db0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate bool graphicInitFMVPlayer(int movie_id, int param_2);
+    public const    nint __addr_graphicInitFMVPlayer = 0x00241840;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public delegate int PhyreScene_loadVFXTexture(nint phyreScene, int param_1, byte* param_2, char param_3);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void PhyreScene_onVFXTextureLoaded(nint param_1, int* param_2);
+
+    public struct returnedTexData {
+        public short unknown1;
+        public short type;
+        public nint  dataName;
+        public short offset;
+        public short size;
+        public nint  unknown2;
+    }
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public delegate returnedTexData* FUN_0056cd50(nint _this, nint dataName);
+
+    public struct FixedClusterData {
+        public nint _0x00; // Texture data offsets?
+        public nint _0x04; // Texture data?
+        public nint _0x08;
+        public nint _0x0c;
+        public nint _0x10;
+        public nint _0x14;
+        public nint _0x18;
+        public nint _0x1c;
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public delegate void FUN_0065ee30(FixedClusterData* param_1);
+    public const    nint __addr_ClusterManager_FUN_0065ee30 = 0x0025ee30;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int Phyre_PFramework_PApplication_FixupClusters(nint cluster, int param_1);
+    public const    nint __addr_Phyre_PFramework_PApplication_FixupClusters = 0x00223740;
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public delegate nint ClusterManager_loadPCluster(nint _this, nint filePath);
+    public const    nint __addr_ClusterManager_loadPCluster = 0x0029ba80;
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public delegate void ClusterManager_releasePCluster(nint _this, nint cluster);
+    public const    nint __addr_ClusterManager_releasePCluster = 0x0029bef0;
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public delegate nint ClusterManager_getPClusterByName(nint _this, nint filePath);
+
+
+
+
+
+
+
+
+
+
+
+    [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 0x2c)]
+    public struct TOMesWinWork {
+        [FieldOffset(0x08)] public byte* text;
+        [FieldOffset(0x0c)] public byte* _0xc;
+        [FieldOffset(0x14)] public short status;
+
+        [FieldOffset(0x16)] public short _0x16;
+
+        [FieldOffset(0x18)] public int   _0x18;
+        [FieldOffset(0x1d)] public byte  _0x1d;
+        [FieldOffset(0x20)] public byte  _0x20;
+
+    }
+
+    // obbtainTreasure related
+    public delegate void          FUN_008b8910(int window_idx, int variable_idx, int type); // setMessageWindowVariableType (0: text*, 1: int)
+    public const    nint          __addr_FUN_008b8910 = 0x004b8910;
+
+    public delegate byte*         FUN_008bda20(uint window_idx); // getMenuText
+    public const    nint          __addr_FUN_008bda20 = 0x004bda20;
+
+    public delegate void          FUN_008b8930(int window_idx, int variable_idx, int value); // setMessageWindowVariable
+    public const    nint          __addr_FUN_008b8930 = 0x004b8930;
+
+    public delegate void          FUN_0086a0c0();
+    public const    nint          __addr_FUN_0086a0c0 = 0x0046a0c0;
+
+    public delegate TOMesWinWork* AtelGetMesWinWork(int idx);
+    public const    nint          __addr_AtelGetMesWinWork = 0x0046be20;
+
+
+
+
+
+
+
+
+    // Temporary
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void AtelEventSetUp(int event_id);
+    public const nint __addr_AtelEventSetUp = 0x472E90;
+
+    // getCurrentPartySlots
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void MsGetSavePartyMember(uint* param_1, uint* param_2, uint* param_3);
+    public const nint __addr_MsGetSavePartyMember = 0x3853B0;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CT_RetInt_01B6(nint work, int* storage, nint atelStack);
+
+    public static int __addr_CT_RetInt_01B6 = 0x004594d0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int CT_RetInt_01B7(nint work, int* storage, nint atelStack);
+
+    public static int __addr_CT_RetInt_01B7 = 0x004596a0;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void eiAbmParaGet();
+
+    public static int __addr_eiAbmParaGet = 0x00654860;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint MsApUp(int chr_id, Chr* chr, int base_ap_add, uint param_4);
+    public const nint __addr_MsApUp = 0x00398A10;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TkMsImportantSet(uint param_1);
+    public const nint __addr_TkMsImportantSet = 0x0048e700;
+
+
+    public delegate void MsFieldItemGet(int treasure_id);
+    public const nint __addr_MsFieldItemGet = 0x00398fe0;
+
+    public delegate void CT_RetInt_0065(nint work, int* storage, nint atelStack);
+    public const nint __addr_CT_RetInt_0065 = 0x00457f60;
+
+    public delegate void CT_RetInt_006A(nint work, int* storage, nint atelStack);
+    public const nint __addr_CT_RetInt_006A = 0x004589f0;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate nint AtelGetCurCtrlWork();
+    public const nint __addr_AtelGetCurCtrlWork = 0x46AF80;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate int MsPayGIL(int change);
+    public const nint __addr_MsPayGIL = 0x385A60;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void SndSepPlaySimple(uint param_1);
+    public const nint __addr_SndSepPlaySimple = 0x486DE0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate nint MsGetSaveWeapon(uint gear_inv_idx, nint ref_name);
+    public const nint __addr_MsGetSaveWeapon = 0x3ABBF0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void MsSetSaveParam(uint chr_id);
+    public const nint __addr_MsSetSaveParam = 0x3861B0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void MsBattleExe(uint param_1, int field_idx, int group_idx, int formation_idx);
+    public const nint __addr_MsBattleExe = 0x3810F0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void TkMsGetRomItem(uint param_1, int* param_2);
+    public const nint __addr_TkMsGetRomItem = 0x4AB230;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void MsSaveItemUse(uint item_id, int amount);
+    public const nint __addr_MsSaveItemUse = 0x3905A0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate byte* MsImportantName(uint key_item_idx);
+    public const nint __addr_MsImportantName = 0x3908B0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate nint MsBtlListGroup(int field_idx, int group_idx);
+    public const nint __addr_MsBtlListGroup = 0x39D230;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate nint MsGetExcelData(int req_elem_idx, nint excel_data_ptr, int* ref_data_end);
+    public const nint __addr_MsGetExcelData = 0x3AB890;
 }
+
