@@ -50,7 +50,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="Archipelago.MultiClient.Net" Version="6.6.0" />
+		<PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
 	</ItemGroup>
 	
 	<!-- BUILD EVENTS -->
@@ -60,7 +60,11 @@
 
 	<!-- PROJECT REFERENCES -->
 	<ItemGroup>
-		<ProjectReference Include="..\..\base\core\Fahrenheit.Core.csproj">
+        <ProjectReference Include="..\..\core\framework\Fahrenheit.Core.csproj">
+            <Private>false</Private>
+            <ExcludeAssets>runtime;native</ExcludeAssets>
+        </ProjectReference>
+		<ProjectReference Include="..\..\core\ffx\Fahrenheit.Core.FFX.csproj">
 			<Private>false</Private>
 			<ExcludeAssets>runtime;native</ExcludeAssets>
 		</ProjectReference>

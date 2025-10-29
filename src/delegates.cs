@@ -1,17 +1,32 @@
 ﻿using Fahrenheit.Core;
 using Fahrenheit.Core.FFX;
-using Fahrenheit.Core.FFX.Atel;
+using Fahrenheit.Core.Atel;
 using Fahrenheit.Core.FFX.Battle;
 using Hexa.NET.DirectXTex;
 using System.Numerics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using static Fahrenheit.Core.FFX.FhCall;
-using static Fahrenheit.Modules.ArchipelagoFFX.Client.ArchipelagoClient;
-using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 public static unsafe class delegates {
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void AtelInitTotal();
+    public const nint __addr_AtelInitTotal = 0x0046d660;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void AtelSetUpCallFunc(int nameSpaceId, nint nameSpacePtr);
+    public const nint __addr_AtelSetUpCallFunc = 0x00477800;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int   CT_Exec    (AtelBasicWorker* work, AtelStack* atelStack);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int   CT_RetInt  (AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate float CT_RetFloat(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+
+
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate char* AtelGetEventName(uint event_id);
@@ -50,6 +65,7 @@ public static unsafe class delegates {
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void SgEvent_showModularMenuInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_SgEvent_showModularMenuInit = 0x00678210;
 
 
     // Common.playFieldVoiceLineInit
@@ -77,10 +93,12 @@ public static unsafe class delegates {
 
     // Common.01D1Init
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int FUN_0085fb60(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public delegate int Common_01D1Init(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_01D1Init = 0x0045fb60;
     // Common.01D1Exec
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate bool FUN_0085fdb0(int* param_1, int* param_2);
+    public delegate bool Common_01D1Exec(AtelBasicWorker* param_1, AtelStack* param_2);
+    public const nint __addr_Common_01D1Exec = 0x0045fdb0;
 
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -309,15 +327,51 @@ public static unsafe class delegates {
     public const    nint          __addr_AtelGetMesWinWork = 0x0046be20;
 
 
+    // Voice related
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public unsafe delegate int FmodVoice_dataChange(nint FmodVoice, int event_id, nint param_2);
+    public const nint __addr_FmodVoice_dataChange = 0x0030a720;
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    public unsafe delegate nint FMOD_EventSystem_load(nint param_1, nint file_path, nint param_3, nint bank);
+    public const nint __addr_FMOD_EventSystem_load = 0x70C75C;
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    public unsafe delegate nint FMOD_Bank_Post_Load(nint param_1, nint param_2, nint param_3, nint param_4);
 
 
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public unsafe delegate void FfxFmod_soundInit_setLang(nint ffxFmod, int lang);
+    public const nint __addr_FfxFmod_soundInit_setLang = 0x0030b4e0;
+
+
+    [StructLayout(LayoutKind.Explicit, Pack = 4, Size = 0x1C)]
+    public struct FFXLocalizationManager {
+        [FieldOffset(0x00)] public int video; // Also voice?
+        [FieldOffset(0x04)] public int text;  // Probably
+        [FieldOffset(0x08)] public int voice; // Unused?
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public unsafe delegate void LocalizationManager_Initialize(FFXLocalizationManager* localizationManager);
+    public const nint __addr_LocalizationManager_Initialize = 0x002db1c0;
+
+    public unsafe delegate FFXLocalizationManager* LocalizationManager_GetInstance();
+    public const nint __addr_LocalizationManager_GetInstance = 0x002db1a0;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public unsafe delegate void FfxFmod_soundInit(nint ffxFmod);
+    public const nint __addr_FfxFmod_soundInit = 0x00307170;
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    public unsafe delegate void FmodVoice_initList(nint fmodVoice);
+    public const nint __addr_FmodVoice_initList = 0x0030ac80;
 
 
 
 
     // Temporary
-
-
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate void AtelEventSetUp(int event_id);
     public const nint __addr_AtelEventSetUp = 0x472E90;

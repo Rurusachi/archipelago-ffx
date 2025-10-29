@@ -14,28 +14,34 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using TerraFX.Interop.Windows;
+using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.Client;
-public class ArchipelagoClient {
-    public  static          ArchipelagoSession? session;
-    private static          int                 received_items = 0;
-    public  static readonly List<long>          local_checked_locations = [];
-    public  static          bool                local_locations_updated = false;
-    public ArchipelagoClient() {
-        
-    }
+public static class FFXArchipelagoClient {
+    public static          ArchipelagoSession? current_session;
+    public static          int                 received_items = 0;
+    public static readonly List<long>          local_checked_locations = [];
+    public static          bool                local_locations_updated = false;
+    public static          string?             SeedId = null;
     
-    public static PlayerInfo? active_player => session?.Players.ActivePlayer;
-    public static bool is_connected => session != null;
+    public static PlayerInfo? active_player => current_session?.Players.ActivePlayer;
+    private static bool is_disconnecting = false;
+    public static bool is_connected => current_session is not null & !is_disconnecting;
 
-    public static void Connect(string server, string user, string password) {
-        LoginResult login_result;
+    public static async Task Connect(string server, string user, string password) {
+        LoginResult? login_result = new LoginFailure("");
+        ArchipelagoSession? session = null;
+        if (is_disconnecting) return;
 
         try {
             session = ArchipelagoSessionFactory.CreateSession(server);
-            connectHandlers();
-            login_result = session.TryConnectAndLogin("Final Fantasy X", user, ItemsHandlingFlags.IncludeStartingInventory, Version.Parse("0.5.1"), null, null, password, true);
+            connectHandlers(session);
+            var roomInfoPacket = await session.ConnectAsync();
+            
+            login_result = await session.LoginAsync("Final Fantasy X", user, ItemsHandlingFlags.IncludeStartingInventory, Version.Parse("0.6.0"), password: password, requestSlotData: true);
+            //login_result = tempSession.TryConnectAndLogin("Final Fantasy X", user, ItemsHandlingFlags.IncludeStartingInventory, Version.Parse("0.6.0"), password: password, requestSlotData: true);
         }
         catch (Exception e) {
             login_result = new LoginFailure(e.GetBaseException().Message);
@@ -50,18 +56,62 @@ public class ArchipelagoClient {
             foreach (ConnectionRefusedError error in failure.ErrorCodes) {
                 errorMessage += $"\n    {error}";
             }
-            session = null;
+            current_session = null;
             ArchipelagoFFXModule.logger.Error(errorMessage);
             return; // Did not connect, show the user the contents of `errorMessage`
         }
         var loginSuccess = (LoginSuccessful)login_result;
 
-        // TODO: Get region states if they exist. Probably separate Key for each region to minimize network traffic?
-        //session.DataStorage[Scope.Slot, "region_states"];
+        if (ArchipelagoFFXModule.seed.SeedId is not null) {
+            if (ArchipelagoFFXModule.seed.SeedId != (string)loginSuccess.SlotData["SeedId"]) {
+                string message = "Loaded seed doesn't match connected slot";
+                ArchipelagoGUI.add_log_message([(message, Color.Red)]);
+                ArchipelagoFFXModule.logger.Error(message);
+                disconnect(session);
+                return;
+            }
+        } else {
+            SeedId = (string)loginSuccess.SlotData["SeedId"];
+        }
+        current_session = session;
     }
 
-    private static void connectHandlers() {
-        session!.MessageLog.OnMessageReceived += MessageLog_OnMessageReceived;
+    public static void disconnect(ArchipelagoSession? session = null) {
+        ArchipelagoFFXModule.logger.Debug("disconnect");
+        session ??= current_session;
+        if (session is null || is_disconnecting) return;
+        is_disconnecting = true;
+        session.Socket.DisconnectAsync();
+    }
+
+    private static void connectHandlers(ArchipelagoSession session) {
+        session.MessageLog.OnMessageReceived += MessageLog_OnMessageReceived;
+        session.Socket.ErrorReceived += Socket_ErrorReceived;
+        session.Socket.SocketOpened += Socket_SocketOpened;
+        session.Socket.SocketClosed += Socket_SocketClosed;
+    }
+
+    private static void Socket_ErrorReceived(Exception e, string message) {
+        ArchipelagoFFXModule.logger.Debug($"Socket Error: {message}");
+        ArchipelagoFFXModule.logger.Debug($"Socket Exception: {e.Message}");
+
+        if (e.StackTrace != null)
+            foreach (var line in e.StackTrace.Split('\n'))
+                ArchipelagoFFXModule.logger.Debug($"    {line}");
+        else
+            ArchipelagoFFXModule.logger.Debug($"    No stacktrace provided");
+    }
+
+    private static void Socket_SocketOpened() {
+        ArchipelagoFFXModule.logger.Debug($"Socket Opened: \"{current_session?.Socket.Uri}\"");
+    }
+
+    private static void Socket_SocketClosed(string reason) {
+        ArchipelagoFFXModule.logger.Debug($"Socket Closed: \"{reason}\"");
+        ArchipelagoGUI.add_log_message([($"Disconnected from server ({reason})", Color.Red)]);
+        SeedId = null;
+        current_session = null;
+        is_disconnecting = false;
     }
 
     public unsafe static void update() {
@@ -70,41 +120,42 @@ public class ArchipelagoClient {
             ArchipelagoFFXModule.logger.Debug($"received_item: {item.ItemName}");
         }
          */
-        if (session == null) {
+        if (current_session == null) {
             return;
         }
 
-        if (Globals.save_data->current_room_id == 23) {
+        // TODO: Check for post-battle/other menu?
+        if (Globals.save_data->current_room_id ==  23 || // Main Menu
+            Globals.save_data->current_room_id ==   0 || // Tutorial room
+            Globals.save_data->current_room_id == 348 || // Intro
+            Globals.Battle.btl->battle_state   !=   0) { // In battle
             return;
         }
 
-        if (session.Items.AllItemsReceived.Count > received_items) {
+        if (current_session.Items.AllItemsReceived.Count > received_items) {
             ArchipelagoFFXModule.logger.Debug("New items received");
-            foreach (ItemInfo item in session.Items.AllItemsReceived.Skip(received_items)) {
+            foreach (ItemInfo item in current_session.Items.AllItemsReceived.Skip(received_items)) {
                 ArchipelagoFFXModule.logger.Debug($"received_item: {item.ItemName}");
-                ArchipelagoFFXModule.obtain_item((uint)item.ItemId, 1);
+                ArchipelagoFFXModule.obtain_item((uint)item.ItemId);
                 received_items++;
             }
         }
 
 
         if (local_locations_updated) {
-            var local_only = local_checked_locations.Except(session.Locations.AllLocationsChecked);
+            var local_only = local_checked_locations.Except(current_session.Locations.AllLocationsChecked);
             if (local_only.Any()) {
-                session.Locations.CompleteLocationChecks(local_only.ToArray());
+                current_session.Locations.CompleteLocationChecks(local_only.ToArray());
                 ArchipelagoFFXModule.logger.Debug($"Sent: {string.Join(",", local_only)}");
             }
             local_locations_updated = false;
         }
 
-        /*
-        session.DataStorage[Scope.Slot, "region_states"] = JObject.FromObject(ArchipelagoModule.region_states);
-
-        var remote_state_json = session.DataStorage[Scope.Slot, "region_states"].To<JObject>();
-        if (remote_state_json != null) {
-            Dictionary<string, ArchipelagoData.ArchipelagoRegion> remote_state = remote_state_json.ToObject<Dictionary<string, ArchipelagoData.ArchipelagoRegion>>();
+        // TODO: Implement alternate goals
+        if (local_checked_locations.Contains(42 | (long)ArchipelagoLocationType.Boss)) {
+            // Yu Yevon defeated
+            current_session.SetGoalAchieved();
         }
-         */
 
         /*
         var remote_only = session.Locations.AllLocationsChecked.Except(local_checked_locations);
@@ -135,8 +186,7 @@ public class ArchipelagoClient {
             }
             return (part.Text, color);
             }).ToList();
-        ArchipelagoGUI.client_log.Add(messageParts);
-        ArchipelagoGUI.client_log_updated = true;
+        ArchipelagoGUI.add_log_message(messageParts);
     }
 
     /*
@@ -158,13 +208,13 @@ public unsafe static void connectHandlers() {
 */
 
     public enum ArchipelagoLocationType: int {
-        Treasure = 0x1000,
-        Boss = 0x2000,
-        PartyMember = 0x3000,
-        Overdrive = 0x4000,
+        Treasure      = 0x1000,
+        Boss          = 0x2000,
+        PartyMember   = 0x3000,
+        Overdrive     = 0x4000,
         OverdriveMode = 0x5000,
-        Other = 0x6000,
-        SphereGrid = 0x7000,
+        Other         = 0x6000,
+        SphereGrid    = 0x7000,
     }
 
     public static void sendTreasureLocation(long treasureId) {
@@ -182,7 +232,7 @@ public unsafe static void connectHandlers() {
         local_checked_locations.Add(locationId);
         local_locations_updated = true;
         if (is_connected) {
-            ArchipelagoFFXModule.logger.Debug(session!.Locations.GetLocationNameFromId(locationId) ?? $"Location: {locationId}");
+            ArchipelagoFFXModule.logger.Debug(current_session!.Locations.GetLocationNameFromId(locationId) ?? $"Location: {locationId}");
         }
     }
 

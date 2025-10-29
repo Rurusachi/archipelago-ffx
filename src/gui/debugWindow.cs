@@ -1,7 +1,7 @@
 ﻿using Archipelago.MultiClient.Net.Models;
 using Fahrenheit.Core;
+using Fahrenheit.Core.Atel;
 using Fahrenheit.Core.FFX;
-using Fahrenheit.Core.FFX.Atel;
 using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
@@ -10,15 +10,18 @@ using Hexa.NET.ImGui;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
-using Color = Archipelago.MultiClient.Net.Models.Color;
-using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
-using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoFFXModule;
-using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using TerraFX.Interop.DirectX;
+using TerraFX.Interop.Windows;
+using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
+using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoFFXModule;
+using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
+using Color = Archipelago.MultiClient.Net.Models.Color;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.GUI;
 public unsafe static class ArchipelagoGUI {
@@ -39,7 +42,7 @@ public unsafe static class ArchipelagoGUI {
 
     private static string client_input_command = "";
 
-    public static List<List<(string text, Color color)>> client_log = [];
+    private static List<List<(string text, Color color)>> client_log = [];
     public static bool client_log_updated = false;
     private static float previous_scroll = 1;
     private static float previous_scroll_max = 1;
@@ -64,6 +67,9 @@ public unsafe static class ArchipelagoGUI {
     private static Equipment* armor = null;
 
     private static int clickedNodeIndex = -1;
+
+
+    public static int selected_seed;
 
 
     public static void render() {
@@ -93,6 +99,8 @@ public unsafe static class ArchipelagoGUI {
     private static FhTexture? shiori_image;
     private static FhTexture? bevelle_image;
 
+    private static int voiceline_id;
+
     private static void render_experiments() {
         experiments_enabled ^= ImGui.IsKeyPressed(experimental_gui_key);
         if (!experiments_enabled) return;
@@ -101,8 +109,11 @@ public unsafe static class ArchipelagoGUI {
 
 
         if (ImGui.Begin("Archipelago###Archipelago.Experiments.GUI")) {
+            int requirement = (int)seed.GoalRequirement;
+            ImGui.InputInt("Goal Requirement", ref requirement);
+            seed.GoalRequirement = (GoalRequirement)requirement;
             if (ImGui.Button("Load seed")) {
-                ArchipelagoFFXModule.loadSeed();
+                ArchipelagoFFXModule.loadSeed(loaded_seeds[selected_seed]);
             }
             //ImGui.InputText("fileName", ref cluster_file_name, 256);
             //if (ImGui.Button("Load cluster")) {
@@ -132,6 +143,8 @@ public unsafe static class ArchipelagoGUI {
 
             ImGui.Text($"Tidus overdrive uses: {Globals.save_data->tidus_limit_uses}");
 
+            if (Globals.actors is not null) ImGui.Text($"Tidus position: {Globals.actors[0].chr_pos_vec}");
+
             //for (int i = 0; i < 18; i++) {
             //    string name = Globals.save_data->character_names[i].name;
             //    if (ImGui.InputText($"Name {i}", ref name, 20)) {
@@ -139,6 +152,192 @@ public unsafe static class ArchipelagoGUI {
             //    }
             //}
 
+            ImGui.InputInt("Voiceline id", ref voiceline_id);
+            if (ImGui.Button("Play voiceline")) {
+                play_voice_line(voiceline_id);
+            }
+
+            int inMenu = FhUtil.get_at<int>(0x01efb4d4);
+            ImGui.Text($"Is in menu?: {inMenu}");
+
+            //var tempString = ArchipelagoFFXModule.customStrings[0];
+            //
+            //
+            //byte[] decoded = new byte[FhCharset.compute_decode_buffer_size(new ReadOnlySpan<byte>(tempString.encoded, 1000))];
+            //FhCharset.decode(new Span<byte>(tempString.encoded, tempString.encodedLength), decoded);
+            //string tempText = Encoding.UTF8.GetString(decoded);
+            //ImGui.Text(tempText);
+
+
+            ReadOnlySpan<byte> testString = "{TIME:00}Ready to fight Sin?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8;
+            //ReadOnlySpan<byte> testString = "{TIME:00}いいですか？{LF}{CHOICE:00}はい{LF}{CHOICE:01}いいえ"u8;
+
+            byte[] encoded = new byte[FhCharset.compute_encode_buffer_size(testString)];
+            FhCharset.encode(testString, encoded);
+
+            byte[] decoded = new byte[100];
+            int expected_size = FhCharset.compute_decode_buffer_size(encoded);
+            int actual_size = FhCharset.decode(encoded, decoded);
+
+            string decodedString = Encoding.UTF8.GetString(decoded);
+
+            ImGui.Text(decodedString);
+
+
+            BtlArea* pos_def_ptr = Globals.Battle.btl->ptr_pos_def;
+
+            if (pos_def_ptr != null && Globals.Battle.btl->battle_state != 0) {
+                BtlAreasHelper areas = new(pos_def_ptr);
+                //BtlAreas areas = *pos_def_ptr;
+
+                foreach (BtlAreaHelper area in areas.areas) {
+
+                    ImGui.Text("PARTY_POS");
+                    if (ImGui.BeginTable("PARTY_POS", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
+
+                        foreach (Vector4 pos in area.party_pos) {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.X}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Y}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Z}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.W}");
+                        }
+
+                        ImGui.EndTable();
+                    }
+
+                    ImGui.Text("PARTY_RUN_POS");
+                    if (ImGui.BeginTable("PARTY_RUN_POS", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
+
+                        foreach (Vector4 pos in area.party_run_pos) {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.X}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Y}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Z}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.W}");
+                        }
+
+                        ImGui.EndTable();
+                    }
+
+                    ImGui.Text("AEON_POS");
+                    if (ImGui.BeginTable("AEON_POS", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
+
+                        foreach (Vector4 pos in area.aeon_pos) {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.X}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Y}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Z}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.W}");
+                        }
+
+                        ImGui.EndTable();
+                    }
+
+                    ImGui.Text("AEON_RUN_POS");
+                    if (ImGui.BeginTable("AEON_RUN_POS", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
+
+                        foreach (Vector4 pos in area.aeon_run_pos) {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.X}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Y}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Z}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.W}");
+                        }
+
+                        ImGui.EndTable();
+                    }
+
+                    ImGui.Text("ENEMY_POS");
+                    if (ImGui.BeginTable("ENEMY_POS", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
+
+                        foreach (Vector4 pos in area.enemy_pos) {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.X}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Y}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Z}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.W}");
+                        }
+
+                        ImGui.EndTable();
+                    }
+
+                    ImGui.Text("ENEMY_RUN_POS");
+                    if (ImGui.BeginTable("ENEMY_RUN_POS", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg)) {
+
+                        foreach (Vector4 pos in area.enemy_run_pos) {
+                            ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.X}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Y}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.Z}");
+                            ImGui.TableNextColumn();
+                            ImGui.Text($"{pos.W}");
+                        }
+
+                        ImGui.EndTable();
+                    }
+                    
+                }
+            }
+            //var localizationManager = _LocalizationManager_GetInstance();
+            //
+            //int text_language = localizationManager->text;
+            //
+            //if (ImGui.InputInt("Text language", &text_language)) {
+            //    localizationManager->text = text_language;
+            //}
+            //
+            //
+            //int voice_language = localizationManager->voice;
+            //
+            //if (ImGui.InputInt("Voice language", &voice_language)) {
+            //    localizationManager->voice = voice_language;
+            //
+            //    nint _FmodManager = FhUtil.get_at<nint>(0x008E9000);
+            //    //_FfxFmod_soundInit(*(nint*)(_FmodManager+8));
+            //
+            //    nint ffxFmod = *(nint*)(_FmodManager + 8);
+            //
+            //    nint fmodVoice = *(nint*)(ffxFmod + 0x10);
+            //
+            //    *(byte*)(fmodVoice + 4) = (byte)voice_language;
+            //
+            //    _FmodVoice_initList(fmodVoice);
+            //
+            //    int dataChange_result = h_FmodVoice_dataChange(fmodVoice, Globals.save_data->current_room_id, *(nint*)(ffxFmod + 4));
+            //    if (dataChange_result != 0) {
+            //        *(nint*)(*(int*)((int)ffxFmod + 0xc) + 0x28) = **(nint**)((int)ffxFmod + 0x10);
+            //    }
+            //}
+
+
+            //string tidusName = Globals.save_data->character_names[0].name;
+            //if (ImGui.InputText("Name Test", ref tidusName, 20)) {
+            //    Globals.save_data->character_names[0].name = tidusName;
+            //}
 
         }
         ImGui.End();
@@ -343,17 +542,34 @@ public unsafe static class ArchipelagoGUI {
     }
 
     private static void render_connection() {
-        if (!ArchipelagoClient.is_connected) {
+        if (seed.SeedId is null && !FFXArchipelagoClient.is_connected) {
+            string[] seedNames = [.. ArchipelagoFFXModule.loaded_seeds.Select(x => x.SeedId)];
+            ImGui.Combo("Selected seed", ref selected_seed, seedNames, seedNames.Length);
+        } else {
+            ImGui.Text($"Loaded seed: {seed.SeedId}");
+        }
+        if (!FFXArchipelagoClient.is_connected) {
             ImGui.InputText("Address", ref client_input_address, 50);
             ImGui.InputText("Name", ref client_input_name, 50);
             ImGui.InputText("Password", ref client_input_password, 50);
-            bool try_connect = ImGui.Button("Connect");
-            if (try_connect) {
-                ArchipelagoClient.Connect(client_input_address, client_input_name, client_input_password);
+            if (ImGui.Button("Connect")) {
+                //Task.Run(() => FFXArchipelagoClient.Connect(client_input_address, client_input_name, client_input_password));
+                _ = FFXArchipelagoClient.Connect(client_input_address, client_input_name, client_input_password);
+                //FFXArchipelagoClient.Connect(client_input_address, client_input_name, client_input_password);
             }
         }
         else {
-            ImGui.Text($"Connected as {ArchipelagoClient.active_player!.Name}");
+            ImGui.Text($"Connected as {FFXArchipelagoClient.active_player!.Name}");
+            if (ImGui.Button("Disconnect")) {
+                FFXArchipelagoClient.disconnect();
+            }
+        }
+    }
+
+    public static void add_log_message(List<(string, Color)> message) {
+        lock (client_log) {
+            client_log.Add(message);
+            client_log_updated = true;
         }
     }
 
@@ -361,34 +577,36 @@ public unsafe static class ArchipelagoGUI {
         ImGuiStylePtr style = ImGui.GetStyle();
         if (ImGui.BeginChild("Archipelago.GUI.Log", new(0, ImGui.GetContentRegionAvail().Y - ImGui.GetTextLineHeight() - 3 * style.ItemSpacing.Y), ImGuiChildFlags.Borders, ImGuiWindowFlags.NoMove)) {
             //var curr_scroll = ImGui.GetScrollY() / previous_scroll_max;
-            foreach (var line in client_log) {
-                byte part_counter = 0;
-                int part_length = line.Count;
-                //ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0,style.ItemSpacing.Y));
-                //ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + ImGui.GetWindowWidth() - style.WindowPadding.X);
-                var wrap_width = ImGui.GetContentRegionAvail().X;
-                var remaining_width = wrap_width;
-                foreach (var part in line) {
-                    var color = new Vector4(part.color.R / 255f, part.color.G / 255f, part.color.B / 255f, 1.0f);
-                    ImGui.PushStyleColor(ImGuiCol.Text, color);
-                    foreach (var word in part.text.Split(" ")) {
-                        var word_width = ImGui.CalcTextSize($"{word} ").X;
-                        if (part_counter > 0 && word_width < remaining_width) {
-                            ImGui.SameLine();
-                            ImGui.TextUnformatted(word);
-                            remaining_width -= word_width;
+            lock (client_log) {
+                foreach (var line in client_log) {
+                    byte part_counter = 0;
+                    int part_length = line.Count;
+                    //ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0,style.ItemSpacing.Y));
+                    //ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + ImGui.GetWindowWidth() - style.WindowPadding.X);
+                    var wrap_width = ImGui.GetContentRegionAvail().X;
+                    var remaining_width = wrap_width;
+                    foreach (var part in line) {
+                        var color = new Vector4(part.color.R / 255f, part.color.G / 255f, part.color.B / 255f, 1.0f);
+                        ImGui.PushStyleColor(ImGuiCol.Text, color);
+                        foreach (var word in part.text.Split(" ")) {
+                            var word_width = ImGui.CalcTextSize($"{word} ").X;
+                            if (part_counter > 0 && word_width < remaining_width) {
+                                ImGui.SameLine();
+                                ImGui.TextUnformatted(word);
+                                remaining_width -= word_width;
+                            }
+                            else {
+                                ImGui.TextUnformatted(word);
+                                remaining_width = wrap_width - word_width;
+                            }
+                            part_counter++;
                         }
-                        else {
-                            ImGui.TextUnformatted(word);
-                            remaining_width = wrap_width - word_width;
-                        }
-                        part_counter++;
+                        ImGui.PopStyleColor();
+                        //ImGui.TextWrapped(line);
                     }
-                    ImGui.PopStyleColor();
-                    //ImGui.TextWrapped(line);
+                    //ImGui.PopTextWrapPos();
+                    //ImGui.PopStyleVar();
                 }
-                //ImGui.PopTextWrapPos();
-                //ImGui.PopStyleVar();
             }
             //previous_scroll_max = ImGui.GetScrollMaxY();
             if (client_log_updated) {
@@ -408,8 +626,8 @@ public unsafe static class ArchipelagoGUI {
         if (process_input) {
             if (!client_input_command.StartsWith("/")) {
                 // Say
-                if (ArchipelagoClient.is_connected) {
-                    ArchipelagoClient.session!.Say(client_input_command);
+                if (FFXArchipelagoClient.is_connected) {
+                    FFXArchipelagoClient.current_session!.Say(client_input_command);
                 }
 
             }
@@ -422,23 +640,23 @@ public unsafe static class ArchipelagoGUI {
                         if (int.TryParse(map, out int map_id)) {
                             if (int.TryParse(entrance, out int entrance_id)) {
                                 List<(string, Color)> message = [("Warping to ", Color.White), ($"{map_id} (entrance {entrance_id})", Color.Blue)];
-                                client_log.Add(message);
+                                add_log_message(message);
                                 ArchipelagoFFXModule.call_warp_to_map(map_id, entrance_id);
                             }
                             else {
                                 List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entrance, Color.Blue)];
-                                client_log.Add(message);
+                                add_log_message(message);
                             }
                         }
                         else {
                             List<(string, Color)> message = [("invalid map_id: ", Color.Red), (map, Color.Blue)];
-                            client_log.Add(message);
+                            add_log_message(message);
                         }
                     }
                     ,
                     ["/warp", ..] => () => {
                         List<(string, Color)> message = [("Wrong arguments for /warp: Should be ", Color.Red), ($"/warp map_id entrance_id", Color.Blue)];
-                        client_log.Add(message);
+                        add_log_message(message);
                     }
                     ,
                     ["/resetregion", string regionString] => () => {
@@ -447,13 +665,13 @@ public unsafe static class ArchipelagoGUI {
                         }
                         else {
                             List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
-                            client_log.Add(message);
+                            add_log_message(message);
                         }
                     }
                     ,
                     ["/resetregion", ..] => () => {
                         List<(string, Color)> message = [("Wrong arguments for '/resetregion': Should be ", Color.Red), ($"/resetregion regionName", Color.Blue)];
-                        client_log.Add(message);
+                        add_log_message(message);
                     }
                     ,
                     ["/setregion", string regionString, string progressString, string mapString, string entranceString] => () => {
@@ -468,37 +686,43 @@ public unsafe static class ArchipelagoGUI {
                                     }
                                     else {
                                         List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entranceString, Color.Blue)];
-                                        client_log.Add(message);
+                                        add_log_message(message);
                                     }
                                 }
                                 else{
                                     List<(string, Color)> message = [("invalid map_id: ", Color.Red), (mapString, Color.Blue)];
-                                    client_log.Add(message);
+                                    add_log_message(message);
                                 }
 
                             }
                             else {
                                 List<(string, Color)> message = [("invalid story_progress: ", Color.Red), (progressString, Color.Blue)];
-                                client_log.Add(message);
+                                add_log_message(message);
                             }
 
                         }
                         else {
                             List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
-                            client_log.Add(message);
+                            add_log_message(message);
                         }
                     }
                     ,
                     ["/setregion", ..] => () => {
                         List<(string, Color)> message = [("Wrong arguments for '/setregion': Should be ", Color.Red), ($"/setregion regionName story_progress map_id entrance_id", Color.Blue)];
-                        client_log.Add(message);
+                        add_log_message(message);
                     }
                     ,
-                    ["/clear"] => () => {client_log.Clear(); }
+                    ["/send_checks"] => () => {FFXArchipelagoClient.local_locations_updated = true; }
+                    ,
+                    ["/clear"] => () => {
+                        lock (client_log) {
+                            client_log.Clear(); 
+                        }
+                    }
                     ,
                     _ => () => {
                         List<(string, Color)> message = [("unknown command: ", Color.Red), (client_input_command, Color.Blue)];
-                        client_log.Add(message);
+                        add_log_message(message);
                     }
                 };
                 fn();
@@ -523,19 +747,19 @@ public unsafe static class ArchipelagoGUI {
 
 
         foreach (var region in ArchipelagoFFXModule.region_states) {
-            ImGui.Text($"{region.Key}: story_progress: {region.Value.story_progress}, room: {region.Value.room_id}, entrance: {region.Value.entrance}");
+            ImGui.Text($"{region.Key}: story_progress: {region.Value.story_progress}, room: {region.Value.room_id}, entrance: {region.Value.entrance}, completed_visits: {region.Value.completed_visits}");
         }
 
-        //ImGui.Text($"Battle State: {Globals.btl->battle_state}");
-        if (Globals.btl->battle_state != 0) {
-            //ImGui.Text($"Battle End Type: {Globals.btl->battle_end_type}");
-            //ImGui.InputScalar("Battle State", ImGuiDataType.U8, (nint)(&Globals.btl->battle_state));
-            //ImGui.InputScalar("Battle End Type", ImGuiDataType.U8, (nint)(&Globals.btl->battle_end_type));
+        //ImGui.Text($"Battle State: {Globals.Battle.btl->battle_state}");
+        if (Globals.Battle.btl->battle_state != 0) {
+            //ImGui.Text($"Battle End Type: {Globals.Battle.btl->battle_end_type}");
+            //ImGui.InputScalar("Battle State", ImGuiDataType.U8, (nint)(&Globals.Battle.btl->battle_state));
+            //ImGui.InputScalar("Battle End Type", ImGuiDataType.U8, (nint)(&Globals.Battle.btl->battle_end_type));
             ImGui.Text($"Battle Name: {Marshal.PtrToStringAnsi((nint)FhUtil.ptr_at<char>(0xD2C25A))}");
 
             if (ImGui.InputInt3("MsBtlGetPosInput", ref MsBtlGetPosParams[0])) {
                 fixed (Vector4* out_pos = &MsBtlGetPosResult)
-                    ArchipelagoFFXModule.h_MsBtlGetPos(0, &Globals.Battle.player_characters[Globals.btl->frontline[0]], MsBtlGetPosParams[0], MsBtlGetPosParams[1], MsBtlGetPosParams[2], out_pos);
+                    ArchipelagoFFXModule.h_MsBtlGetPos(0, &Globals.Battle.player_characters[Globals.Battle.btl->frontline[0]], MsBtlGetPosParams[0], MsBtlGetPosParams[1], MsBtlGetPosParams[2], out_pos);
             }
             ImGui.Text($"{MsBtlGetPosResult}");
         }
@@ -582,10 +806,11 @@ public unsafe static class ArchipelagoGUI {
         if (ImGui.Begin("Archipelago###Archipelago.GUI")){
 
             if (shiori_image == null) {
-                var resources = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles();
-                var shiori_file = Array.Find(resources, file => file.Name == "shiori.png");
+                //var resources = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles();
+                //var shiori_file = Array.Find(resources, file => file.Name == "shiori.png");
+                var shiori_file =  ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles("shiori.png").FirstOrDefault(defaultValue:null);
                 if (shiori_file != null) {
-                    FhApi.ResourceLoader.load_png_from_disk(shiori_file.FullName, out shiori_image);
+                    FhApi.Resources.load_png_from_disk(shiori_file.FullName, out shiori_image);
                 }
             }   
             if (shiori_image != null) {
@@ -593,8 +818,12 @@ public unsafe static class ArchipelagoGUI {
             }
             if (ImGui.BeginTabBar("TabBar###Archipelago.GUI.TabBar")) {
                 if (ImGui.BeginTabItem("Main###Archipelago.GUI.TabBar.Main")) {
-                    //render_connection();
+                    render_connection();
 
+                    render_console();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Unlocks###Archipelago.GUI.TabBar.Unlocks")) {
                     string s = "Unlocked regions:";
                     ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
                     ImGui.Text(s);
@@ -620,8 +849,6 @@ public unsafe static class ArchipelagoGUI {
                         }
                         counter = ++counter % 4;
                     }
-
-                    render_console();
                     ImGui.EndTabItem();
                 }
 

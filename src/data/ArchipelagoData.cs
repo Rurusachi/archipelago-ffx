@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TerraFX.Interop.DirectX;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 
@@ -60,6 +61,21 @@ public static class ArchipelagoData {
         Airship,
         OmegaRuins,
     }
+
+    public enum GoalRequirement {
+        None = 0,
+        PartyMembers,
+        Pilgrimage,
+    }
+
+    public static RegionEnum[] pilgrimageRegions = [
+        RegionEnum.Besaid,
+        RegionEnum.Kilika,
+        RegionEnum.Djose,
+        RegionEnum.Macalania,
+        RegionEnum.Bevelle,
+        RegionEnum.ZanarkandRuins,
+    ];
 
     public static Dictionary<RegionEnum, List<int>> region_to_ids = new(){
         { RegionEnum.DreamZanarkand, [
@@ -431,12 +447,14 @@ public static class ArchipelagoData {
         public ushort? next_story_progress;
         public ushort? next_room_id;
         public ushort? next_entrance;
+        public bool    visit_complete = false;
         public RegionEnum return_if_locked;
         public ArchipelagoStoryCheckDelegate? check_delegate;
     }
     public unsafe class ArchipelagoRegion {
         public Dictionary<ushort, ArchipelagoStoryCheck> story_checks = [];
 
+        public int completed_visits { get; set; }
         public ushort story_progress { get; set; }
         public ushort room_id { get; set; }
         public ushort entrance { get; set; }
@@ -456,22 +474,22 @@ public static class ArchipelagoData {
         {RegionEnum.BaajTemple, new(){ story_progress = 30, room_id = 48, entrance = 0, airship_destination_index = 1, 
             story_checks = {
                 { 60, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Baaj Temple visit 1 complete"); } } },
-                { 110, new() {next_story_progress = 3210, next_room_id = 49, next_entrance = 2, return_if_locked = RegionEnum.Besaid, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Al Bhed Ship complete"); } } },
+                { 110, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 49, next_entrance = 2, return_if_locked = RegionEnum.Besaid, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Al Bhed Ship complete"); } } },
             } } },
         {RegionEnum.Besaid, new(){ story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
             story_checks = {
                 { 228, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Besaid visit 1 complete"); } } },
-                { 290, new() {next_story_progress = 3210, next_room_id = 19, next_entrance = 1, return_if_locked = RegionEnum.Kilika, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Liki visit complete"); } } },
+                { 290, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 19, next_entrance = 1, return_if_locked = RegionEnum.Kilika, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Liki visit complete"); } } },
             } } },
         {RegionEnum.Kilika, new(){ story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
             story_checks = {
                 { 372, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Kilika visit 1 complete"); } } },
-                { 400, new() {next_story_progress = 3210, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Winno visit complete"); } } },
-                { 402, new() {next_story_progress = 3210, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Winno visit complete"); } } },
+                { 400, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Winno visit complete"); } } },
+                { 402, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Winno visit complete"); } } },
             } } },
         {RegionEnum.Luca, new(){ story_progress = 402, room_id = 267, entrance = 0, airship_destination_index = 4,
             story_checks = {
-                { 730, new() {next_story_progress = 3210, next_room_id = 123, next_entrance = 6, return_if_locked = RegionEnum.MiihenHighroad, 
+                { 730, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 123, next_entrance = 6, return_if_locked = RegionEnum.MiihenHighroad, 
                     check_delegate = (r) => {
                         ArchipelagoFFXModule.logger.Info("Luca visit complete"); 
                         // CSR workaround
@@ -481,66 +499,66 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.MiihenHighroad, new(){ story_progress = 730, room_id = 95, entrance = 0, airship_destination_index = 5,
             story_checks = {
-                { 787, new() {next_story_progress = 3210, next_room_id = 171, next_entrance = 1, return_if_locked = RegionEnum.MushroomRockRoad, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mi'ihen Highroad visit complete"); } } },
+                { 787, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 171, next_entrance = 1, return_if_locked = RegionEnum.MushroomRockRoad, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mi'ihen Highroad visit complete"); } } },
             } } },
         {RegionEnum.MushroomRockRoad, new(){ story_progress = 787, room_id = 79, entrance = 0, airship_destination_index = 6,
             story_checks = {
-                { 960, new() {next_story_progress = 3210, next_room_id = 131, next_entrance = 3, return_if_locked = RegionEnum.Djose, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mushroom Rock Road visit complete"); } } },
+                { 960, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 131, next_entrance = 3, return_if_locked = RegionEnum.Djose, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mushroom Rock Road visit complete"); } } },
             } } },
         {RegionEnum.Djose, new(){ story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
             story_checks = {
-                { 1030, new() {next_story_progress = 3210, next_room_id = 82, next_entrance = 0, return_if_locked = RegionEnum.Moonflow, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Djose visit 1 complete"); } } },
+                { 1030, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 82, next_entrance = 0, return_if_locked = RegionEnum.Moonflow, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Djose visit 1 complete"); } } },
             } } },
         {RegionEnum.Moonflow, new(){ story_progress = 1030, room_id = 75, entrance = 0, airship_destination_index = 7,
             story_checks = {
-                { 1085, new() {next_story_progress = 3210, next_room_id = 235, next_entrance = 1, return_if_locked = RegionEnum.Guadosalam, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Moonflow visit complete"); } } },
+                { 1085, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 235, next_entrance = 1, return_if_locked = RegionEnum.Guadosalam, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Moonflow visit complete"); } } },
             } } },
         {RegionEnum.Guadosalam, new(){ story_progress = 1085, room_id = 135, entrance = 0, airship_destination_index = 8,
             story_checks = {
-                { 1210, new() {next_story_progress = 3210, next_room_id = 243, next_entrance = 1, return_if_locked = RegionEnum.ThunderPlains, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Guadosalam visit complete"); } } },
+                { 1210, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 243, next_entrance = 1, return_if_locked = RegionEnum.ThunderPlains, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Guadosalam visit complete"); } } },
             } } },
         {RegionEnum.ThunderPlains, new(){ story_progress = 1210, room_id = 140, entrance = 0, airship_destination_index = 9,
             story_checks = {
-                { 1375, new() {next_story_progress = 3210, next_room_id = 263, next_entrance = 2, return_if_locked = RegionEnum.Macalania, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Thunder Plains visit complete"); } } },
+                { 1375, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 263, next_entrance = 2, return_if_locked = RegionEnum.Macalania, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Thunder Plains visit complete"); } } },
             } } },
         {RegionEnum.Macalania, new(){ story_progress = 1400, room_id = 110, entrance = 0, airship_destination_index = 10,
             story_checks = {
                 { 1470, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Macalania Woods visit complete"); } } },
-                { 1704, new() {next_story_progress = 3210, next_room_id = 215, next_entrance = 1, return_if_locked = RegionEnum.Bikanel, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Lake Macalania visit 1 complete"); } } },
+                { 1704, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 215, next_entrance = 1, return_if_locked = RegionEnum.Bikanel, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Lake Macalania visit 1 complete"); } } },
             } } },
         {RegionEnum.Bikanel, new(){ story_progress = 1704, room_id = 129, entrance = 0, airship_destination_index = 11,
             story_checks = {
-                { 1940, new() {next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bikanel visit complete"); } } },
-                { 1950, new() {next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bikanel visit complete"); } } },
+                { 1940, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bikanel visit complete"); } } },
+                { 1950, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bikanel visit complete"); } } },
             } } },
         {RegionEnum.Airship, new(){ story_progress = 1950, room_id = 194, entrance = 1, airship_destination_index = 99,
             story_checks = {
-                { 2075, new() {next_story_progress = 2970, next_room_id = 255, next_entrance = 0, return_if_locked = RegionEnum.Bevelle, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Airship visit 1 complete"); } } },
+                { 2075, new() {visit_complete = true, next_story_progress = 2970, next_room_id = 255, next_entrance = 0, return_if_locked = RegionEnum.Bevelle, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Airship visit 1 complete"); } } },
                 //{ 3135, new() {next_story_progress = 3210, next_room_id = 255, next_entrance = 0, return_if_locked = RegionEnum.Sin, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Airship visit 2 complete"); } } },
             } } },
         {RegionEnum.Bevelle, new(){ story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 12, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
             story_checks = {
-                { 2385, new() {next_story_progress = 2920, next_room_id = 208, next_entrance = 1, return_if_locked = RegionEnum.CalmLands, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 1 complete"); } } },
-                { 2945, new() {next_story_progress = 3210, next_room_id = 208, next_entrance = 1, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 2 complete"); } } },
+                { 2385, new() {visit_complete = true, next_story_progress = 2920, next_room_id = 208, next_entrance = 1, return_if_locked = RegionEnum.CalmLands, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 1 complete"); } } },
+                { 2945, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 208, next_entrance = 1, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 2 complete"); } } },
             } } }, 
         {RegionEnum.CalmLands, new(){ story_progress = 2385, room_id = 223, entrance = 0, airship_destination_index = 13,
             story_checks = {
-                { 2440, new() {next_story_progress = 3210, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
-                { 2510, new() {next_story_progress = 3210, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
+                { 2440, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
+                { 2510, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 223, next_entrance = 4, return_if_locked = RegionEnum.MtGagazet, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Calm Lands complete"); } } }, // Normally ends at 2440, but CSR skips from 2420 to 2510
             } } },
         {RegionEnum.CavernOfTheStolenFayth, new(){ story_progress = 2385, room_id = 56, entrance = 0, airship_destination_index = 99 } },
         {RegionEnum.MtGagazet, new(){ story_progress = 2440, room_id = 259, entrance = 0, airship_destination_index = 14,
             story_checks = {
-                { 2680, new() {next_story_progress = 3210, next_room_id = 259, next_entrance = 2, return_if_locked = RegionEnum.ZanarkandRuins, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mt. Gagazet complete"); } } },
+                { 2680, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 259, next_entrance = 2, return_if_locked = RegionEnum.ZanarkandRuins, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mt. Gagazet complete"); } } },
             } } },
         {RegionEnum.ZanarkandRuins, new(){ story_progress = 2680, room_id = 132, entrance = 0, airship_destination_index = 15,
             story_checks = {
-                { 2875, new() {next_story_progress = 3210, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Zanarkand Ruins complete"); } } },
-                { 2900, new() {next_story_progress = 3210, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Zanarkand Ruins complete"); } } },
+                { 2875, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Zanarkand Ruins complete"); } } },
+                { 2900, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Zanarkand Ruins complete"); } } },
             } } },
         {RegionEnum.Sin, new(){ story_progress = 3125, room_id = 322, entrance = 2, airship_destination_index = 16,
             story_checks = {
-                { 3400, new() {next_room_id = 322, next_entrance = 2, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Game Complete"); } } },
+                { 3400, new() {visit_complete = true, next_room_id = 322, next_entrance = 2, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Game Complete"); } } },
             } } },
         {RegionEnum.OmegaRuins, new(){ story_progress = 3210, room_id = 258, entrance = 2, airship_destination_index = 17 } }, // Story_progress?
     };
