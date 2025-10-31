@@ -1486,6 +1486,12 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
                 foreach (uint item in seed.StartingItems) obtain_item(item);
             }
+            if (seed.SeedId is null) {
+                // In-game with no seed
+                save_data->current_room_id = 23;
+                on_map_change();
+                return;
+            }
 
             var regions = id_to_regions[save_data->current_room_id];
             RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();

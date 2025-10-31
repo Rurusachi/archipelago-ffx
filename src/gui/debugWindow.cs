@@ -84,7 +84,7 @@ public unsafe static class ArchipelagoGUI {
         //ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
         
         render_client();
-        render_experiments();
+        //render_experiments();
         //render_pane(pane_width);
 
         // Reset style
@@ -636,29 +636,29 @@ public unsafe static class ArchipelagoGUI {
                 string[] cmd = client_input_command.Split(" ");
 
                 Action fn = cmd switch {
-                    ["/warp", string map, string entrance] => () => {
-                        if (int.TryParse(map, out int map_id)) {
-                            if (int.TryParse(entrance, out int entrance_id)) {
-                                List<(string, Color)> message = [("Warping to ", Color.White), ($"{map_id} (entrance {entrance_id})", Color.Blue)];
-                                add_log_message(message);
-                                ArchipelagoFFXModule.call_warp_to_map(map_id, entrance_id);
-                            }
-                            else {
-                                List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entrance, Color.Blue)];
-                                add_log_message(message);
-                            }
-                        }
-                        else {
-                            List<(string, Color)> message = [("invalid map_id: ", Color.Red), (map, Color.Blue)];
-                            add_log_message(message);
-                        }
-                    }
-                    ,
-                    ["/warp", ..] => () => {
-                        List<(string, Color)> message = [("Wrong arguments for /warp: Should be ", Color.Red), ($"/warp map_id entrance_id", Color.Blue)];
-                        add_log_message(message);
-                    }
-                    ,
+                    //["/warp", string map, string entrance] => () => {
+                    //    if (int.TryParse(map, out int map_id)) {
+                    //        if (int.TryParse(entrance, out int entrance_id)) {
+                    //            List<(string, Color)> message = [("Warping to ", Color.White), ($"{map_id} (entrance {entrance_id})", Color.Blue)];
+                    //            add_log_message(message);
+                    //            ArchipelagoFFXModule.call_warp_to_map(map_id, entrance_id);
+                    //        }
+                    //        else {
+                    //            List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entrance, Color.Blue)];
+                    //            add_log_message(message);
+                    //        }
+                    //    }
+                    //    else {
+                    //        List<(string, Color)> message = [("invalid map_id: ", Color.Red), (map, Color.Blue)];
+                    //        add_log_message(message);
+                    //    }
+                    //}
+                    //,
+                    //["/warp", ..] => () => {
+                    //    List<(string, Color)> message = [("Wrong arguments for /warp: Should be ", Color.Red), ($"/warp map_id entrance_id", Color.Blue)];
+                    //    add_log_message(message);
+                    //}
+                    //,
                     ["/resetregion", string regionString] => () => {
                         if (Enum.TryParse(regionString, out RegionEnum region)) {
                             ArchipelagoFFXModule.region_states[region] = region_starting_state[region];
@@ -674,50 +674,57 @@ public unsafe static class ArchipelagoGUI {
                         add_log_message(message);
                     }
                     ,
-                    ["/setregion", string regionString, string progressString, string mapString, string entranceString] => () => {
-                        if (Enum.TryParse(regionString, out RegionEnum region)) {
-                            if (ushort.TryParse(progressString, out ushort progress)) {
-                                if (ushort.TryParse(mapString, out ushort map)) {
-                                    if (ushort.TryParse(entranceString, out ushort entrance)) {
-                                        ArchipelagoRegion r = ArchipelagoFFXModule.region_states[region];
-                                        r.story_progress = progress;
-                                        r.room_id = map;
-                                        r.entrance = entrance;
-                                    }
-                                    else {
-                                        List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entranceString, Color.Blue)];
-                                        add_log_message(message);
-                                    }
-                                }
-                                else{
-                                    List<(string, Color)> message = [("invalid map_id: ", Color.Red), (mapString, Color.Blue)];
-                                    add_log_message(message);
-                                }
-
-                            }
-                            else {
-                                List<(string, Color)> message = [("invalid story_progress: ", Color.Red), (progressString, Color.Blue)];
-                                add_log_message(message);
-                            }
-
-                        }
-                        else {
-                            List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
-                            add_log_message(message);
-                        }
-                    }
-                    ,
-                    ["/setregion", ..] => () => {
-                        List<(string, Color)> message = [("Wrong arguments for '/setregion': Should be ", Color.Red), ($"/setregion regionName story_progress map_id entrance_id", Color.Blue)];
-                        add_log_message(message);
-                    }
-                    ,
+                    //["/setregion", string regionString, string progressString, string mapString, string entranceString] => () => {
+                    //    if (Enum.TryParse(regionString, out RegionEnum region)) {
+                    //        if (ushort.TryParse(progressString, out ushort progress)) {
+                    //            if (ushort.TryParse(mapString, out ushort map)) {
+                    //                if (ushort.TryParse(entranceString, out ushort entrance)) {
+                    //                    ArchipelagoRegion r = ArchipelagoFFXModule.region_states[region];
+                    //                    r.story_progress = progress;
+                    //                    r.room_id = map;
+                    //                    r.entrance = entrance;
+                    //                }
+                    //                else {
+                    //                    List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entranceString, Color.Blue)];
+                    //                    add_log_message(message);
+                    //                }
+                    //            }
+                    //            else{
+                    //                List<(string, Color)> message = [("invalid map_id: ", Color.Red), (mapString, Color.Blue)];
+                    //                add_log_message(message);
+                    //            }
+                    //
+                    //        }
+                    //        else {
+                    //            List<(string, Color)> message = [("invalid story_progress: ", Color.Red), (progressString, Color.Blue)];
+                    //            add_log_message(message);
+                    //        }
+                    //
+                    //    }
+                    //    else {
+                    //        List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
+                    //        add_log_message(message);
+                    //    }
+                    //}
+                    //,
+                    //["/setregion", ..] => () => {
+                    //    List<(string, Color)> message = [("Wrong arguments for '/setregion': Should be ", Color.Red), ($"/setregion regionName story_progress map_id entrance_id", Color.Blue)];
+                    //    add_log_message(message);
+                    //}
+                    //,
                     ["/send_checks"] => () => {FFXArchipelagoClient.local_locations_updated = true; }
                     ,
                     ["/clear"] => () => {
                         lock (client_log) {
                             client_log.Clear(); 
                         }
+                    }
+                    ,
+                    ["/help"] => () => {
+                        add_log_message([("Available commands:", Color.White)]);
+                        add_log_message([("/resetregion regionName", Color.White)]);
+                        add_log_message([("/send_checks", Color.White)]);
+                        add_log_message([("/clear", Color.White)]);
                     }
                     ,
                     _ => () => {
@@ -733,11 +740,13 @@ public unsafe static class ArchipelagoGUI {
     }
     
     private static void render_debug_tab() {
+#if DEBUG
         fixed (int* ap_mult = &ArchipelagoFFXModule.ap_multiplier) {
             uint step = 1;
             uint step_fast = 10;
             ImGui.InputScalar("AP multiplier", ImGuiDataType.U32, ap_mult, &step, &step_fast);
         }
+#endif
 
         ImGui.Text($"Current room: {Globals.save_data->current_room_id} ({Marshal.PtrToStringAnsi((nint)ArchipelagoFFXModule.get_event_name(*(uint*)Globals.event_id))!})");
         ImGui.Text($"Current region: {ArchipelagoFFXModule.current_region}");
@@ -750,20 +759,11 @@ public unsafe static class ArchipelagoGUI {
             ImGui.Text($"{region.Key}: story_progress: {region.Value.story_progress}, room: {region.Value.room_id}, entrance: {region.Value.entrance}, completed_visits: {region.Value.completed_visits}");
         }
 
-        //ImGui.Text($"Battle State: {Globals.Battle.btl->battle_state}");
         if (Globals.Battle.btl->battle_state != 0) {
-            //ImGui.Text($"Battle End Type: {Globals.Battle.btl->battle_end_type}");
-            //ImGui.InputScalar("Battle State", ImGuiDataType.U8, (nint)(&Globals.Battle.btl->battle_state));
-            //ImGui.InputScalar("Battle End Type", ImGuiDataType.U8, (nint)(&Globals.Battle.btl->battle_end_type));
             ImGui.Text($"Battle Name: {Marshal.PtrToStringAnsi((nint)FhUtil.ptr_at<char>(0xD2C25A))}");
-
-            if (ImGui.InputInt3("MsBtlGetPosInput", ref MsBtlGetPosParams[0])) {
-                fixed (Vector4* out_pos = &MsBtlGetPosResult)
-                    ArchipelagoFFXModule.h_MsBtlGetPos(0, &Globals.Battle.player_characters[Globals.Battle.btl->frontline[0]], MsBtlGetPosParams[0], MsBtlGetPosParams[1], MsBtlGetPosParams[2], out_pos);
-            }
-            ImGui.Text($"{MsBtlGetPosResult}");
         }
         else {
+#if DEBUG
             fixed (uint* battle_input = &LaunchBattleInput) {
                 uint p_step = 1;
                 uint p_step_fast = 10;
@@ -772,9 +772,8 @@ public unsafe static class ArchipelagoGUI {
             if (ImGui.Button("launchBattleButton")) {
                 ArchipelagoFFXModule._MsBattleLabelExe(LaunchBattleInput, 1, 1);
             }
+#endif
         }
-
-        //ImGui.InputInt("IgnoreThisInput", ref ArchipelagoFFXModule.ignore_this);
 
         /*
         AtelBasicWorker* worker0 = Atel.controllers[0].worker(0);
@@ -798,6 +797,42 @@ public unsafe static class ArchipelagoGUI {
          */
     }
 
+    private static void render_unlocks() {
+        string s = "Unlocked regions:";
+        ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
+        ImGui.Text(s);
+        int counter = 0;
+        int length = ArchipelagoFFXModule.region_is_unlocked.Count;
+        foreach (var (region, i) in ArchipelagoFFXModule.region_is_unlocked.Select((value, i) => (value, i))) {
+#if DEBUG
+            ArchipelagoFFXModule.region_is_unlocked[region.Key] ^= ImGui.Button($"{region.Key} unlocked: {region.Value}");
+            if (counter < 3 && i < length - 1) {
+                ImGui.SameLine();
+            }
+            counter = ++counter % 4;
+#else
+            ImGui.Text($"{region.Key} unlocked: {region.Value}");
+#endif
+        }
+
+        s = "Unlocked characters:";
+        ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
+        ImGui.Text(s);
+        counter = 0;
+        length = ArchipelagoFFXModule.unlocked_characters.Count;
+        foreach (var (character, i) in ArchipelagoFFXModule.unlocked_characters.Select((value, i) => (value, i))) {
+#if DEBUG
+            ArchipelagoFFXModule.unlocked_characters[character.Key] ^= ImGui.Button($"{id_to_character[character.Key]} unlocked: {character.Value}");
+            if (counter < 3 && i < length - 1) {
+                ImGui.SameLine();
+            }
+            counter = ++counter % 4;
+#else
+            ImGui.Text($"{id_to_character[character.Key]} unlocked: {character.Value}");
+#endif
+        }
+    }
+
     private static void render_client() {
         enabled ^= ImGui.IsKeyPressed(archipelago_gui_key);
         if (!enabled) return;
@@ -808,7 +843,7 @@ public unsafe static class ArchipelagoGUI {
             if (shiori_image == null) {
                 //var resources = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles();
                 //var shiori_file = Array.Find(resources, file => file.Name == "shiori.png");
-                var shiori_file =  ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles("shiori.png").FirstOrDefault(defaultValue:null);
+                var shiori_file =  ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles("shiori.png").FirstOrDefault();
                 if (shiori_file != null) {
                     FhApi.Resources.load_png_from_disk(shiori_file.FullName, out shiori_image);
                 }
@@ -824,31 +859,7 @@ public unsafe static class ArchipelagoGUI {
                     ImGui.EndTabItem();
                 }
                 if (ImGui.BeginTabItem("Unlocks###Archipelago.GUI.TabBar.Unlocks")) {
-                    string s = "Unlocked regions:";
-                    ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
-                    ImGui.Text(s);
-                    int counter = 0;
-                    int length = ArchipelagoFFXModule.region_is_unlocked.Count;
-                    foreach (var (region, i) in ArchipelagoFFXModule.region_is_unlocked.Select((value, i) => (value, i))) {
-                        ArchipelagoFFXModule.region_is_unlocked[region.Key] ^= ImGui.Button($"{region.Key} unlocked: {region.Value}");
-                        if (counter < 3 && i < length - 1) {
-                            ImGui.SameLine();
-                        }
-                        counter = ++counter % 4;
-                    }
-
-                    s = "Unlocked characters:";
-                    ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
-                    ImGui.Text(s);
-                    counter = 0;
-                    length = ArchipelagoFFXModule.unlocked_characters.Count;
-                    foreach (var (character, i) in ArchipelagoFFXModule.unlocked_characters.Select((value, i) => (value, i))) {
-                        ArchipelagoFFXModule.unlocked_characters[character.Key] ^= ImGui.Button($"{id_to_character[character.Key]} unlocked: {character.Value}");
-                        if (counter < 3 && i < length - 1) {
-                            ImGui.SameLine();
-                        }
-                        counter = ++counter % 4;
-                    }
+                    render_unlocks();
                     ImGui.EndTabItem();
                 }
 
@@ -857,11 +868,12 @@ public unsafe static class ArchipelagoGUI {
                     ImGui.EndTabItem();
                 }
 
+#if DEBUG
                 if (Globals.SphereGrid.lpamng != null && *Globals.SphereGrid.is_open && ImGui.BeginTabItem("Sphere Grid###Archipelago.GUI.TabBar.SphereGrid")) {
                     render_sphere_grid_editor();
                     ImGui.EndTabItem();
                 }
-
+#endif
 
                 ImGui.EndTabBar();
             }

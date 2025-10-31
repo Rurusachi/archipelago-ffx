@@ -180,17 +180,23 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     }
 
     public static bool loadSeed() {
+        string message;
         if (FFXArchipelagoClient.SeedId is not null) {
             var seed = loaded_seeds.FirstOrDefault(seed => seed.SeedId == FFXArchipelagoClient.SeedId);
 
             if (seed.SeedId is not null) return loadSeed(seed);
 
-            string message = "Seed for connected slot not found";
+            message = "Seed for connected slot not found";
             ArchipelagoGUI.add_log_message([(message, Color.Red)]);
             logger.Error($"Seed for connected slot not found");
             return false;
+        } else if (ArchipelagoGUI.selected_seed < loaded_seeds.Count) {
+            return loadSeed(loaded_seeds[ArchipelagoGUI.selected_seed]);
         }
-        return loadSeed(loaded_seeds[ArchipelagoGUI.selected_seed]);
+        message = "No seeds found";
+        ArchipelagoGUI.add_log_message([(message, Color.Red)]);
+        logger.Error(message);
+        return false;
     }
 
     public static bool loadSeed(ArchipelagoSeed loaded_seed) {
@@ -198,7 +204,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             if (FFXArchipelagoClient.SeedId != loaded_seed.SeedId) {
                 string message = "Seed doesn't match connected slot";
                 ArchipelagoGUI.add_log_message([(message, Color.Red)]);
-                logger.Error($"Seed doesn't match connected slot");
+                logger.Error(message);
                 return false;
             }
         }
@@ -207,24 +213,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         ap_multiplier = loaded_seed.APMultiplier;
         item_locations = new ArchipelagoLocations(loaded_seed);
         return true;
-        //var files = mod_context.Paths.ResourcesDir.GetFiles();
-        //foreach (var file in files) {
-        //    if (file.Name != "locations.json") continue;
-        //    try {
-        //        initalize_states();
-        //        using (FileStream stream = File.Open(file.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-        //            var loaded_seed = JsonSerializer.Deserialize<ArchipelagoSeed>(stream);
-        //            seed = loaded_seed;
-        //            ap_multiplier = loaded_seed.APMultiplier;
-        //            item_locations = new ArchipelagoLocations(loaded_seed);
-        //        }
-        //    }   
-        //    catch {
-        //        seed = new ArchipelagoSeed();
-        //        logger.Warning("Failed to load seed");
-        //    }
-        //    break;
-        //}
     }
 
     public override bool init(FhModContext mod_context, FileStream global_state_file) {
@@ -279,7 +267,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
 
         public SemVer WithoutMetadata() {
-            return new SemVer(major, minor, patch, "", "");
+            return new SemVer(major, minor, patch, prerelease, "");
         }
 
         public override string ToString() {
@@ -370,17 +358,9 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             }
             else { 
                 logger.Error($"Seed for loaded state not found");
+                FFXArchipelagoClient.disconnect();
                 return;
             }
-            //foreach (var seed in loaded_seeds) {
-            //    if (loaded_state.SeedId == seed.SeedId) {
-            //        loadSeed(seed);
-            //        break;
-            //    }
-            //}
-            //if (loaded_state.SeedId != seed.SeedId) {
-            //    logger.Error($"Loaded state has a different AP seed");
-            //}
             foreach (var region in loaded_state.region_states) {
                     region_states[region.Key].story_progress = region.Value.story_progress;
                     region_states[region.Key].room_id = region.Value.room_id;
@@ -433,13 +413,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             on_map_change();
             last_room_id = Globals.save_data->current_room_id;
             last_entrance_id = Globals.save_data->current_spawnpoint;
-
-            /*
-            if (Globals.save_data->last_room_id == 368 && Globals.save_data->current_room_id == 376) {
-                _logger.Debug("Skip Dream Zanarkand");
-                call_warp_to_map(382, 0);
-            }
-             */
         }
     }
 
@@ -463,6 +436,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
         }
         if (Globals.Input.select.held && Globals.Input.l1.just_pressed) {
+#if DEBUG
             AtelBasicWorker* worker0 = Atel.controllers[0].worker(0);
 
             float minDistance = -1;
@@ -479,6 +453,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             }
             MapEntrance closestEntrance = worker0->script_chunk->map_entrances[closestEntranceIndex];
             logger.Debug($"Closest Entrance: pos:({closestEntrance.x}, {closestEntrance.y}, {closestEntrance.z}) distance:{minDistance}");
+#endif
 
 
 

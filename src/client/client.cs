@@ -31,6 +31,7 @@ public static class FFXArchipelagoClient {
     public static bool is_connected => current_session is not null & !is_disconnecting;
 
     public static async Task Connect(string server, string user, string password) {
+        ArchipelagoFFXModule.logger.Debug("Connect");
         LoginResult? login_result = new LoginFailure("");
         ArchipelagoSession? session = null;
         if (is_disconnecting) return;
@@ -85,6 +86,7 @@ public static class FFXArchipelagoClient {
     }
 
     private static void connectHandlers(ArchipelagoSession session) {
+        ArchipelagoFFXModule.logger.Debug("connectHandlers");
         session.MessageLog.OnMessageReceived += MessageLog_OnMessageReceived;
         session.Socket.ErrorReceived += Socket_ErrorReceived;
         session.Socket.SocketOpened += Socket_SocketOpened;
