@@ -1,6 +1,7 @@
 ﻿using Fahrenheit.Core;
 using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Ids;
+using Fahrenheit.Modules.ArchipelagoFFX.Client;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
@@ -478,6 +479,16 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Besaid, new(){ story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
             story_checks = {
+                { 210, new() {check_delegate = (r) => {
+                    // Send and obtain Map location if skipped by CSR
+                    int map_treasure_id = 459;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(map_treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                        FFXArchipelagoClient.sendLocation(map_treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
+                        if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(map_treasure_id, out var item)) {
+                            ArchipelagoFFXModule.obtain_item(item.id);
+                        }
+                    }
+                } } },
                 { 228, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Besaid visit 1 complete"); } } },
                 { 290, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 19, next_entrance = 1, return_if_locked = RegionEnum.Kilika, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Liki visit complete"); } } },
             } } },
