@@ -126,10 +126,11 @@ public static class FFXArchipelagoClient {
         }
 
         // TODO: Check for post-battle/other menu?
-        if (Globals.save_data->current_room_id ==  23 || // Main Menu
-            Globals.save_data->current_room_id ==   0 || // Tutorial room
-            Globals.save_data->current_room_id == 348 || // Intro
-            Globals.Battle.btl->battle_state   !=   0) { // In battle
+        if (ArchipelagoFFXModule.seed.SeedId   == null ||
+            Globals.save_data->current_room_id ==  23  || // Main Menu
+            Globals.save_data->current_room_id ==   0  || // Tutorial room
+            Globals.save_data->current_room_id == 348  || // Intro
+            Globals.Battle.btl->battle_state   !=   0)  { // In battle
             return;
         }
 

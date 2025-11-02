@@ -1355,7 +1355,7 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void h_Common_obtainTreasureInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int treasure_id = atelStack->values.as_int()[1];
         //ArchipelagoGUI.lastTreasure = treasure_id;
-        logger.Debug($"obtain_treasure: {treasure_id}");
+        logger.Info($"obtain_treasure: {treasure_id}");
         //ArchipelagoClient.sendTreasureLocation(treasure_id);
         FFXArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure);
 
@@ -1469,7 +1469,7 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void h_Common_obtainTreasureSilentlyInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int treasure_id = atelStack->values.as_int()[0];
         //ArchipelagoGUI.lastTreasure = treasure_id;
-        logger.Debug($"obtain_treasure_silently: {treasure_id}");
+        logger.Info($"obtain_treasure_silently: {treasure_id}");
         FFXArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure);
         //_Common_obtainTreasureSilentlyInit.orig_fptr(work, storage, atelStack);
         obtainTreasureSilentlyInitReimplement(work, storage, atelStack);
@@ -1478,7 +1478,6 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void obtainTreasureSilentlyInitReimplement(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
 
         int treasure_id = atelStack->pop_int();
-        logger.Debug($"treasure_id:{treasure_id}");
         _MsFieldItemGet(treasure_id);
         bool gear_inv_is_full = false;
         uint weapon_id = 0;

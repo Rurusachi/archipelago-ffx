@@ -481,10 +481,10 @@ public static class ArchipelagoData {
             story_checks = {
                 { 210, new() {check_delegate = (r) => {
                     // Send and obtain Map location if skipped by CSR
-                    int map_treasure_id = 459;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(map_treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
-                        if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(map_treasure_id, out var item)) {
-                            FFXArchipelagoClient.sendLocation(map_treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
+                    int treasure_id = 459;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                        if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
+                            FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
                             ArchipelagoFFXModule.obtain_item(item.id);
                         }
                     }
@@ -535,6 +535,14 @@ public static class ArchipelagoData {
         {RegionEnum.Macalania, new(){ story_progress = 1400, room_id = 110, entrance = 0, airship_destination_index = 10,
             story_checks = {
                 { 1470, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Macalania Woods visit complete"); } } },
+                { 1530, new() {check_delegate = (r) => {
+                    int treasure_id = 85;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                        if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
+                            FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
+                            ArchipelagoFFXModule.obtain_item(item.id);
+                        }
+                    } } } },
                 { 1704, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 215, next_entrance = 1, return_if_locked = RegionEnum.Bikanel, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Lake Macalania visit 1 complete"); } } },
             } } },
         {RegionEnum.Bikanel, new(){ story_progress = 1704, room_id = 129, entrance = 0, airship_destination_index = 11,
