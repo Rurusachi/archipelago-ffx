@@ -1992,6 +1992,7 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void* curr_pos_area_ptr = null;
     public static byte h_MsBtlReadSetScene() {
         byte result = _MsBtlReadSetScene.orig_fptr();
+        logger.Info($"Battle Name: {Marshal.PtrToStringAnsi((nint)FhUtil.ptr_at<char>(0xD2C25A))}");
         //ref BtlAreas original_pos_struct = ref *Battle.btl->ptr_pos_def;
         BtlAreasHelper original_pos_struct = new BtlAreasHelper(Battle.btl->ptr_pos_def);
         if (original_pos_struct.areas.Length == 0) return result;
