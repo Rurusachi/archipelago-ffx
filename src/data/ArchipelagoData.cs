@@ -483,8 +483,8 @@ public static class ArchipelagoData {
                     // Send and obtain Map location if skipped by CSR
                     int map_treasure_id = 459;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(map_treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
-                        FFXArchipelagoClient.sendLocation(map_treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
                         if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(map_treasure_id, out var item)) {
+                            FFXArchipelagoClient.sendLocation(map_treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
                             ArchipelagoFFXModule.obtain_item(item.id);
                         }
                     }
@@ -539,8 +539,30 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Bikanel, new(){ story_progress = 1704, room_id = 129, entrance = 0, airship_destination_index = 11,
             story_checks = {
-                { 1940, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bikanel visit complete"); } } },
-                { 1950, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bikanel visit complete"); } } },
+                { 1940, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {
+                    ArchipelagoFFXModule.logger.Info("Bikanel visit complete");
+                    int[] treasure_ids = [362, 363, 364];
+                    foreach (int treasure_id in treasure_ids) {
+                        if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                            if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
+                                FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
+                { 1950, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 129, next_entrance = 2, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {
+                    ArchipelagoFFXModule.logger.Info("Bikanel visit complete");
+                    int[] treasure_ids = [362, 363, 364];
+                    foreach (int treasure_id in treasure_ids) {
+                        if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                            if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
+                                FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
             } } },
         {RegionEnum.Airship, new(){ story_progress = 1950, room_id = 194, entrance = 1, airship_destination_index = 99,
             story_checks = {

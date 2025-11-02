@@ -21,6 +21,7 @@ using TerraFX.Interop.Windows;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoFFXModule;
 using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Color = Archipelago.MultiClient.Net.Models.Color;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.GUI;
@@ -84,7 +85,9 @@ public unsafe static class ArchipelagoGUI {
         //ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
         
         render_client();
-        //render_experiments();
+#if DEBUG
+        render_experiments();
+#endif
         //render_pane(pane_width);
 
         // Reset style
@@ -95,11 +98,14 @@ public unsafe static class ArchipelagoGUI {
     private static string cluster_file_name = "";
     //private static PTexture2DBase* loaded_texture2d;
     private static FhTexture? loaded_image;
-    
+
+    public static FileInfo?  shiori_file;
     private static FhTexture? shiori_image;
     private static FhTexture? bevelle_image;
 
     private static int voiceline_id;
+    public  static byte voice_lang = 0xFF;
+    public  static byte text_lang  = 0xFF;
 
     private static void render_experiments() {
         experiments_enabled ^= ImGui.IsKeyPressed(experimental_gui_key);
@@ -112,9 +118,7 @@ public unsafe static class ArchipelagoGUI {
             int requirement = (int)seed.GoalRequirement;
             ImGui.InputInt("Goal Requirement", ref requirement);
             seed.GoalRequirement = (GoalRequirement)requirement;
-            if (ImGui.Button("Load seed")) {
-                ArchipelagoFFXModule.loadSeed(loaded_seeds[selected_seed]);
-            }
+
             //ImGui.InputText("fileName", ref cluster_file_name, 256);
             //if (ImGui.Button("Load cluster")) {
             //    loaded_texture2d = ArchipelagoFFXModule.loadCluster(cluster_file_name);
@@ -674,44 +678,46 @@ public unsafe static class ArchipelagoGUI {
                         add_log_message(message);
                     }
                     ,
-                    //["/setregion", string regionString, string progressString, string mapString, string entranceString] => () => {
-                    //    if (Enum.TryParse(regionString, out RegionEnum region)) {
-                    //        if (ushort.TryParse(progressString, out ushort progress)) {
-                    //            if (ushort.TryParse(mapString, out ushort map)) {
-                    //                if (ushort.TryParse(entranceString, out ushort entrance)) {
-                    //                    ArchipelagoRegion r = ArchipelagoFFXModule.region_states[region];
-                    //                    r.story_progress = progress;
-                    //                    r.room_id = map;
-                    //                    r.entrance = entrance;
-                    //                }
-                    //                else {
-                    //                    List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entranceString, Color.Blue)];
-                    //                    add_log_message(message);
-                    //                }
-                    //            }
-                    //            else{
-                    //                List<(string, Color)> message = [("invalid map_id: ", Color.Red), (mapString, Color.Blue)];
-                    //                add_log_message(message);
-                    //            }
-                    //
-                    //        }
-                    //        else {
-                    //            List<(string, Color)> message = [("invalid story_progress: ", Color.Red), (progressString, Color.Blue)];
-                    //            add_log_message(message);
-                    //        }
-                    //
-                    //    }
-                    //    else {
-                    //        List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
-                    //        add_log_message(message);
-                    //    }
-                    //}
-                    //,
-                    //["/setregion", ..] => () => {
-                    //    List<(string, Color)> message = [("Wrong arguments for '/setregion': Should be ", Color.Red), ($"/setregion regionName story_progress map_id entrance_id", Color.Blue)];
-                    //    add_log_message(message);
-                    //}
-                    //,
+#if DEBUG
+                    ["/setregion", string regionString, string progressString, string mapString, string entranceString] => () => {
+                        if (Enum.TryParse(regionString, out RegionEnum region)) {
+                            if (ushort.TryParse(progressString, out ushort progress)) {
+                                if (ushort.TryParse(mapString, out ushort map)) {
+                                    if (ushort.TryParse(entranceString, out ushort entrance)) {
+                                        ArchipelagoRegion r = ArchipelagoFFXModule.region_states[region];
+                                        r.story_progress = progress;
+                                        r.room_id = map;
+                                        r.entrance = entrance;
+                                    }
+                                    else {
+                                        List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entranceString, Color.Blue)];
+                                        add_log_message(message);
+                                    }
+                                }
+                                else{
+                                    List<(string, Color)> message = [("invalid map_id: ", Color.Red), (mapString, Color.Blue)];
+                                    add_log_message(message);
+                                }
+                    
+                            }
+                            else {
+                                List<(string, Color)> message = [("invalid story_progress: ", Color.Red), (progressString, Color.Blue)];
+                                add_log_message(message);
+                            }
+                    
+                        }
+                        else {
+                            List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
+                            add_log_message(message);
+                        }
+                    }
+                    ,
+                    ["/setregion", ..] => () => {
+                        List<(string, Color)> message = [("Wrong arguments for '/setregion': Should be ", Color.Red), ($"/setregion regionName story_progress map_id entrance_id", Color.Blue)];
+                        add_log_message(message);
+                    }
+                    ,
+#endif
                     ["/send_checks"] => () => {FFXArchipelagoClient.local_locations_updated = true; }
                     ,
                     ["/clear"] => () => {
@@ -721,6 +727,9 @@ public unsafe static class ArchipelagoGUI {
                     }
                     ,
                     ["/help"] => () => {
+#if DEBUG
+                        add_log_message([("/setregion regionName progress map entrance", Color.White)]);
+#endif
                         add_log_message([("Available commands:", Color.White)]);
                         add_log_message([("/resetregion regionName", Color.White)]);
                         add_log_message([("/send_checks", Color.White)]);
@@ -833,22 +842,47 @@ public unsafe static class ArchipelagoGUI {
         }
     }
 
+    private static void render_settings() {
+
+        if (ImGui.BeginCombo("Voice", voice_lang == 0xFF ? "Default" : ((FhLangId)voice_lang).ToString())) {
+            if (ImGui.Selectable("Default", voice_lang == 0xFF)) {
+                voice_lang = 0xFF;
+            }
+            if (ImGui.Selectable("Japanese", voice_lang == (byte)FhLangId.Japanese)) {
+                voice_lang = (byte)FhLangId.Japanese;
+            }
+            if (ImGui.Selectable("English", voice_lang == (byte)FhLangId.English)) {
+                voice_lang = (byte)FhLangId.English;
+            }
+            ImGui.EndCombo();
+        }
+
+        if (ImGui.BeginCombo("Text", text_lang == 0xFF ? "Default" : ((FhLangId)text_lang).ToString())) {
+            if (ImGui.Selectable("Default", text_lang == 0xFF)) {
+                text_lang = 0xFF;
+            }
+            foreach (FhLangId lang in Enum.GetValues<FhLangId>()) {
+                if (ImGui.Selectable($"{lang}", text_lang == (byte)lang)) {
+                    text_lang = (byte)lang;
+                }
+            }
+            ImGui.EndCombo();
+        }
+
+        if (ImGui.Button("Save languages")) {
+            ArchipelagoFFXModule.VoiceLanguage = voice_lang != 0xFF ? (FhLangId)voice_lang : null;
+            ArchipelagoFFXModule.TextLanguage = text_lang != 0xFF ? (FhLangId)text_lang : null;
+            ArchipelagoFFXModule.save_settings();
+        }
+    }
+
     private static void render_client() {
         enabled ^= ImGui.IsKeyPressed(archipelago_gui_key);
         if (!enabled) return;
         ImGuiStylePtr style = ImGui.GetStyle();
 
-        if (ImGui.Begin("Archipelago###Archipelago.GUI")){
-
-            if (shiori_image == null) {
-                //var resources = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles();
-                //var shiori_file = Array.Find(resources, file => file.Name == "shiori.png");
-                var shiori_file =  ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles("shiori.png").FirstOrDefault();
-                if (shiori_file != null) {
-                    FhApi.Resources.load_png_from_disk(shiori_file.FullName, out shiori_image);
-                }
-            }   
-            if (shiori_image != null) {
+        if (ImGui.Begin("Archipelago###Archipelago.GUI")) {
+            if (shiori_image != null || (shiori_file != null && FhApi.Resources.load_png_from_disk(shiori_file.FullName, out shiori_image))) {
                 ImGui.GetWindowDrawList().AddImage(shiori_image.TextureRef, ImGui.GetWindowPos(), ImGui.GetWindowPos() + ImGui.GetWindowSize(), 0x55555555);
             }
             if (ImGui.BeginTabBar("TabBar###Archipelago.GUI.TabBar")) {
@@ -874,6 +908,10 @@ public unsafe static class ArchipelagoGUI {
                     ImGui.EndTabItem();
                 }
 #endif
+                if (ImGui.BeginTabItem("Settings###Archipelago.GUI.TabBar.Settings")) {
+                    render_settings();
+                    ImGui.EndTabItem();
+                }
 
                 ImGui.EndTabBar();
             }

@@ -41,8 +41,7 @@ public static class FFXArchipelagoClient {
             connectHandlers(session);
             var roomInfoPacket = await session.ConnectAsync();
             
-            login_result = await session.LoginAsync("Final Fantasy X", user, ItemsHandlingFlags.IncludeStartingInventory, Version.Parse("0.6.0"), password: password, requestSlotData: true);
-            //login_result = tempSession.TryConnectAndLogin("Final Fantasy X", user, ItemsHandlingFlags.IncludeStartingInventory, Version.Parse("0.6.0"), password: password, requestSlotData: true);
+            login_result = await session.LoginAsync("Final Fantasy X", user, ItemsHandlingFlags.RemoteItems, Version.Parse("0.6.0"), password: password, requestSlotData: true);
         }
         catch (Exception e) {
             login_result = new LoginFailure(e.GetBaseException().Message);

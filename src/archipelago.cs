@@ -65,6 +65,20 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         init_hooks();
     }
 
+    public static FhLangId? VoiceLanguage;
+    public static FhLangId? TextLanguage;
+    private class ArchipelagoGlobalState { 
+        public string   LastVersion { get; set; }
+        public FhLangId? VoiceLanguage { get; set; }
+        public FhLangId? TextLanguage { get; set; }
+
+        public ArchipelagoGlobalState() {
+            this.LastVersion   = ArchipelagoFFXModule.Version.ToString();
+            this.VoiceLanguage = ArchipelagoFFXModule.VoiceLanguage;
+            this.TextLanguage  = ArchipelagoFFXModule.TextLanguage;
+        }
+    }
+
     private class ArchipelagoState {
         public string                                    SeedId                 { get; set; }
         public Dictionary<RegionEnum, ArchipelagoRegion> region_states           { get; set; }
@@ -217,7 +231,13 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
     public override bool init(FhModContext mod_context, FileStream global_state_file) {
         ArchipelagoFFXModule.mod_context = mod_context;
+
+        load_settings();
+
+
         // Initialize Archipelago Client
+
+        ArchipelagoGUI.shiori_file = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles("shiori.png").FirstOrDefault();
         logger = _logger;
         initalize_states();
         //loadSeed();
@@ -380,6 +400,36 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             FFXArchipelagoClient.received_items = loaded_state.received_items;
             skip_state_updates = loaded_state.skip_state_updates;
         }
+    }
+
+    public static bool load_settings() {
+        string settings_file_path = Path.Combine(mod_context.Paths.ResourcesDir.FullName, "settings.json");
+
+        try {
+            using (FileStream? settings_file = File.Open(settings_file_path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite)) {
+                var loaded_state = JsonSerializer.Deserialize<ArchipelagoGlobalState>(settings_file);
+                if (loaded_state == null) return false;
+
+                VoiceLanguage = loaded_state.VoiceLanguage;
+                TextLanguage = loaded_state.TextLanguage;
+                ArchipelagoGUI.voice_lang = VoiceLanguage.HasValue ? (byte)VoiceLanguage.Value : (byte)0xFF;
+                ArchipelagoGUI.text_lang  = TextLanguage.HasValue  ? (byte)TextLanguage.Value  : (byte)0xFF;
+            }
+            return true;
+        }
+        catch (Exception) {
+            return false;
+        }
+    }
+    public static bool save_settings() {
+        string settings_file_path = Path.Combine(mod_context.Paths.ResourcesDir.FullName, "settings.json");
+
+        using (FileStream settings_file = File.Open(settings_file_path, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite)) {
+            ArchipelagoGlobalState state = new();
+            JsonSerializer.Serialize(settings_file, state);
+        }
+
+        return true;
     }
 
     public override void pre_update() {

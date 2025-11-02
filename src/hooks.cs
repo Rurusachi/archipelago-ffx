@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -410,12 +411,12 @@ public unsafe partial class ArchipelagoFFXModule {
             && _SgEvent_showModularMenuInit.hook()
             && _Common_addPartyMember.hook() && _Common_removePartyMember.hook() && _Common_removePartyMemberLongTerm.hook() && _Common_setWeaponVisibilty.hook()
             && _Common_putPartyMemberInSlot.hook() && _Common_pushParty.hook() && _Common_popParty.hook() && _MsBattleExe.hook() && _FUN_00791820.hook()
-            && _MsApUp.hook() //&& _MsBtlReadSetScene.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
+            && _MsApUp.hook() && _MsBtlReadSetScene.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
             && _eiAbmParaGet.hook() // && _FUN_00a48910.hook()
             && _FUN_0086bec0.hook() && _FUN_0086bea0.hook() // Custom strings
             && _graphicInitFMVPlayer.hook() && _FmodVoice_dataChange.hook()
-            && _AtelInitTotal.hook();
-            //&& _LocalizationManager_Initialize.hook();
+            && _AtelInitTotal.hook()
+            && _LocalizationManager_Initialize.hook();
             //&& _FUN_00656c90.hook() && _FUN_0065ee30.hook();
             //&& _openFile.hook() && _FUN_0070aec0.hook();
             //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
@@ -534,6 +535,8 @@ public unsafe partial class ArchipelagoFFXModule {
         new CustomString("{TIME:00}Ready to fight {COLOR:88}Sin{COLOR:41}?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
         new CustomString("{TIME:00}Ready to fight {COLOR:88}Jecht{COLOR:41}?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
         new CustomString("{TIME:00}Locked"u8, 0, 0),
+        new CustomString("{TIME:00}{CHOICE:00}Save{LF}{CHOICE:01}Board airship{LF}{CHOICE:02}Play blitzball{LF}{CHOICE:03}Cancel"u8, 4, 0),
+        new CustomString("{TIME:00}The {MACRO:06:42} are not at full{LF}strength. You need more members{LF}to participate in blitzball."u8, 0, 0),
     ];
     //public static readonly byte[][] rawCustomStrings = [
     //    "{TIME:0}Ready to fight {COLOR:BLUE}Sin{COLOR:WHITE}?\n{CHOICE:0}Yes\n{CHOICE:1}No"u8.ToArray()
@@ -586,10 +589,25 @@ public unsafe partial class ArchipelagoFFXModule {
         ];
     }
 
+    private static AtelInst[] atelPushInt(uint value) {
+        return [
+            AtelOp.PUSHII  .build((ushort)(value & 0xffff)),
+            AtelOp.PUSHII  .build((ushort)(value >>    16)),
+            AtelOp.CALLPOPA.build(0xF000),
+            ];
+    }
+    private static AtelInst[] atelPushIntAsFloat(uint value) {
+        return [
+            AtelOp.PUSHII  .build((ushort)(value & 0xffff)),
+            AtelOp.PUSHII  .build((ushort)(value >>    16)),
+            AtelOp.CALLPOPA.build(0xF001),
+            ];
+    }
+
     private static readonly List<GCHandle> customScriptHandles = [];
     private static readonly byte[][] customScripts = {
         // Cid talk hook
-        ((AtelInst[])[
+        ((AtelInst[])[ // 0
             // If GameMoment < 2970 or GameMoment >= 3120: Jump to j01 (return)
             AtelOp.PUSHV   .build(0x0000),
             AtelOp.POPY    .build(      ),
@@ -634,7 +652,7 @@ public unsafe partial class ArchipelagoFFXModule {
         ]).SelectMany(x => x.to_bytes()).ToArray(),
 
         // Start Airship Sin fights
-        ((AtelInst[])[
+        ((AtelInst[])[ // 1
             // Set GameMoment = 3085
             AtelOp.PUSHII  .build(  3085),
             AtelOp.POPV    .build(0x0000),
@@ -648,7 +666,7 @@ public unsafe partial class ArchipelagoFFXModule {
         ]).SelectMany(x => x.to_bytes()).ToArray(),
 
         // Remove defeated Aeon
-        ((AtelInst[])[
+        ((AtelInst[])[ // 2
             // call Common.obtainBrotherhood(privBA98, 9) = lock party member privBA98
             AtelOp.PUSHV   .build(0x000B),
             AtelOp.PUSHII  .build(0x0009),
@@ -663,7 +681,7 @@ public unsafe partial class ArchipelagoFFXModule {
         ]).SelectMany(x => x.to_bytes()).ToArray(),
 
         // Check Goal Requirement (Falling tower)
-        ((AtelInst[])[
+        ((AtelInst[])[ // 3
             // If !(GameMoment < 3250): Jump to j01 (return)
             AtelOp.PUSHV    .build(0x0000),
             AtelOp.PUSHII   .build(3250  ),
@@ -714,7 +732,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         ]).SelectMany(x => x.to_bytes()).ToArray(),
 
-        ((AtelInst[])[
+        ((AtelInst[])[ // 4
             // call Common.disablePlayerControl? [005Eh]();
             AtelOp.CALLPOPA.build(0x005e),
             // call Common.displayFieldChoice [013Bh](boxIndex=1 [01h], string=customString[1], p3=0 [00h], p4=1 [01h], x=280 [0118h], y=224 [E0h], align=Center [04h]);
@@ -763,7 +781,7 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.JMP       .build(0x0001),
         ]).SelectMany(x => x.to_bytes()).ToArray(),
 
-        ((AtelInst[])[
+        ((AtelInst[])[ // 5
             //call Common.disablePlayerControl? [005Eh]();
             AtelOp.CALLPOPA.build(0x005E),
             //call Common.stopWorkerMotion [00D1h]();
@@ -781,15 +799,18 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.PUSHF   .build(0x0007),
             AtelOp.CALLPOPA.build(0x002F),
             //call Common.setDestination [0015h](x=-96.33675 [C2C0AC6Ah], y=25.666155 [41CD5449h], z=-526.34314 [C40395F6h]);
-            AtelOp.PUSHII  .build((ushort)(0xc0800000 & 0xffff)),
-            AtelOp.PUSHII  .build((ushort)(0xc0800000 >>    16)),
-            AtelOp.CALLPOPA.build(0xF001),
-            AtelOp.PUSHII  .build((ushort)(0x40ae56e5 & 0xffff)),
-            AtelOp.PUSHII  .build((ushort)(0x40ae56e5 >>    16)),
-            AtelOp.CALLPOPA.build(0xF001),
-            AtelOp.PUSHII  .build((ushort)(0xc3af0000 & 0xffff)),
-            AtelOp.PUSHII  .build((ushort)(0xc3af0000 >>    16)),
-            AtelOp.CALLPOPA.build(0xF001),
+            //AtelOp.PUSHII  .build((ushort)(0xc0800000 & 0xffff)),
+            //AtelOp.PUSHII  .build((ushort)(0xc0800000 >>    16)),
+            //AtelOp.CALLPOPA.build(0xF001),
+            .. atelPushIntAsFloat(0xc0800000),
+            //AtelOp.PUSHII  .build((ushort)(0x40ae56e5 & 0xffff)),
+            //AtelOp.PUSHII  .build((ushort)(0x40ae56e5 >>    16)),
+            //AtelOp.CALLPOPA.build(0xF001),
+            .. atelPushIntAsFloat(0x40ae56e5),
+            //AtelOp.PUSHII  .build((ushort)(0xc3af0000 & 0xffff)),
+            //AtelOp.PUSHII  .build((ushort)(0xc3af0000 >>    16)),
+            //AtelOp.CALLPOPA.build(0xF001),
+            .. atelPushIntAsFloat(0xc3af0000),
             AtelOp.CALLPOPA.build(0x0015),
             //call Common.setRotationTarget1 [0028h](angle=Common.destinationToYaw [001Fh]());
             AtelOp.CALL    .build(0x001F),
@@ -815,8 +836,160 @@ public unsafe partial class ArchipelagoFFXModule {
 
         ]).SelectMany(x => x.to_bytes()).ToArray(),
 
+        // bvyt0900 Save Sphere (Options)
+        ((AtelInst[])[ // 6
+            // (0 [00h] == case) -> j03 (5170)
+            AtelOp.PUSHII  .build(0),
+            AtelOp.PUSHY   .build( ),
+            AtelOp.EQ      .build( ),
+            AtelOp.POPXCJMP.build(3),
+            // (1 [00h] == case) -> customscripts[7] (5170)
+            AtelOp.PUSHII  .build(1),
+            AtelOp.PUSHY   .build( ),
+            AtelOp.EQ      .build( ),
+            //AtelOp.POPXCJMP.build(3),
+            // call Common.obtainBrotherhood(value, 7, 4) i.e. if value jump to customscripts[7]
+            AtelOp.PUSHII  .build(0x0704),
+            AtelOp.CALLPOPA.build(0x01B8),
+            // (2 [00h] == case) -> j03 (5170)
+            AtelOp.PUSHII  .build(2),
+            AtelOp.PUSHY   .build( ),
+            AtelOp.EQ      .build( ),
+            // call Common.obtainBrotherhood(value, 8, 4) i.e. if value jump to customscripts[8]
+            AtelOp.PUSHII  .build(0x0804),
+            AtelOp.CALLPOPA.build(0x01B8),
+            // Jump to j02 (51A8)
+            AtelOp.JMP     .build(2),
 
-    };
+
+        ]).SelectMany(x => x.to_bytes()).ToArray(),
+
+        // bvyt0900 Save Sphere (Board Airship option)
+        ((AtelInst[])[ // 7
+            // AD3A00 D8DF00           call Common.playSfx [00DFh](sfx=BoardAirship [80000048h]);
+            //AtelOp.PUSHI   .build(0x003A),
+            //AtelOp.PUSHII  .build((ushort)(0x80000048 & 0xffff)),
+            //AtelOp.PUSHII  .build((ushort)(0x80000048 >>    16)),
+            //AtelOp.CALLPOPA.build(0xF001),
+            .. atelPushInt(0x80000048),
+            AtelOp.CALLPOPA.build(0x00DF),
+            // AE0300 AE0000 D80980    call Map.bindGfxToTarget [8009h](gfxIndex= 3[03h], attachmentPoint= 0[00h]);
+            AtelOp.PUSHII  .build(0x0003),
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x8009),
+            // AE0300 AE0100 D80280    call Map.setGfxActive? [8002h](gfxIndex= 3[03h], active= true[01h]);
+            AtelOp.PUSHII  .build(0x0003),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x8002),
+            // AE1E00 D80000           call Common.wait[0000h] (frames=30 [1Eh]);
+            AtelOp.PUSHII  .build(0x001E),
+            AtelOp.CALLPOPA.build(0x0000),
+            // AE3C00 D88801           call Common.0188(p1=60 [3Ch]);
+            AtelOp.PUSHII  .build(0x003C),
+            AtelOp.CALLPOPA.build(0x0188),
+            // AE0F00 D80540           call SgEvent.fadeoutToBlack?[4005h] (frames=15 [0Fh]);
+            AtelOp.PUSHII  .build(0x000F),
+            AtelOp.CALLPOPA.build(0x4005),
+            // AE0200 AE0100 D88400    call Common.waitForText [0084h](boxIndex= 2[02h], p2= 1[01h]);
+            AtelOp.PUSHII  .build(0x0002),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x0084),
+            // AE0F00 D80000           call Common.wait[0000h] (frames=15 [0Fh]);
+            AtelOp.PUSHII  .build(0x000F),
+            AtelOp.CALLPOPA.build(0x0000),
+            // AE0000 A00100           Set IsBetweenDjoseFaythTalkAndAirshipBoarding = false [00h];
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.POPV    .build(0x0001),
+            // Variable location depends on event script. Injected into slot 1 here
+
+            // call Common.00BB(0);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x00BB),
+            // call Common.00BC(0);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x00BC),
+            // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+            AtelOp.PUSHII  .build(   382),
+            AtelOp.PUSHII  .build(     0),
+            AtelOp.CALLPOPA.build(0x010B),
+            // Jump to j02 (51A8)
+            AtelOp.JMP     .build(2),
+        ]).SelectMany(x => x.to_bytes()).ToArray(),
+
+        // bvyt0900 Save Sphere (Play Blitzball option)
+        ((AtelInst[])[ // 8
+            // AE0500 A20400 AE0600 0B D72E00                   Check (BlitzballTeamPlayerCount[Besaid Aurochs [05h]] < 6 [06h]) else jump to j2E (2D22)
+            AtelOp.PUSHII   .build(0x0005),
+            AtelOp.PUSHAR   .build(0x0001),
+            AtelOp.PUSHII   .build(0x0006),
+            AtelOp.LS       .build(      ),
+            //AtelOp.POPXNCJMP.build(0x0000),
+            // call Common.obtainBrotherhood(value, 7, 3) i.e. if value jump to customscripts[9]
+            AtelOp.PUSHII  .build(0x0903),
+            AtelOp.CALLPOPA.build(0x01B8),
+            // AE0200 AE0100 D88400                             call Common.waitForText [0084h](boxIndex=2 [02h], p2=1 [01h]);
+            AtelOp.PUSHII  .build(0x0002),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x0084),
+            // AD3900 D8DF00                                    call Common.playSfx[00DFh] (sfx=sfx:-2147483645 [80000003h]);
+            .. atelPushInt(0x80000003),
+            AtelOp.CALLPOPA.build(0x00DF),
+            // AE0100 AE0001 AEE000 AE0400 D86500               call Common.positionText [0065h](boxIndex= 1[01h], x= 256[0100h], y= 224[E0h], align= Center[04h]);
+            // AE0100 AE0000 D86600                             call Common.setTextHasTransparentBackdrop [0066h](boxIndex= 1[01h], transparent= false[00h]);
+            // AE0100 AE1300 D86400                             call Common.displayFieldString [0064h](boxIndex= 1[01h], string= "{TIME:00}The {MCR:s06l42:"Besaid Aurochs"} are not at full{\n}strength. You need more members{\n}to participate in blitzball." [13h]);
+            // AE0100 AE0000 D89D00                             call Common.setTextFlags[009Dh] (boxIndex=1 [01h], textFlags=[] [00h]);
+            // AE0100 AE0000 D86A00                             call Common.006A(boxIndex= 1[01h], p2= 0[00h]);
+            .. atelDisplayFieldString(1, 0x8004, 256, 224, 4, 0, 0),
+            // AE0100 AE0100 D88400                             call Common.waitForText[0084h] (boxIndex=1 [01h], p2=1 [01h]);
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x0084),
+            // B02500                                           Jump to j22(2D86)
+            AtelOp.JMP     .build(2),
+        ]).SelectMany(x => x.to_bytes()).ToArray(),
+
+        // bvyt0900 Save Sphere (Play Blitzball option)
+        ((AtelInst[])[ // 9
+            // AD3A00 D8DF00                                    call Common.playSfx [00DFh](sfx=BoardAirship [80000048h]);
+            .. atelPushInt(0x80000048),
+            AtelOp.CALLPOPA.build(0x00DF),
+            // AE0300 AE0000 D80980                             call Map.bindGfxToTarget[8009h] (gfxIndex=3 [03h], attachmentPoint=0 [00h]);
+            AtelOp.PUSHII  .build(0x0003),
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x8009),
+            // AE0300 AE0100 D80280                             call Map.setGfxActive?[8002h] (gfxIndex=3 [03h], active=true [01h]);
+            AtelOp.PUSHII  .build(0x0003),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x8002),
+            // AE1E00 D80000                                    call Common.wait[0000h] (frames=30 [1Eh]);
+            AtelOp.PUSHII  .build(0x001E),
+            AtelOp.CALLPOPA.build(0x0000),
+            // AE0F00 D80540                                    call SgEvent.fadeoutToBlack? [4005h](frames= 15[0Fh]);
+            AtelOp.PUSHII  .build(0x000F),
+            AtelOp.CALLPOPA.build(0x4005),
+            // AE0200 AE0100 D88400                             call Common.waitForText[0084h] (boxIndex=2 [02h], p2=1 [01h]);
+            AtelOp.PUSHII  .build(0x0002),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x0084),
+            // AE0F00 D80000                                    call Common.wait [0000h](frames= 15[0Fh]);
+            AtelOp.PUSHII  .build(0x000F),
+            AtelOp.CALLPOPA.build(0x0000),
+            // AE0000 D8BB00                                    call Common.00BB(p1= 0[00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x00BB),
+            // AE0000 D8BC00                                    call Common.00BC(p1= 0[00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x00BC),
+            // AE5B01 AE0000 D80B01                             call Common.warpToMap?[010Bh] (map=bltz0200[015Bh], entranceIndex?=0 [00h]);
+            AtelOp.PUSHII  .build(0x015B),
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x010B),
+            // 3C                                               return;
+            AtelOp.RET     .build(      ),
+        ]).SelectMany(x => x.to_bytes()).ToArray(),
+
+
+};
 
     private static readonly AtelInst[] save_sphere_load_model = [
         AtelOp.PUSHII  .build(0x5001),
@@ -1069,7 +1242,31 @@ public unsafe partial class ArchipelagoFFXModule {
                 ]);
 
         }
-        else {
+        else if (event_name == "bvyt0900") {
+
+            //int save_sphere_offset = 0x507B;
+            int tutorial_offset    = 0x7E;
+            int menu_string_offset = 0xD8;
+            foreach (int save_sphere_offset in (int[])[0x507B, 0x5253]) {
+                set(code_ptr, save_sphere_offset + tutorial_offset, [
+                    AtelOp.PUSHII  .build(0x0008),
+                            AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
+                            AtelOp.JMP     .build(0x0000),
+                            ]);
+
+                set(code_ptr, save_sphere_offset + menu_string_offset + 3, AtelOp.PUSHII.build(0x8003)); // Set to customString[3]
+            }
+
+            AtelBasicWorker* save_sphere_worker_1 = Globals.Atel.current_controller->worker(0x13);
+            // Custom switch
+            save_sphere_worker_1->table_jump[1] = (uint)(customScriptHandles[6].AddrOfPinnedObject() - (nint)save_sphere_worker_1->code_ptr);
+            logger.Debug($"{save_sphere_worker_1->table_var[1].raw}");
+            save_sphere_worker_1->table_var[1].raw = 0x0000000100000A98;
+
+            AtelBasicWorker* save_sphere_worker_2 = Globals.Atel.current_controller->worker(0x14);
+            // Custom switch
+            save_sphere_worker_2->table_jump[1] = (uint)(customScriptHandles[6].AddrOfPinnedObject() - (nint)save_sphere_worker_2->code_ptr);
+        } else {
             AtelInst? previous_op = null;
             AtelInst? current_op = null;
             uint code_length = Atel.controllers[0].worker(0)->script_chunk->code_length;
@@ -1079,7 +1276,7 @@ public unsafe partial class ArchipelagoFFXModule {
             int tutorial_offset = 0x571;
             ushort tutorial_jump = 0x23;
             int airship_warp_offset = 0x657;
-            if (event_name == "mihn0000" || event_name == "mihn0200") {
+            if (event_name == "mihn0000" || event_name == "mihn0200" || event_name == "mihn0600") {
                 tutorial_offset = 0x59B;
                 airship_warp_offset = 0x695;
             }
@@ -1784,7 +1981,10 @@ public unsafe partial class ArchipelagoFFXModule {
             }
             if (encounterToLocationDict.TryGetValue(encounter_name, out int[]? boss_locations)) {
                 foreach (int location_id in boss_locations) {
-                    sendLocation(location_id, ArchipelagoLocationType.Boss);
+                    if (item_locations.boss.TryGetValue(location_id, out var item)) {
+                        sendLocation(location_id, ArchipelagoLocationType.Boss);
+                        ArchipelagoFFXModule.obtain_item(item.id);
+                    }
                 }
             }
         }
@@ -2092,6 +2292,8 @@ public unsafe partial class ArchipelagoFFXModule {
                     unlocked_characters[PlySaveId.PC_MAGUS2] = true;
                     unlocked_characters[PlySaveId.PC_MAGUS3] = true;
                 }
+                save_party();
+                reset_party();
                 break;
             case 0x9:
                 // Trap
@@ -2356,8 +2558,15 @@ public unsafe partial class ArchipelagoFFXModule {
     // Unsure if there are side effects
     public static void h_LocalizationManager_Initialize(FFXLocalizationManager* localizationManager) {
         _LocalizationManager_Initialize.orig_fptr(localizationManager);
-        localizationManager->video = 0;
-        localizationManager->voice = 0;
+        if (TextLanguage.HasValue) { 
+            logger.Debug($"Text: {TextLanguage.Value}");
+            localizationManager->text = (int)TextLanguage; 
+        }
+        if (VoiceLanguage.HasValue) {
+            logger.Debug($"Voice: {VoiceLanguage.Value}");
+            localizationManager->video = (int)VoiceLanguage;
+            localizationManager->voice = (int)VoiceLanguage;
+        }
     }
 
     public static int h_FmodVoice_dataChange(nint FmodVoice, int event_id, nint param_2) {
@@ -2459,14 +2668,19 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
     static AtelCallTarget[] customNameSpace = {
-        new() { exec_func = (nint)(delegate*<AtelBasicWorker*, AtelStack*, int>)(&CT_Exec_F000)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F000)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F001)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
-    public static int CT_Exec_F000(AtelBasicWorker* work, AtelStack* atelStack) {
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_F000(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         logger.Debug("Call target F000");
-        return 0;
+        int high = atelStack->pop_int();
+        int low  = atelStack->pop_int();
+
+        atelStack->push_int((high << 16) | low);
+        return 1;
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
