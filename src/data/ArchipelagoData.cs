@@ -484,11 +484,19 @@ public static class ArchipelagoData {
         {RegionEnum.Besaid, new(){ story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
             story_checks = {
                 { 210, new() {check_delegate = (r) => {
-                    // Send and obtain Map location if skipped by CSR
+                    // Send and obtain Map and Brotherhood locations if skipped by CSR
                     int treasure_id = 459;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
                         if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
                             if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                    int other_id = 0;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(other_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(other_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(other_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -531,6 +539,17 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Guadosalam, new(){ story_progress = 1085, room_id = 135, entrance = 0, airship_destination_index = 8,
             story_checks = {
+                { 1170, new() {check_delegate = (r) => {
+                    // Send and obtain Brotherhood upgrade location if skipped by CSR
+                    int other_id = 37;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(other_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(other_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(other_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 1210, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 243, next_entrance = 1, return_if_locked = RegionEnum.ThunderPlains, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Guadosalam visit complete"); } } },
             } } },
         {RegionEnum.ThunderPlains, new(){ story_progress = 1210, room_id = 140, entrance = 0, airship_destination_index = 9,
