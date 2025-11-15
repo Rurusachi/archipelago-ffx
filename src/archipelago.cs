@@ -47,6 +47,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     public const int NUM_CHARACTERS = 0x12;
     public static Dictionary<int, bool> unlocked_characters = [];
     public static Dictionary<int, bool> locked_characters = []; // Overrides unlocked characters
+    public static int[] celestial_level = new int[NUM_CHARACTERS];
     public static bool party_overridden = false;
     public static bool is_character_unlocked(int character) => unlocked_characters[character] && !locked_characters[character];
 
@@ -84,7 +85,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public Dictionary<RegionEnum, ArchipelagoRegion> region_states           { get; set; }
         public Dictionary<RegionEnum, bool>              region_is_unlocked      { get; set; }
         public Dictionary<int,        bool>              unlocked_characters     { get; set; }
-        public List<long>                                local_checked_locations { get; set; }
+        public int[]                                     celestial_level         { get; set; }
+        public HashSet<long>                             local_checked_locations { get; set; }
         public int                                       received_items          { get; set; }
 
         public bool skip_state_updates { get; set; }
@@ -94,6 +96,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             this.region_states           = ArchipelagoFFXModule.region_states;
             this.region_is_unlocked      = ArchipelagoFFXModule.region_is_unlocked;
             this.unlocked_characters     = ArchipelagoFFXModule.unlocked_characters;
+            this.celestial_level         = ArchipelagoFFXModule.celestial_level;
             this.skip_state_updates      = ArchipelagoFFXModule.skip_state_updates;
             this.local_checked_locations = FFXArchipelagoClient.local_checked_locations;
             this.received_items          = FFXArchipelagoClient.received_items;
@@ -113,6 +116,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public string          SeedId;
         [JsonInclude]
         public GoalRequirement GoalRequirement;
+        [JsonInclude]
+        public int             RequiredPartyMembers;
         [JsonInclude]
         public int             APMultiplier;
         [JsonInclude]          
@@ -142,6 +147,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public ArchipelagoSeed() {
             SeedId = "";
             GoalRequirement = GoalRequirement.None;
+            RequiredPartyMembers = 1;
             APMultiplier = 1;
             StartingItems = [];
             Treasure = [];
@@ -256,6 +262,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
         unlocked_characters.Clear();
         locked_characters.Clear();
+        celestial_level.Initialize();
         for (int i = 0; i < NUM_CHARACTERS; i++) {
             unlocked_characters.Add(i, false);
             locked_characters.Add(i, false);
@@ -394,8 +401,10 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 unlocked_characters[character.Key] = character.Value;
                 locked_characters[character.Key] = false;
             }
+            loaded_state.celestial_level.CopyTo(celestial_level, 0);
             FFXArchipelagoClient.local_checked_locations.Clear();
-            FFXArchipelagoClient.local_checked_locations.AddRange(loaded_state.local_checked_locations);
+            FFXArchipelagoClient.local_checked_locations.UnionWith(loaded_state.local_checked_locations);
+            //FFXArchipelagoClient.local_checked_locations.AddRange(loaded_state.local_checked_locations);
             FFXArchipelagoClient.local_locations_updated = true;
             FFXArchipelagoClient.received_items = loaded_state.received_items;
             skip_state_updates = loaded_state.skip_state_updates;
@@ -453,6 +462,17 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                     region.entrance = storyCheck.next_entrance ?? region.entrance;
                     region.completed_visits += storyCheck.visit_complete ? 1 : 0;
                     skip_state_updates = storyCheck.next_story_progress.HasValue || storyCheck.next_room_id.HasValue || storyCheck.next_entrance.HasValue;
+
+                    if (storyCheck.visit_complete && region.completed_visits == 1 && pilgrimageRegions.Contains(current_region)) {
+                        int completedPilgrimages = pilgrimageRegions.Count(region => region_states[region].completed_visits > 0);
+
+                        string message = $"{completedPilgrimages}/{pilgrimageRegions.Length} pilgrimage regions completed";
+                        Color color = Color.White;
+                        if (completedPilgrimages >= pilgrimageRegions.Length) {
+                            color = Color.Green;
+                        }
+                        ArchipelagoGUI.add_log_message([(message, color)]);
+                    }
                 }
             }
             last_story_progress = story_progress;

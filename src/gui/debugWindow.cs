@@ -35,8 +35,6 @@ public unsafe static class ArchipelagoGUI {
     public static bool experiments_enabled = false;
     private static bool show = true;
 
-    public static long lastTreasure = -1;
-
     private static string client_input_address = "";
     private static string client_input_name = "";
     private static string client_input_password = "";
@@ -115,9 +113,34 @@ public unsafe static class ArchipelagoGUI {
 
 
         if (ImGui.Begin("Archipelago###Archipelago.Experiments.GUI")) {
-            int requirement = (int)seed.GoalRequirement;
-            ImGui.InputInt("Goal Requirement", ref requirement);
-            seed.GoalRequirement = (GoalRequirement)requirement;
+            //int requirement = (int)seed.GoalRequirement;
+            //ImGui.InputInt("Goal Requirement", ref requirement);
+            //seed.GoalRequirement = (GoalRequirement)requirement;
+            float frameHeight = ImGui.GetFrameHeight();
+            Vector2 windowPos = ImGui.GetWindowPos();
+            float windowBorderSize = ImGui.GetStyle().WindowBorderSize;
+            ImGui.Text($"frameHeight: {frameHeight}, windowBorderSize: {windowBorderSize}");
+            if (shiori_image != null) ImGui.GetForegroundDrawList().AddImage(shiori_image.TextureRef, windowPos + new Vector2(windowBorderSize), new(windowPos.X + frameHeight - windowBorderSize, windowPos.Y + frameHeight - windowBorderSize));
+            
+            var goalRequirements = Enum.GetNames<GoalRequirement>();
+            int currentRequirement = (int)seed.GoalRequirement;
+            if (ImGui.Combo("Goal Requirement", ref currentRequirement, goalRequirements, goalRequirements.Length)) {
+                seed.GoalRequirement = (GoalRequirement)currentRequirement;
+            }
+
+            ImGui.InputInt("Required Party Members", ref seed.RequiredPartyMembers);
+
+            //if (ImGui.BeginCombo("Text", text_lang == 0xFF ? "Default" : ((FhLangId)text_lang).ToString())) {
+            //    if (ImGui.Selectable("Default", text_lang == 0xFF)) {
+            //        text_lang = 0xFF;
+            //    }
+            //    foreach (FhLangId lang in Enum.GetValues<FhLangId>()) {
+            //        if (ImGui.Selectable($"{lang}", text_lang == (byte)lang)) {
+            //            text_lang = (byte)lang;
+            //        }
+            //    }
+            //    ImGui.EndCombo();
+            //}
 
             //ImGui.InputText("fileName", ref cluster_file_name, 256);
             //if (ImGui.Button("Load cluster")) {
@@ -727,10 +750,10 @@ public unsafe static class ArchipelagoGUI {
                     }
                     ,
                     ["/help"] => () => {
+                        add_log_message([("Available commands:", Color.White)]);
 #if DEBUG
                         add_log_message([("/setregion regionName progress map entrance", Color.White)]);
 #endif
-                        add_log_message([("Available commands:", Color.White)]);
                         add_log_message([("/resetregion regionName", Color.White)]);
                         add_log_message([("/send_checks", Color.White)]);
                         add_log_message([("/clear", Color.White)]);

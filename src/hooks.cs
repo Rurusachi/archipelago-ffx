@@ -24,6 +24,7 @@ using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
 using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
+using Color = Archipelago.MultiClient.Net.Models.Color;
 
 //[assembly: DisableRuntimeMarshalling]
 namespace Fahrenheit.Modules.ArchipelagoFFX;
@@ -42,12 +43,14 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhMethodHandle<Common_obtainTreasureInit> _Common_obtainTreasureInit;
     private static FhMethodHandle<Common_obtainTreasureSilentlyInit> _Common_obtainTreasureSilentlyInit;
     private static FhMethodHandle<CT_RetInt_01B6> _Common_isBrotherhoodUnpoweredRetInt;
-    private static FhMethodHandle<CT_RetInt_01B7> _Common_upgradeBrotherhoodRetInt;
+    private static FhMethodHandle<Common_upgradeBrotherhoodRetInt> _Common_upgradeBrotherhoodRetInt;
     private static FhMethodHandle<Common_obtainBrotherhoodRetInt> _Common_obtainBrotherhoodRetInt;
-    private static FhMethodHandle<Common_grantCelestialUpgrade> _Common_grantCelestialUpgrade;
+    //private static FhMethodHandle<Common_grantCelestialUpgrade> _Common_grantCelestialUpgrade;
     private static FhMethodHandle<Common_setPrimerCollected> _Common_setPrimerCollected;
     private static FhMethodHandle<Common_transitionToMap> _Common_transitionToMap;
     private static FhMethodHandle<Common_warpToMap> _Common_warpToMap;
+
+    private static FhMethodHandle<TkSetLegendAbility> _TkSetLegendAbility;
 
     private static FhMethodHandle<SgEvent_showModularMenuInit> _SgEvent_showModularMenuInit;
 
@@ -198,10 +201,11 @@ public unsafe partial class ArchipelagoFFXModule {
         _Common_obtainTreasureSilentlyInit = new FhMethodHandle<Common_obtainTreasureSilentlyInit>(this, game, 0x004579e0, h_Common_obtainTreasureSilentlyInit);
 
         _Common_isBrotherhoodUnpoweredRetInt = new FhMethodHandle<CT_RetInt_01B6>(this, game, __addr_CT_RetInt_01B6, h_Common_isBrotherhoodUnpoweredRetInt);
-        _Common_upgradeBrotherhoodRetInt = new FhMethodHandle<CT_RetInt_01B7>(this, game, __addr_CT_RetInt_01B7, h_Common_upgradeBrotherhoodRetInt);
+        _Common_upgradeBrotherhoodRetInt = new FhMethodHandle<Common_upgradeBrotherhoodRetInt>(this, game, __addr_CT_RetInt_01B7, h_Common_upgradeBrotherhoodRetInt);
         _Common_obtainBrotherhoodRetInt = new FhMethodHandle<Common_obtainBrotherhoodRetInt>(this, game, 0x00459a40, h_Common_obtainBrotherhoodRetInt);
 
-        _Common_grantCelestialUpgrade = new FhMethodHandle<Common_grantCelestialUpgrade>(this, game, 0x0045cfe0, h_Common_grantCelestialUpgrade);
+        //_Common_grantCelestialUpgrade = new FhMethodHandle<Common_grantCelestialUpgrade>(this, game, 0x0045cfe0, h_Common_grantCelestialUpgrade);
+        _TkSetLegendAbility = new FhMethodHandle<TkSetLegendAbility>(this, game, __addr_TkSetLegendAbility, h_TkSetLegendAbility);
 
         _Common_setPrimerCollected = new FhMethodHandle<Common_setPrimerCollected>(this, game, 0x0045ab30, h_Common_setPrimerCollected);
 
@@ -406,7 +410,7 @@ public unsafe partial class ArchipelagoFFXModule {
     public bool hook() {
 
         return _Common_obtainTreasureInit.hook() && _Common_obtainTreasureSilentlyInit.hook() && _Common_obtainBrotherhoodRetInt.hook()
-            && _Common_grantCelestialUpgrade.hook() && _Common_setPrimerCollected.hook()
+            && _TkSetLegendAbility.hook() && _Common_setPrimerCollected.hook()
             && _AtelEventSetUp.hook() && _Common_transitionToMap.hook() && _Common_warpToMap.hook()
             && _SgEvent_showModularMenuInit.hook()
             && _Common_addPartyMember.hook() && _Common_removePartyMember.hook() && _Common_removePartyMemberLongTerm.hook() && _Common_setWeaponVisibilty.hook()
@@ -417,9 +421,9 @@ public unsafe partial class ArchipelagoFFXModule {
             && _graphicInitFMVPlayer.hook() && _FmodVoice_dataChange.hook()
             && _AtelInitTotal.hook()
             && _LocalizationManager_Initialize.hook();
-            //&& _FUN_00656c90.hook() && _FUN_0065ee30.hook();
-            //&& _openFile.hook() && _FUN_0070aec0.hook();
-            //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
+        //&& _FUN_00656c90.hook() && _FUN_0065ee30.hook();
+        //&& _openFile.hook() && _FUN_0070aec0.hook();
+        //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
 
     }
 
@@ -499,7 +503,7 @@ public unsafe partial class ArchipelagoFFXModule {
             this.decoded = Encoding.UTF8.GetString(text);
 
             this.encodedLength = FhCharset.compute_encode_buffer_size(text, flags: encodingFlags);
-            this.encoded = (byte*)NativeMemory.AllocZeroed((nuint)encodedLength+1);
+            this.encoded = (byte*)NativeMemory.AllocZeroed((nuint)encodedLength + 1);
             int actual_size = FhCharset.encode(text, new Span<byte>(encoded, encodedLength), flags: encodingFlags);
         }
 
@@ -511,7 +515,7 @@ public unsafe partial class ArchipelagoFFXModule {
             ReadOnlySpan<byte> utf8String = Encoding.UTF8.GetBytes(text);
 
             this.encodedLength = FhCharset.compute_encode_buffer_size(utf8String, flags: encodingFlags);
-            this.encoded = (byte*)NativeMemory.AllocZeroed((nuint)encodedLength+1);
+            this.encoded = (byte*)NativeMemory.AllocZeroed((nuint)encodedLength + 1);
             int actual_size = FhCharset.encode(utf8String, new Span<byte>(encoded, encodedLength), flags: encodingFlags);
         }
 
@@ -1002,6 +1006,16 @@ public unsafe partial class ArchipelagoFFXModule {
         AtelOp.CALLPOPA.build(0x0001),
     ];
 
+    private static readonly Dictionary<string, (int hasCelestial, int hasCloudy, int celestialObtained)> event_to_celestial_offsets = new(){
+        {"bjyt0200", (0x02EA9, 0x02F3F, 0x02FE8)},
+        {"kami0000", (0x0459F, 0x04632, 0x046D8)},
+        {"kino0000", (0x10AF4, 0x10B87, 0x10C2D)},
+        {"kino0100", (0x0398D, 0x03A20, 0x03AC6)},
+        {"luca0400", (0x08F45, 0x08F74, 0x08FB6)},
+        {"nagi0000", (0x3420F, 0x342A2, 0x34348)},
+        {"nagi0700", (0x0E357, 0x0E3EA, 0x0E490)},
+    };
+
     private static Dictionary<(int, int), uint> originalEntryPoints = new();
     private static string current_event_name = "";
     private static void h_AtelEventSetUp(int event_id) {
@@ -1074,6 +1088,416 @@ public unsafe partial class ArchipelagoFFXModule {
                 //    AtelOp.RET.build(),
                 //    ]);
                 break;
+            case "mcfr0100":
+                // Remove NPC
+                set(code_ptr, 0x1601, [
+                    AtelOp.JMP.build(0x0001),
+                    ]);
+                // Disable invisible wall
+                set(code_ptr, 0x5C8B, [
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                // Check for (has_cloudy && !CelestialMirrorObtained) instead of (has_cloudy && !has_celestial)
+                set(code_ptr, 0x7A5C, [
+                    AtelOp.PUSHI    .build(0x0000),
+                    AtelOp.CALL     .build(0x0160),
+
+                    AtelOp.PUSHV    .build(0x0001),
+                    AtelOp.PUSHII   .build(0x0000),
+                    AtelOp.EQ       .build(),
+                    AtelOp.LAND     .build(),
+
+                    // Disable side quest requirement
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+
+                // Don't remove Cloudy Mirror
+                set(code_ptr, 0x197B, [
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                // Don't remove Cloudy Mirror
+                set(code_ptr, 0x7C3B, [
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+
+                // Check inventory instead of flags for Celestial weapons
+                set(code_ptr, 0x7AA4, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_TIDUS),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_YUNA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.LOR      .build(),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_AURON),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.LOR      .build(),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_KIMAHRI),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.LOR      .build(),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_WAKKA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.LOR      .build(),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_LULU),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.LOR      .build(),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_RIKKU),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.LOR      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+
+                set(code_ptr, 0x7EF7, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_TIDUS),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.NOT      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                set(code_ptr, 0x9774, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_YUNA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.NOT      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                set(code_ptr, 0xAFF1, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_AURON),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.NOT      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                set(code_ptr, 0xC86E, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_KIMAHRI),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.NOT      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                set(code_ptr, 0xE0EB, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_WAKKA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.NOT      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                set(code_ptr, 0xF968, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_LULU),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.NOT      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                set(code_ptr, 0x111E5, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_RIKKU),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
+                    AtelOp.NOT      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+
+                break;
+            case "lmyt0100":
+                // Yojimbo fight
+                set(code_ptr, 0x441A, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                // Anima fight
+                set(code_ptr, 0x4509, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                // Magus Sisters fight
+                set(code_ptr, 0x4614, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_MAGUS1),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+
+                // ????
+                set(code_ptr, 0x57D4, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.LAND     .build(),
+
+                    AtelOp.PUSHII   .build(0x0000),
+                    AtelOp.PUSHAR   .build(0x0005),
+                    AtelOp.PUSHII   .build(0x0010),
+                    AtelOp.AND      .build(      ),
+                    AtelOp.NOT      .build(      ),
+                    AtelOp.NOT      .build(      ),
+                    AtelOp.LAND     .build(      ),
+
+                    AtelOp.PUSHII   .build(0x0000),
+                    AtelOp.PUSHAR   .build(0x0005),
+                    AtelOp.PUSHII   .build(0x0020),
+                    AtelOp.AND      .build(      ),
+                    AtelOp.NOT      .build(      ),
+                    AtelOp.NOT      .build(      ),
+                    AtelOp.LAND     .build(      ),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+
+                set(code_ptr, 0x5870, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.LAND     .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+
+                set(code_ptr, 0x5937, [
+                    AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+
+                    AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.LAND     .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    AtelOp.NOP      .build(),
+                    ]);
+                break;
+        }
+
+        // Celestial weapon locations
+        if (event_to_celestial_offsets.TryGetValue(event_name, out var offsets)) {
+            // Remove CelestialMirrorObtained check
+            set(code_ptr, offsets.hasCelestial + 6, [
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+
+                AtelOp.NOP      .build(),
+
+                AtelOp.NOP      .build(),
+                ]);
+            set(code_ptr, offsets.hasCloudy + 6, [
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+                AtelOp.NOP      .build(),
+
+                AtelOp.NOP      .build(),
+
+                AtelOp.NOP      .build(),
+                ]);
+            set(code_ptr, offsets.celestialObtained, [
+                AtelOp.PUSHII   .build(0xA003),
+                AtelOp.CALL     .build(0x0160),
+                AtelOp.NOP      .build(),
+                ]);
         }
 
         // Inject save sphere hook
@@ -1276,7 +1700,7 @@ public unsafe partial class ArchipelagoFFXModule {
             int tutorial_offset = 0x571;
             ushort tutorial_jump = 0x23;
             int airship_warp_offset = 0x657;
-            if (event_name == "mihn0000" || event_name == "mihn0200" || event_name == "mihn0600") {
+            if (event_name == "mihn0000" || event_name == "mihn0200" || event_name == "mihn0300" || event_name == "mihn0600") {
                 tutorial_offset = 0x59B;
                 airship_warp_offset = 0x695;
             }
@@ -1354,11 +1778,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
     private static void h_Common_obtainTreasureInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int treasure_id = atelStack->values.as_int()[1];
-        //ArchipelagoGUI.lastTreasure = treasure_id;
         logger.Info($"obtain_treasure: {treasure_id}");
-        //ArchipelagoClient.sendTreasureLocation(treasure_id);
-        FFXArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure);
-
         //_Common_obtainTreasureInit.orig_fptr(work, storage, atelStack);
         obtainTreasureInitReimplement(work, storage, atelStack);
     }
@@ -1383,17 +1803,23 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
         if (item_locations.treasure.TryGetValue(treasure_id, out var item)) {
-            obtain_item(item.id);
+            if (FFXArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure)) {
+                obtain_item(item.id);
 
-            CustomString name = new CustomString(item.id != 0 ? item.name : $"{item.name} to {item.player}", encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
-            logger.Info(item.name);
+                CustomString name = new CustomString(item.id != 0 ? item.name : $"{item.name} to {item.player}", encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
+                logger.Info(item.name);
 
-            cached_strings.Add(name);
-            item_name = name.encoded;
-            if (item.id != 0) {
-                message_text = _FUN_008bda20(0x4018); // "Obtained %0!"
+                cached_strings.Add(name);
+                item_name = name.encoded;
+                if (item.id != 0) {
+                    message_text = _FUN_008bda20(0x4018); // "Obtained %0!"
+                } else {
+                    CustomString sent_text = new CustomString("Sent {VAR:00}!");
+                    cached_strings.Add(sent_text);
+                    message_text = sent_text.encoded;
+                }
             } else {
-                CustomString sent_text = new CustomString("Sent {VAR:00}!");
+                CustomString sent_text = new CustomString("Already received this item!");
                 cached_strings.Add(sent_text);
                 message_text = sent_text.encoded;
             }
@@ -1468,9 +1894,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
     private static void h_Common_obtainTreasureSilentlyInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int treasure_id = atelStack->values.as_int()[0];
-        //ArchipelagoGUI.lastTreasure = treasure_id;
         logger.Info($"obtain_treasure_silently: {treasure_id}");
-        FFXArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure);
         //_Common_obtainTreasureSilentlyInit.orig_fptr(work, storage, atelStack);
         obtainTreasureSilentlyInitReimplement(work, storage, atelStack);
     }
@@ -1483,7 +1907,9 @@ public unsafe partial class ArchipelagoFFXModule {
         uint weapon_id = 0;
 
         if (item_locations.treasure.TryGetValue(treasure_id, out var item)) {
-            obtain_item(item.id);
+            if (FFXArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure)) {
+                obtain_item(item.id);
+            }
         }
         else
         if (Battle.reward_data->item_count != 0) {
@@ -1576,9 +2002,13 @@ public unsafe partial class ArchipelagoFFXModule {
                     case GoalRequirement.None:
                         return 1;
                     case GoalRequirement.PartyMembers:
-                        if (unlocked_characters.All(c => c.Value)) {
-                            return 1;
-                        }
+                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) return 1;
+                        //if (unlocked_characters.All(c => c.Value)) {
+                        //    return 1;
+                        //}
+                        break;
+                    case GoalRequirement.PartyMembersAndAeons:
+                        if (unlocked_characters.Count(x => x.Value) >= seed.RequiredPartyMembers) return 1;
                         break;
                     case GoalRequirement.Pilgrimage:
                         if (pilgrimageRegions.All(region => region_states[region].completed_visits > 0)) {
@@ -1635,19 +2065,47 @@ public unsafe partial class ArchipelagoFFXModule {
 
         return _Common_isBrotherhoodUnpoweredRetInt.orig_fptr(work, storage, atelStack);
     }
-    private static int h_Common_grantCelestialUpgrade(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        int character = atelStack->values.as_int()[0];
-        int level = atelStack->values.as_int()[1];
-        logger.Debug($"grant_celestial_upgrade: character={id_to_character[character]}, level={level}");
+    //private static int h_Common_grantCelestialUpgrade(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+    //    int character = atelStack->values.as_int()[0];
+    //    int level = atelStack->values.as_int()[1];
+    //    logger.Debug($"grant_celestial_upgrade: character={id_to_character[character]}, level={level}");
+    //
+    //
+    //    if (0 <= character && character <= 6 && item_locations.other.TryGetValue(36 + level + character*2, out var item)) {
+    //        obtain_item(item.id);
+    //        atelStack->pop_int();
+    //        atelStack->pop_int();
+    //        return level;
+    //    }
+    //
+    //    return _Common_grantCelestialUpgrade.orig_fptr(work, storage, atelStack);
+    //}
 
-        return _Common_grantCelestialUpgrade.orig_fptr(work, storage, atelStack);
+    private static int h_TkSetLegendAbility(int chr_id, int level) {
+        logger.Debug($"grant_celestial_upgrade: character={id_to_character[chr_id]}, level={level}");
+
+        int other_id = 37 + level + chr_id * 2;
+        if (0 <= chr_id && chr_id <= 6 && item_locations.other.TryGetValue(other_id, out var item)) {
+            if (FFXArchipelagoClient.sendLocation(other_id, ArchipelagoLocationType.Other)) {
+                obtain_item(item.id);
+            }
+            return level;
+        }
+
+        return _TkSetLegendAbility.orig_fptr(chr_id, level);
     }
+
+
     private static int h_Common_setPrimerCollected(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int primer = atelStack->values.as_int()[0];
         logger.Debug($"set_primer_collected: Al Bhed Primer {primer + 1}");
 
         if (item_locations.other.TryGetValue(primer + 1, out var item)) {
-            obtain_item(item.id);
+            if (FFXArchipelagoClient.sendLocation(primer + 1, ArchipelagoLocationType.Other)) {
+                obtain_item(item.id);
+            }
+            atelStack->pop_int();
+            return 1;
         }
 
         return _Common_setPrimerCollected.orig_fptr(work, storage, atelStack);
@@ -1714,6 +2172,11 @@ public unsafe partial class ArchipelagoFFXModule {
                     save_data->current_spawnpoint = (byte)current_state.entrance;
                     logger.Debug($"transition_to_map: Rerouted to map={current_state.room_id}, entrance={current_state.entrance}");
 
+                    // Unlock locked characters. May not be necessary
+                    foreach (var character in ArchipelagoFFXModule.locked_characters) {
+                        ArchipelagoFFXModule.locked_characters[character.Key] = false;
+                    }
+
                     /*
                     // No party members in early Baaj
                     if (current_region == RegionEnum.BaajTemple && current_state.Story_progress < 3000) {
@@ -1740,6 +2203,15 @@ public unsafe partial class ArchipelagoFFXModule {
                     if (save_data->last_room_id == 382) {
                     }
                      */
+                } else {
+                    // Skip crystal collecting
+                    if (save_data->current_room_id == 324 && save_data->story_progress == 3250) {
+                        logger.Info($"Skipping crystal collecting");
+                        save_data->current_room_id = 325;
+                        save_data->current_spawnpoint = 0;
+                        save_data->story_progress = 3260;
+                        on_map_change();
+                    }
                 }
 
             }
@@ -1980,8 +2452,9 @@ public unsafe partial class ArchipelagoFFXModule {
             }
             if (encounterToLocationDict.TryGetValue(encounter_name, out int[]? boss_locations)) {
                 foreach (int location_id in boss_locations) {
-                    if (item_locations.boss.TryGetValue(location_id, out var item)) {
-                        sendLocation(location_id, ArchipelagoLocationType.Boss);
+                    // Sending all locations even if they don't exist
+                    
+                    if (sendLocation(location_id, ArchipelagoLocationType.Boss) && item_locations.boss.TryGetValue(location_id, out var item)) {
                         ArchipelagoFFXModule.obtain_item(item.id);
                     }
                 }
@@ -2242,6 +2715,43 @@ public unsafe partial class ArchipelagoFFXModule {
                 UnownedEquipment* weapon_data = (UnownedEquipment*)h_read_from_bin((int)item_id, (short*)(*buki_get_pointer), 0);
                 //var data = get_from_bin((int)item_id, (short*)0x12000C00, 0);
                 logger.Debug($"obtain_item: Weapon {(int)weapon_data}");
+                if (weapon_data->is_celestial) {
+                    foreach (var equip in Globals.save_data->equipment) {
+                        if (equip.exists && equip.owner == weapon_data->owner && equip.is_celestial) {
+                            // Upgrade celestial
+                            if (celestial_level[equip.owner] < 2) {
+                                celestial_level[equip.owner] += 1;
+                                _TkSetLegendAbility.orig_fptr(equip.owner, celestial_level[equip.owner]);
+                            }
+                            return;
+                        }
+                    }
+                } else if (weapon_data->is_brotherhood) {
+                    foreach (ref var equip in Globals.save_data->equipment) {
+                        if (equip.exists && equip.is_brotherhood) {
+                            if (equip.is_hidden) {
+                                // Obtain
+                                equip.is_hidden = false;
+                            } else {
+                                // Upgrade
+                                equip.flags = weapon_data->flags;
+                                equip.owner = weapon_data->owner;
+                                equip.type = weapon_data->type;
+                                equip.dmg_formula = weapon_data->dmg_formula;
+                                equip.power = weapon_data->power;
+                                equip.crit_bonus = weapon_data->crit_bonus;
+                                equip.slot_count = weapon_data->slot_count;
+                                for (int i = 0; i < 4; i++) {
+                                    equip.abilities[i] = weapon_data->abilities[i];
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    return;
+                }
+
+
                 BtlRewardData rewardData = new BtlRewardData();
                 rewardData.gear_count = 1;
                 Equipment new_weapon = rewardData.gear[0];
@@ -2294,6 +2804,23 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
                 save_party();
                 reset_party();
+                if (seed.GoalRequirement == GoalRequirement.PartyMembers || seed.GoalRequirement == GoalRequirement.PartyMembersAndAeons) {
+                    int num_unlocked;
+                    int num_required;
+                    if (seed.GoalRequirement == GoalRequirement.PartyMembers) {
+                        num_unlocked = unlocked_characters.Where(x => x.Key < 8 && x.Value).Count();
+                        num_required = Math.Min(seed.RequiredPartyMembers, 8);
+                    } else {
+                        num_unlocked = unlocked_characters.Count(x => x.Value);
+                        num_required = seed.RequiredPartyMembers;
+                    }
+                    string message = $"{num_unlocked}/{num_required} party members unlocked";
+                    Color color = Color.White;
+                    if (unlocked_characters.Count(x => x.Value) >= seed.RequiredPartyMembers) {
+                        color = Color.Green;
+                    }
+                    ArchipelagoGUI.add_log_message([(message, color)]);
+                }
                 break;
             case 0x9:
                 // Trap
@@ -2666,10 +3193,18 @@ public unsafe partial class ArchipelagoFFXModule {
         AtelSetUpCallFunc(0xF, customNameSpaceHandle.AddrOfPinnedObject());
     }
 
+    enum CustomCallTarget : ushort {
+        PUSH_INT = 0xF000,
+        PUSH_FLOAT,
+        CHARACTER_IS_UNLOCKED,
+        HAS_CELESTIAL,
+    }
 
     static AtelCallTarget[] customNameSpace = {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F000)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F001)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F002)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F003)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
@@ -2694,6 +3229,26 @@ public unsafe partial class ArchipelagoFFXModule {
         atelStack->types[atelStack->size - 1] = AtelStackType.F32;
 
         return 1;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_F002(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug("Call target F002");
+        int character_id = atelStack->pop_int();
+
+        return is_character_unlocked(character_id) ? 1 : 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_F003(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug("Call target F003");
+        int character_id = atelStack->pop_int();
+
+        foreach (var equip in Globals.save_data->equipment) {
+            if (equip.exists && equip.owner == character_id && equip.is_celestial) return 1;
+        }
+
+        return 0;
     }
 }
 

@@ -22,7 +22,7 @@ namespace Fahrenheit.Modules.ArchipelagoFFX.Client;
 public static class FFXArchipelagoClient {
     public static          ArchipelagoSession? current_session;
     public static          int                 received_items = 0;
-    public static readonly List<long>          local_checked_locations = [];
+    public static readonly HashSet<long>       local_checked_locations = [];
     public static          bool                local_locations_updated = false;
     public static          string?             SeedId = null;
     
@@ -219,23 +219,17 @@ public unsafe static void connectHandlers() {
         SphereGrid    = 0x7000,
     }
 
-    public static void sendTreasureLocation(long treasureId) {
-        //var locationId = 0x14 + treasureId * 4;
-        long locationId = treasureId | (long)ArchipelagoLocationType.Treasure;
-        ArchipelagoGUI.lastTreasure = treasureId;
-        sendLocation(locationId, 0);
-    }
-
-    public static void sendLocation(long locationId, ArchipelagoLocationType locationType) {
+    public static bool sendLocation(long locationId, ArchipelagoLocationType locationType) {
         var absoluteId = locationId | (long)locationType;
-        sendLocation(absoluteId);
+        return sendLocation(absoluteId);
     }
-    private static void sendLocation(long locationId) {
-        local_checked_locations.Add(locationId);
+    private static bool sendLocation(long locationId) {
+        if (!local_checked_locations.Add(locationId)) return false;
         local_locations_updated = true;
         if (is_connected) {
             ArchipelagoFFXModule.logger.Debug(current_session!.Locations.GetLocationNameFromId(locationId) ?? $"Location: {locationId}");
         }
+        return true;
     }
 
 }

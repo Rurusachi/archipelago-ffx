@@ -48,8 +48,11 @@ public static unsafe class delegates {
     public delegate int Common_obtainBrotherhoodRetInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
 
     // Common.grantCelestialUpgrade
+    //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    //public delegate int Common_grantCelestialUpgrade(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int Common_grantCelestialUpgrade(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public delegate int TkSetLegendAbility(int chr_id, int level);
+    public const nint __addr_TkSetLegendAbility = 0x004c3150;
 
     // Common.setPrimerCollected
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -388,7 +391,7 @@ public static unsafe class delegates {
     public static int __addr_CT_RetInt_01B6 = 0x004594d0;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int CT_RetInt_01B7(nint work, int* storage, nint atelStack);
+    public delegate int Common_upgradeBrotherhoodRetInt(nint work, int* storage, nint atelStack);
 
     public static int __addr_CT_RetInt_01B7 = 0x004596a0;
 
@@ -462,5 +465,11 @@ public static unsafe class delegates {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate nint MsGetExcelData(int req_elem_idx, nint excel_data_ptr, int* ref_data_end);
     public const nint __addr_MsGetExcelData = 0x3AB890;
+
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int UpgradeBrotherhood(int level);
+    public static int __addr_UpgradeBrotherhood = 0x004596a0;
 }
 

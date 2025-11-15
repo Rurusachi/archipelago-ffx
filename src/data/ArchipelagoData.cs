@@ -67,6 +67,7 @@ public static class ArchipelagoData {
         None = 0,
         PartyMembers,
         Pilgrimage,
+        PartyMembersAndAeons,
     }
 
     public static RegionEnum[] pilgrimageRegions = [
@@ -416,7 +417,10 @@ public static class ArchipelagoData {
             324, // Point of no return : 3250
             325,
             326,
-            386,
+            386, // Ending
+            387, // Ending
+            388, // Ending
+            390, // Ending
             ] },
         { RegionEnum.Airship, [
             194,
@@ -484,8 +488,9 @@ public static class ArchipelagoData {
                     int treasure_id = 459;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
                         if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
-                            FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
-                            ArchipelagoFFXModule.obtain_item(item.id);
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
                         }
                     }
                 } } },
@@ -539,8 +544,9 @@ public static class ArchipelagoData {
                     int treasure_id = 85;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
                         if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
-                            FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
-                            ArchipelagoFFXModule.obtain_item(item.id);
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
                         }
                     } } } },
                 { 1704, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 215, next_entrance = 1, return_if_locked = RegionEnum.Bikanel, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Lake Macalania visit 1 complete"); } } },
@@ -553,8 +559,9 @@ public static class ArchipelagoData {
                     foreach (int treasure_id in treasure_ids) {
                         if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
                             if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
-                                FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
-                                ArchipelagoFFXModule.obtain_item(item.id);
+                                if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                                    ArchipelagoFFXModule.obtain_item(item.id);
+                                }
                             }
                         }
                     }
@@ -565,8 +572,9 @@ public static class ArchipelagoData {
                     foreach (int treasure_id in treasure_ids) {
                         if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
                             if (ArchipelagoFFXModule.item_locations.treasure.TryGetValue(treasure_id, out var item)) {
-                                FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure);
-                                ArchipelagoFFXModule.obtain_item(item.id);
+                                if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Treasure)) {
+                                    ArchipelagoFFXModule.obtain_item(item.id);
+                                }
                             }
                         }
                     }
@@ -599,7 +607,15 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Sin, new(){ story_progress = 3125, room_id = 322, entrance = 2, airship_destination_index = 16,
             story_checks = {
-                { 3400, new() {visit_complete = true, next_room_id = 322, next_entrance = 2, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Game Complete"); } } },
+                { 3400, new() {visit_complete = true, next_room_id = 322, next_entrance = 2, check_delegate = (r) => {
+                    ArchipelagoFFXModule.logger.Info("Game Complete");
+                    foreach (var character in ArchipelagoFFXModule.locked_characters) {
+                        ArchipelagoFFXModule.locked_characters[character.Key] = false;
+                    }
+                } } },
+                { 11000, new() {next_story_progress = 3210, next_room_id = 327, next_entrance = 0, check_delegate = (r) => {
+                    ArchipelagoFFXModule.call_warp_to_map(382, 0);
+                } } },
             } } },
         {RegionEnum.OmegaRuins, new(){ story_progress = 3210, room_id = 258, entrance = 2, airship_destination_index = 17 } }, // Story_progress?
     };
@@ -649,6 +665,12 @@ public static class ArchipelagoData {
         //    ArchipelagoFFXModule.skip_state_updates = true;
         //    }
         //},
+        // Yu Yevon
+        //{
+        //    "sins07_10", () => {
+        //
+        //    }
+        //}
     };
 
     public static Dictionary<string, Action> encounterToActionDict => new(){
@@ -715,7 +737,9 @@ public static class ArchipelagoData {
         {"cdsp00_00", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp00_01", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp00_02", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"cdsp01_00", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp01_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"cdsp01_02", () => ArchipelagoFFXModule.set_underwater_party()}, // Not confirmed to exist but cdsp01_XX are probably copies of cdsp00_XX
         {"cdsp07_00", () => ArchipelagoFFXModule.set_underwater_party()},
         {"cdsp07_01", () => ArchipelagoFFXModule.set_underwater_party()},
         // Gagazet. Probably the underwater fights
@@ -743,59 +767,59 @@ public static class ArchipelagoData {
 
 
     public static Dictionary<string, int[]> encounterToLocationDict = new(){
-    {"bjyt04_00",  [0]}, // Baaj Temple: Klikk Defeated
-    {"cdsp07_00",  [1]}, // Al Bhed Ship: Tros Defeated
-    {"bsil07_70",  [2]}, // Besaid: Dark Valefor
-    {"slik02_00",  [3]}, // S.S. Liki: Sin Fin
-    {"slik02_01",  [4]}, // S.S. Liki: Sinspawn Echuilles
-    {"klyt00_00",  [5]}, // Kilika: Lord Ochu
-    {"klyt01_00",  [6]}, // Kilika: Sinspawn Geneaux
-    {"cdsp02_00",  [7]}, // Luca: Oblitzerator defeated
-    {"mihn02_00",  [8]}, // Mi'Hen Highroad: Chocobo Eater
-    {"kino03_10",  [9]}, // Mushroom Rock Road: Sinspawn Gui
-    {"kino02_00", [10]}, // Mushroom Rock Road: Sinspawn Gui 2
-    {"genk09_00", [12]}, // Moonflow: Extractor
-    {"kami03_71", [13]}, // Thunder Plains: Dark Ixion
-    {"mcfr03_00", [14]}, // Macalania Woods: Spherimorph
-    {"maca02_00", [15]}, // Lake Macalania: Crawler
-    {"mcyt06_00", [16]}, // Lake Macalania: Seymour/Anima
-    {"maca02_01", [17]}, // Lake Macalania: Wendigo
-    {"mcyt00_70", [18]}, // Lake Macalania: Dark Shiva
-    {"bika03_70", [19]}, // Bikanel: Dark Ifrit
-    {"hiku15_00", [20]}, // Airship: Evrae
-    {"ssbt00_00", [21]}, // Airship: Sin Left Fin
-    {"ssbt01_00", [22]}, // Airship: Sin Right Fin
-    {"ssbt02_00", [23]}, // Airship: Sinspawn Genais
-    {"ssbt03_00", [24]}, // Airship: Overdrive Sin
-    {"hiku15_70", [25]}, // Airship: Penance
-    {"bvyt09_12", [26]}, // Bevelle: Isaaru (probably?)
-    {"stbv00_10", [27]}, // Bevelle: Evrae Altana
-    {"stbv01_10", [28]}, // Bevelle: Seymour Natus
-    {"nagi01_00", [29]}, // Calm Lands: Defender X
-    {"zzzz02_76", [30]}, // Monster Arena: Nemesis
-    {"nagi05_74", [31]}, // Cavern of the Stolen Fayth: Dark Yojimbo
-    {"mtgz01_10", [32]}, // Gagazet (Outside): Biran and Yenke
-    {"mtgz02_00", [33]}, // Gagazet (Outside): Seymour Flux
-    {"mtgz01_70", [34]}, // Gagazet (Outside): Dark Anima
-    {"mtgz08_00", [35]}, // Gagazet: Sanctuary Keeper
-    {"dome02_00", [36]}, // Zanarkand: Spectral Keeper
-    {"dome06_00", [37]}, // Zanarkand: Yunalesca
-    {"dome06_70", [38]}, // Zanarkand: Dark Bahamut
-    {"sins03_00", [39]}, // Sin: Seymour Omnis
-    {"sins06_00", [40]}, // Sin: Braska's Final Aeon
-    {"sins07_0x", [41]}, // Sin: Contest of Aeons
-    {"sins07_10", [42]}, // Sin: Yu Yevon
-    {"omeg00_10", [43]}, // Omega Ruins: Ultima Weapon
-    {"omeg01_10", [44]}, // Omega Ruins: Omega Weapon
-    {"kino00_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
-    {"kino01_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
-    {"kino01_72", [45, 46]}, // Dark Mindy, Dark Sandy
-    {"kino05_71", [45]}, // Dark Mindy
-    {"kino05_70", [46]}, // Dark Sandy
-    {"kino01_71", [47]}, // Dark Cindy
+        {"bjyt04_01",  [0]}, // Baaj Temple: Klikk Defeated
+        {"cdsp07_00",  [1]}, // Al Bhed Ship: Tros Defeated
+        {"bsil07_70",  [2]}, // Besaid: Dark Valefor
+        {"slik02_00",  [3]}, // S.S. Liki: Sin Fin
+        {"slik02_01",  [4]}, // S.S. Liki: Sinspawn Echuilles
+        {"klyt00_00",  [5]}, // Kilika: Lord Ochu
+        {"klyt01_00",  [6]}, // Kilika: Sinspawn Geneaux
+        {"cdsp02_00",  [7]}, // Luca: Oblitzerator defeated
+        {"mihn02_00",  [8]}, // Mi'Hen Highroad: Chocobo Eater
+        {"kino02_00",  [9]}, // Mushroom Rock Road: Sinspawn Gui 2
+        {"kino03_10", [10]}, // Mushroom Rock Road: Sinspawn Gui
+        {"genk09_00", [12]}, // Moonflow: Extractor
+        {"kami03_71", [13]}, // Thunder Plains: Dark Ixion
+        {"mcfr03_00", [14]}, // Macalania Woods: Spherimorph
+        {"maca02_00", [15]}, // Lake Macalania: Crawler
+        {"mcyt06_00", [16]}, // Lake Macalania: Seymour/Anima
+        {"maca02_01", [17]}, // Lake Macalania: Wendigo
+        {"mcyt00_70", [18]}, // Lake Macalania: Dark Shiva
+        {"bika03_70", [19]}, // Bikanel: Dark Ifrit
+        {"hiku15_00", [20]}, // Airship: Evrae
+        {"ssbt00_00", [21]}, // Airship: Sin Left Fin
+        {"ssbt01_00", [22]}, // Airship: Sin Right Fin
+        {"ssbt02_00", [23]}, // Airship: Sinspawn Genais
+        {"ssbt03_00", [24]}, // Airship: Overdrive Sin
+        {"hiku15_70", [25]}, // Airship: Penance
+        {"bvyt09_12", [26]}, // Bevelle: Isaaru (probably?)
+        {"stbv00_10", [27]}, // Bevelle: Evrae Altana
+        {"stbv01_10", [28]}, // Bevelle: Seymour Natus
+        {"nagi01_00", [29]}, // Calm Lands: Defender X
+        {"zzzz02_76", [30]}, // Monster Arena: Nemesis
+        {"nagi05_74", [31]}, // Cavern of the Stolen Fayth: Dark Yojimbo
+        {"mtgz01_10", [32]}, // Gagazet (Outside): Biran and Yenke
+        {"mtgz02_00", [33]}, // Gagazet (Outside): Seymour Flux
+        {"mtgz01_70", [34]}, // Gagazet (Outside): Dark Anima
+        {"mtgz08_00", [35]}, // Gagazet: Sanctuary Keeper
+        {"dome02_00", [36]}, // Zanarkand: Spectral Keeper
+        {"dome06_00", [37]}, // Zanarkand: Yunalesca
+        {"dome06_70", [38]}, // Zanarkand: Dark Bahamut
+        {"sins03_00", [39]}, // Sin: Seymour Omnis
+        {"sins06_00", [40]}, // Sin: Braska's Final Aeon
+        {"sins07_0x", [41]}, // Sin: Contest of Aeons
+        {"sins07_10", [42]}, // Sin: Yu Yevon
+        {"omeg00_10", [43]}, // Omega Ruins: Ultima Weapon
+        {"omeg01_10", [44]}, // Omega Ruins: Omega Weapon
+        {"kino00_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
+        {"kino01_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
+        {"kino01_72", [45, 46]}, // Dark Mindy, Dark Sandy
+        {"kino05_71", [45]}, // Dark Mindy
+        {"kino05_70", [46]}, // Dark Sandy
+        {"kino01_71", [47]}, // Dark Cindy
 
-    //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
-    //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy
-    //{"kino00_70", 47}, {"kino01_70", 47}, {"kino01_71", 47},                    // Dark Cindy
-        };
+        //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
+        //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy
+        //{"kino00_70", 47}, {"kino01_70", 47}, {"kino01_71", 47},                    // Dark Cindy
+    };
 }
