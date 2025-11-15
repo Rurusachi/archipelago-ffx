@@ -541,6 +541,7 @@ public unsafe partial class ArchipelagoFFXModule {
         new CustomString("{TIME:00}Locked"u8, 0, 0),
         new CustomString("{TIME:00}{CHOICE:00}Save{LF}{CHOICE:01}Board airship{LF}{CHOICE:02}Play blitzball{LF}{CHOICE:03}Cancel"u8, 4, 0),
         new CustomString("{TIME:00}The {MACRO:06:42} are not at full{LF}strength. You need more members{LF}to participate in blitzball."u8, 0, 0),
+        new CustomString("{TIME:00}Skip ending?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
     ];
     //public static readonly byte[][] rawCustomStrings = [
     //    "{TIME:0}Ready to fight {COLOR:BLUE}Sin{COLOR:WHITE}?\n{CHOICE:0}Yes\n{CHOICE:1}No"u8.ToArray()
@@ -606,6 +607,14 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.PUSHII  .build((ushort)(value >>    16)),
             AtelOp.CALLPOPA.build(0xF001),
             ];
+    }
+
+    private static AtelInst[] atelNOPArray(uint n) {
+        AtelInst[] temp = new AtelInst[n];
+        for (int i = 0; i < temp.Length; i++) {
+            temp[i] = AtelOp.NOP.build();
+        }
+        return temp;
     }
 
     private static readonly List<GCHandle> customScriptHandles = [];
@@ -992,6 +1001,55 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.RET     .build(      ),
         ]).SelectMany(x => x.to_bytes()).ToArray(),
 
+        // Post-Yu Yevon battle
+        ((AtelInst[])[ // A
+            // call Common.disablePlayerControl? [005Eh]();
+            AtelOp.CALLPOPA.build(0x005e),
+            // call Common.displayFieldChoice [013Bh](boxIndex=1 [01h], string=customString[5], p3=0 [00h], p4=1 [01h], x=280 [0118h], y=224 [E0h], align=Center [04h]);
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x8005),
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x0100),
+            AtelOp.PUSHII  .build(0x00e0),
+            AtelOp.PUSHII  .build(0x0004),
+            AtelOp.CALLPOPA.build(0x013b),
+            AtelOp.PUSHA.build(),
+            // call Common.waitForText [0084h](boxIndex=1 [01h], p2=1 [01h]);
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x0084),
+            // call Common.enablePlayerControl? [005Dh]();
+            AtelOp.CALLPOPA.build(0x005d),
+            
+            // call Common.obtainBrotherhood(choice, 11, 3) i.e. if !choice jump to customscripts[B]
+            AtelOp.PUSHII  .build(0x0B03),
+            AtelOp.CALLPOPA.build(0x01B8),
+
+            
+            // AE0000 D8BB00        call Common.00BB(p1=0 [00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x00bb),
+            // AE0000 D8BC00        call Common.00BC(p1=0 [00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x00bc),
+            // AE8201 AE0000 D80B01 call Common.warpToMap? [010Bh](map=endg0100 (Besaid Village) [0182h], entranceIndex?=0 [00h]);
+            AtelOp.PUSHII  .build(0x0182),
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x010b),
+            AtelOp.RET     .build(      ),
+
+        ]).SelectMany(x => x.to_bytes()).ToArray(),
+
+        // Ending skip
+        ((AtelInst[])[ // B
+            // AEF82A A00000 Set GameMoment = 11000 [2AF8h];
+            AtelOp.PUSHII  .build(0x2AF8),
+            AtelOp.POPV    .build(0x0000),
+            AtelOp.RET     .build(      ),
+
+        ]).SelectMany(x => x.to_bytes()).ToArray(),
+
 
 };
 
@@ -1064,6 +1122,12 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.PUSHII  .build(0x0202),
                     AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0202) = jump to customScripts[2]
                     ]);
+
+                // Ending skip choice
+                set(code_ptr, 0x7391, [
+                    AtelOp.PUSHII  .build(0x0A02),
+                    AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0A02) = jump to customScripts[A]
+                    ]);
                 break;
 
             case "luca0400":
@@ -1094,40 +1158,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.JMP.build(0x0001),
                     ]);
                 // Disable invisible wall
-                set(code_ptr, 0x5C8B, [
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    ]);
+                set(code_ptr, 0x5C8B, atelNOPArray(28));
                 // Check for (has_cloudy && !CelestialMirrorObtained) instead of (has_cloudy && !has_celestial)
                 set(code_ptr, 0x7A5C, [
                     AtelOp.PUSHI    .build(0x0000),
@@ -1139,39 +1170,13 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.LAND     .build(),
 
                     // Disable side quest requirement
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(13),
                     ]);
 
                 // Don't remove Cloudy Mirror
-                set(code_ptr, 0x197B, [
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    ]);
+                set(code_ptr, 0x197B, atelNOPArray(6));
                 // Don't remove Cloudy Mirror
-                set(code_ptr, 0x7C3B, [
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    ]);
+                set(code_ptr, 0x7C3B, atelNOPArray(6));
 
                 // Check inventory instead of flags for Celestial weapons
                 set(code_ptr, 0x7AA4, [
@@ -1202,54 +1207,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.LOR      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(42),
                     ]);
 
                 set(code_ptr, 0x7EF7, [
@@ -1257,84 +1215,49 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.NOT      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 set(code_ptr, 0x9774, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_YUNA),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.NOT      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 set(code_ptr, 0xAFF1, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_AURON),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.NOT      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 set(code_ptr, 0xC86E, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_KIMAHRI),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.NOT      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 set(code_ptr, 0xE0EB, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_WAKKA),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.NOT      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 set(code_ptr, 0xF968, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_LULU),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.NOT      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 set(code_ptr, 0x111E5, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_RIKKU),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.NOT      .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
 
                 break;
@@ -1344,36 +1267,21 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 // Anima fight
                 set(code_ptr, 0x4509, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
                 // Magus Sisters fight
                 set(code_ptr, 0x4614, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_MAGUS1),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(6),
                     ]);
 
                 // ????
@@ -1401,19 +1309,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.NOT      .build(      ),
                     AtelOp.LAND     .build(      ),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(12),
                     ]);
 
                 set(code_ptr, 0x5870, [
@@ -1424,19 +1320,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
                     AtelOp.LAND     .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(12),
                     ]);
 
                 set(code_ptr, 0x5937, [
@@ -1447,20 +1331,13 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
                     AtelOp.LAND     .build(),
 
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
-                    AtelOp.NOP      .build(),
+                    .. atelNOPArray(12),
                     ]);
+                break;
+            case "bltz0200":
+                // Remove min battle requirement for Blitzball prizes
+                set(code_ptr, 0xCCDB, atelNOPArray(10));
+                set(code_ptr, 0xE686, atelNOPArray(10));
                 break;
         }
 
