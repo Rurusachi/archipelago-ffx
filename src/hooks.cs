@@ -1905,7 +1905,7 @@ public unsafe partial class ArchipelagoFFXModule {
                         //}
                         break;
                     case GoalRequirement.PartyMembersAndAeons:
-                        if (unlocked_characters.Count(x => x.Value) >= seed.RequiredPartyMembers) return 1;
+                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers) return 1;
                         break;
                     case GoalRequirement.Pilgrimage:
                         if (pilgrimageRegions.All(region => region_states[region].completed_visits > 0)) {
@@ -2709,7 +2709,7 @@ public unsafe partial class ArchipelagoFFXModule {
                         num_unlocked = unlocked_characters.Where(x => x.Key < 8 && x.Value).Count();
                         num_required = Math.Min(seed.RequiredPartyMembers, 8);
                     } else {
-                        num_unlocked = unlocked_characters.Count(x => x.Value);
+                        num_unlocked = unlocked_characters.Where(x => x.Key < 16 && x.Value).Count();
                         num_required = seed.RequiredPartyMembers;
                     }
                     string message = $"{num_unlocked}/{num_required} party members unlocked";
