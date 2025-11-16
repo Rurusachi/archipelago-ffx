@@ -716,6 +716,9 @@ public static class ArchipelagoData {
         // Piercing tutorial. Tidus only gets 1 turn. Enemy only attacks 3rd character?
         {"mihn00_50", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_AURON, PlySaveId.PC_WAKKA], true, false) },
 
+        // Rikku tutorial
+        {"genk16_50", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_RIKKU], true, false) },
+
         // Summon fights
         // Belgemine
         {"genk00_40",  () => ArchipelagoFFXModule.set_summon_party()},

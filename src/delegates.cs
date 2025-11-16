@@ -38,14 +38,17 @@ public static unsafe class delegates {
     // Common.obtainTreasureInit
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Common_obtainTreasureInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_obtainTreasureInit = 0x0045a740;
 
     // Common.obtainTreasureSilentlyInit
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Common_obtainTreasureSilentlyInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_obtainTreasureSilentlyInit = 0x004579e0;
 
     // Common.obtainBrotherhood
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_obtainBrotherhoodRetInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_obtainBrotherhoodRetInt = 0x00459a40;
 
     // Common.grantCelestialUpgrade
     //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -57,14 +60,17 @@ public static unsafe class delegates {
     // Common.setPrimerCollected
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_setPrimerCollected(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_setPrimerCollected = 0x0045ab30;
 
     // Common.transitionToMap
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_transitionToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_transitionToMap = 0x004580c0;
 
     // Common.warpToMap
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_warpToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_warpToMap = 0x00458370;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void SgEvent_showModularMenuInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
@@ -74,23 +80,29 @@ public static unsafe class delegates {
     // Common.playFieldVoiceLineInit
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_playFieldVoiceLineInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_playFieldVoiceLineInit = 0x0045cb70;
     // Common.playFieldVoiceLineExec
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_playFieldVoiceLineExec(AtelBasicWorker* param_1, AtelStack* param_2);
+    public const nint __addr_Common_playFieldVoiceLineExec = 0x0045cd30;
     // Common.playFieldVoiceLineResultInt
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_playFieldVoiceLineResultInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_playFieldVoiceLineResultInt = 0x0045d150;
 
 
     // Common.00D6Init
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_00D6Init(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_00D6Init = 0x0045d520;
     // Common.00D6eExec
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int Common_00D6eExec(AtelBasicWorker* param_1, AtelStack* param_2);
+    public delegate int Common_00D6Exec(AtelBasicWorker* param_1, AtelStack* param_2);
+    public const nint __addr_Common_00D6Exec = 0x0045d820;
     // Common.00D6ResultInt
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_00D6ResultInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Common_00D6ResultInt = 0x0045dcf0;
 
 
 

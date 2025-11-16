@@ -5,28 +5,19 @@ using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
 using Fahrenheit.Modules.ArchipelagoFFX.GUI;
-using Hexa.NET.DirectXTex;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
-//using Fahrenheit.Core.ImGuiNET;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using TerraFX.Interop.Windows;
 using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
 using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 using Color = Archipelago.MultiClient.Net.Models.Color;
 
-//[assembly: DisableRuntimeMarshalling]
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 public unsafe partial class ArchipelagoFFXModule {
 
@@ -65,7 +56,7 @@ public unsafe partial class ArchipelagoFFXModule {
     private static Common_playFieldVoiceLineResultInt _Common_playFieldVoiceLineResultInt;
 
     private static Common_00D6Init _Common_00D6Init;
-    private static Common_00D6eExec _Common_00D6eExec;
+    private static Common_00D6Exec _Common_00D6Exec;
     private static Common_00D6ResultInt _Common_00D6ResultInt;
 
 
@@ -196,21 +187,20 @@ public unsafe partial class ArchipelagoFFXModule {
 
         _AtelEventSetUp = new FhMethodHandle<AtelEventSetUp>(this, game, __addr_AtelEventSetUp, h_AtelEventSetUp);
 
-        _Common_obtainTreasureInit = new FhMethodHandle<Common_obtainTreasureInit>(this, game, 0x0045a740, h_Common_obtainTreasureInit);
+        _Common_obtainTreasureInit = new FhMethodHandle<Common_obtainTreasureInit>(this, game, __addr_Common_obtainTreasureInit, h_Common_obtainTreasureInit);
 
-        _Common_obtainTreasureSilentlyInit = new FhMethodHandle<Common_obtainTreasureSilentlyInit>(this, game, 0x004579e0, h_Common_obtainTreasureSilentlyInit);
+        _Common_obtainTreasureSilentlyInit = new FhMethodHandle<Common_obtainTreasureSilentlyInit>(this, game, __addr_Common_obtainTreasureSilentlyInit, h_Common_obtainTreasureSilentlyInit);
 
         _Common_isBrotherhoodUnpoweredRetInt = new FhMethodHandle<CT_RetInt_01B6>(this, game, __addr_CT_RetInt_01B6, h_Common_isBrotherhoodUnpoweredRetInt);
         _Common_upgradeBrotherhoodRetInt = new FhMethodHandle<Common_upgradeBrotherhoodRetInt>(this, game, __addr_CT_RetInt_01B7, h_Common_upgradeBrotherhoodRetInt);
-        _Common_obtainBrotherhoodRetInt = new FhMethodHandle<Common_obtainBrotherhoodRetInt>(this, game, 0x00459a40, h_Common_obtainBrotherhoodRetInt);
+        _Common_obtainBrotherhoodRetInt = new FhMethodHandle<Common_obtainBrotherhoodRetInt>(this, game, __addr_Common_obtainBrotherhoodRetInt, h_Common_obtainBrotherhoodRetInt);
 
-        //_Common_grantCelestialUpgrade = new FhMethodHandle<Common_grantCelestialUpgrade>(this, game, 0x0045cfe0, h_Common_grantCelestialUpgrade);
         _TkSetLegendAbility = new FhMethodHandle<TkSetLegendAbility>(this, game, __addr_TkSetLegendAbility, h_TkSetLegendAbility);
 
-        _Common_setPrimerCollected = new FhMethodHandle<Common_setPrimerCollected>(this, game, 0x0045ab30, h_Common_setPrimerCollected);
+        _Common_setPrimerCollected = new FhMethodHandle<Common_setPrimerCollected>(this, game, __addr_Common_setPrimerCollected, h_Common_setPrimerCollected);
 
-        _Common_transitionToMap = new FhMethodHandle<Common_transitionToMap>(this, game, 0x004580c0, h_Common_transitionToMap);
-        _Common_warpToMap = new FhMethodHandle<Common_warpToMap>(this, game, 0x00458370, h_Common_warpToMap);
+        _Common_transitionToMap = new FhMethodHandle<Common_transitionToMap>(this, game, __addr_Common_transitionToMap, h_Common_transitionToMap);
+        _Common_warpToMap = new FhMethodHandle<Common_warpToMap>(this, game, __addr_Common_warpToMap, h_Common_warpToMap);
 
         _SgEvent_showModularMenuInit = new FhMethodHandle<SgEvent_showModularMenuInit>(this, game, __addr_SgEvent_showModularMenuInit, h_SgEvent_showModularMenuInit);
 
@@ -219,13 +209,13 @@ public unsafe partial class ArchipelagoFFXModule {
         //_Common_playFieldVoiceLineExec = new FhMethodHandle<Common_playFieldVoiceLineExec>(this, game, h_Common_playFieldVoiceLineExec, offset: 0x0045cd30);
         //_Common_playFieldVoiceLineResultInt = new FhMethodHandle<Common_playFieldVoiceLineResultInt>(this, game, h_Common_playFieldVoiceLineResultInt, offset: 0x0045d150);
 
-        _Common_playFieldVoiceLineInit = FhUtil.get_fptr<Common_playFieldVoiceLineInit>(0x0045cb70);
-        _Common_playFieldVoiceLineExec = FhUtil.get_fptr<Common_playFieldVoiceLineExec>(0x0045cd30);
-        _Common_playFieldVoiceLineResultInt = FhUtil.get_fptr<Common_playFieldVoiceLineResultInt>(0x0045d150);
+        _Common_playFieldVoiceLineInit      = FhUtil.get_fptr<Common_playFieldVoiceLineInit>     (__addr_Common_playFieldVoiceLineInit     );
+        _Common_playFieldVoiceLineExec      = FhUtil.get_fptr<Common_playFieldVoiceLineExec>     (__addr_Common_playFieldVoiceLineExec     );
+        _Common_playFieldVoiceLineResultInt = FhUtil.get_fptr<Common_playFieldVoiceLineResultInt>(__addr_Common_playFieldVoiceLineResultInt);
 
-        _Common_00D6Init = FhUtil.get_fptr<Common_00D6Init>(0x0045d520);
-        _Common_00D6eExec = FhUtil.get_fptr<Common_00D6eExec>(0x0045d820);
-        _Common_00D6ResultInt = FhUtil.get_fptr<Common_00D6ResultInt>(0x0045dcf0);
+        _Common_00D6Init      = FhUtil.get_fptr<Common_00D6Init>     (__addr_Common_00D6Init     );
+        _Common_00D6Exec      = FhUtil.get_fptr<Common_00D6Exec>     (__addr_Common_00D6Exec     );
+        _Common_00D6ResultInt = FhUtil.get_fptr<Common_00D6ResultInt>(__addr_Common_00D6ResultInt);
 
 
 
@@ -598,14 +588,22 @@ public unsafe partial class ArchipelagoFFXModule {
         return [
             AtelOp.PUSHII  .build((ushort)(value & 0xffff)),
             AtelOp.PUSHII  .build((ushort)(value >>    16)),
-            AtelOp.CALLPOPA.build(0xF000),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.PUSH_INT),
+            ];
+    }
+    private static AtelInst[] atelPushFloat(float value) {
+        int as_int = BitConverter.SingleToInt32Bits(value);
+        return [
+            AtelOp.PUSHII  .build((ushort)(as_int & 0xffff)),
+            AtelOp.PUSHII  .build((ushort)(as_int >>    16)),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.PUSH_FLOAT),
             ];
     }
     private static AtelInst[] atelPushIntAsFloat(uint value) {
         return [
             AtelOp.PUSHII  .build((ushort)(value & 0xffff)),
             AtelOp.PUSHII  .build((ushort)(value >>    16)),
-            AtelOp.CALLPOPA.build(0xF001),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.PUSH_FLOAT),
             ];
     }
 
@@ -812,19 +810,10 @@ public unsafe partial class ArchipelagoFFXModule {
             //call Common.setRotationSpeed2 [002Fh](float=0.17453294 [3E32B8C3h]);
             AtelOp.PUSHF   .build(0x0007),
             AtelOp.CALLPOPA.build(0x002F),
-            //call Common.setDestination [0015h](x=-96.33675 [C2C0AC6Ah], y=25.666155 [41CD5449h], z=-526.34314 [C40395F6h]);
-            //AtelOp.PUSHII  .build((ushort)(0xc0800000 & 0xffff)),
-            //AtelOp.PUSHII  .build((ushort)(0xc0800000 >>    16)),
-            //AtelOp.CALLPOPA.build(0xF001),
-            .. atelPushIntAsFloat(0xc0800000),
-            //AtelOp.PUSHII  .build((ushort)(0x40ae56e5 & 0xffff)),
-            //AtelOp.PUSHII  .build((ushort)(0x40ae56e5 >>    16)),
-            //AtelOp.CALLPOPA.build(0xF001),
-            .. atelPushIntAsFloat(0x40ae56e5),
-            //AtelOp.PUSHII  .build((ushort)(0xc3af0000 & 0xffff)),
-            //AtelOp.PUSHII  .build((ushort)(0xc3af0000 >>    16)),
-            //AtelOp.CALLPOPA.build(0xF001),
-            .. atelPushIntAsFloat(0xc3af0000),
+            //call Common.setDestination [0015h](x=-4 [c0800000h], y=5.4481072 [40ae56e5h], z=-350 [c3af0000h]);
+            .. atelPushFloat(-4f),
+            .. atelPushFloat(5.4481072f),
+            .. atelPushFloat(-350f),
             AtelOp.CALLPOPA.build(0x0015),
             //call Common.setRotationTarget1 [0028h](angle=Common.destinationToYaw [001Fh]());
             AtelOp.CALL    .build(0x001F),
@@ -881,10 +870,6 @@ public unsafe partial class ArchipelagoFFXModule {
         // bvyt0900 Save Sphere (Board Airship option)
         ((AtelInst[])[ // 7
             // AD3A00 D8DF00           call Common.playSfx [00DFh](sfx=BoardAirship [80000048h]);
-            //AtelOp.PUSHI   .build(0x003A),
-            //AtelOp.PUSHII  .build((ushort)(0x80000048 & 0xffff)),
-            //AtelOp.PUSHII  .build((ushort)(0x80000048 >>    16)),
-            //AtelOp.CALLPOPA.build(0xF001),
             .. atelPushInt(0x80000048),
             AtelOp.CALLPOPA.build(0x00DF),
             // AE0300 AE0000 D80980    call Map.bindGfxToTarget [8009h](gfxIndex= 3[03h], attachmentPoint= 0[00h]);
@@ -1143,6 +1128,10 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.PUSHII  .build(0x0002),
                     AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0002) = jump to customScripts[0]
                 ]);
+                break;
+            case "hiku0500":
+                // Rin collected primers check inventory instead of count
+                set(code_ptr, 0x5869, AtelOp.CALL.build((ushort)CustomCallTarget.COLLECTED_PRIMERS));
                 break;
             case "ssbt0300":
                 logger.Debug($"atel_event_setup: Redirect Overdrive Sin post-battle warp");
@@ -3048,7 +3037,7 @@ public unsafe partial class ArchipelagoFFXModule {
             _Common_playFieldVoiceLineResultInt((AtelBasicWorker*)&work, storage, &stack);
 
             _Common_00D6Init((AtelBasicWorker*)&work, storage, &stack);
-            _Common_00D6eExec((AtelBasicWorker*)&work, &stack);
+            _Common_00D6Exec((AtelBasicWorker*)&work, &stack);
             _Common_00D6ResultInt((AtelBasicWorker*)&work, storage, &stack);
 
         }
@@ -3108,52 +3097,53 @@ public unsafe partial class ArchipelagoFFXModule {
         CHARACTER_IS_UNLOCKED,
         HAS_CELESTIAL,
         OTHER_LOCATION_CHECKED,
+        COLLECTED_PRIMERS,
     }
 
     static AtelCallTarget[] customNameSpace = {
-        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F000)},
-        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F001)},
-        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F002)},
-        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F003)},
-        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F004)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_PushInt)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_PushFloat)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsCharacterUnlocked)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_HasCelestialWeapon)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsOtherLocationChecked)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_CollectedPrimers)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static int CT_RetInt_F000(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug("Call target F000");
+    public static int CT_RetInt_PushInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int high = atelStack->pop_int();
         int low  = atelStack->pop_int();
+        int result = (high << 16) | low;
+        logger.Debug($"PushInt: ({high}, {low}) => {result}");
 
-        atelStack->push_int((high << 16) | low);
+        atelStack->push_int(result);
         return 1;
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static int CT_RetInt_F001(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug("Call target F001");
+    public static int CT_RetInt_PushFloat(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int high = atelStack->pop_int();
         int low  = atelStack->pop_int();
+        float result = BitConverter.Int32BitsToSingle((high << 16) | low);
+        logger.Debug($"PushFloat: ({high}, {low}) => {result}");
 
-        atelStack->push_int((high << 16) | low);
-
-        atelStack->types[atelStack->size - 1] = AtelStackType.F32;
-
+        atelStack->push_float(result);
         return 1;
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static int CT_RetInt_F002(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug("Call target F002");
+    public static int CT_RetInt_IsCharacterUnlocked(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int character_id = atelStack->pop_int();
+        logger.Debug($"IsCharacterUnlocked: {id_to_character[character_id]}");
 
         return is_character_unlocked(character_id) ? 1 : 0;
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static int CT_RetInt_F003(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug("Call target F003");
+    public static int CT_RetInt_HasCelestialWeapon(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int character_id = atelStack->pop_int();
+        logger.Debug($"HasCelestialWeapon: {id_to_character[character_id]}");
 
         foreach (var equip in Globals.save_data->equipment) {
             if (equip.exists && equip.owner == character_id && equip.is_celestial) return 1;
@@ -3163,11 +3153,22 @@ public unsafe partial class ArchipelagoFFXModule {
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static int CT_RetInt_F004(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug("Call target F004");
+    public static int CT_RetInt_IsOtherLocationChecked(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int other_id = atelStack->pop_int();
+        logger.Debug($"IsOtherLocationChecked: {other_id | (long)ArchipelagoLocationType.Other}");
 
         return local_checked_locations.Contains(other_id | (long)ArchipelagoLocationType.Other) ? 1 : 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_CollectedPrimers(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int collected_primers = 0;
+        for (int i = 0; i < 26; i++) {
+            collected_primers += Globals.save_data->unlocked_primers.get_bit(i) ? 1 : 0;
+        }
+        logger.Debug($"CollectedPrimers: {collected_primers}");
+
+        return collected_primers;
     }
 }
 
