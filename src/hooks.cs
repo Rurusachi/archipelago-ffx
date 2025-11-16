@@ -611,9 +611,10 @@ public unsafe partial class ArchipelagoFFXModule {
 
     private static AtelInst[] atelNOPArray(uint n) {
         AtelInst[] temp = new AtelInst[n];
-        for (int i = 0; i < temp.Length; i++) {
-            temp[i] = AtelOp.NOP.build();
-        }
+        temp.AsSpan().Fill(AtelOp.NOP.build());
+        //for (int i = 0; i < temp.Length; i++) {
+        //    temp[i] = AtelOp.NOP.build();
+        //}
         return temp;
     }
 
@@ -1074,6 +1075,37 @@ public unsafe partial class ArchipelagoFFXModule {
         {"nagi0700", (0x0E357, 0x0E3EA, 0x0E490)},
     };
 
+    private static readonly Dictionary<string, (int, int)[]> event_to_primer_offsets = new(){
+        {"azit0300", [(0x03236, 20)] },
+        {"azit0600", [(0x00EC7, 19)] },
+        {"bika0000", [(0x011AD,  0), (0x01688,  2)] }, // Also a !check at 0x15FC
+        {"bika0100", [(0x01C3D,  4), (0x020F3, 13), (0x025AD, 13)] },
+        {"bika0200", [(0x00FA9, 16), (0x0142A, 17)] },
+        {"bika0400", [(0x02689, 18)] },
+        {"bsvr0200", [(0x0935E,  1)] },
+        {"bvyt0400", [(0x01174, 21)] },
+        {"cdsp0000", [(0x0C1E0,  0)] }, // Also a !check at 0xC62F
+        {"genk1200", [(0x01A4D, 11)] },
+        {"guad0400", [(0x0361A, 12)] },
+        {"kami0100", [(0x04502, 13), (0x49BC, 13)] },
+        {"kino0400", [(0x07678, 10)] },
+        {"kino0500", [(0x0767E,  9)] },
+        {"lchb1100", [(0x027F3,  6)] },
+        {"lchb1400", [(0x01CEB,  5)] },
+        {"lmyt0000", [(0x05532, 23)] },
+        {"maca0000", [(0x044AD, 15)] },
+        {"mcfr0400", [(0x0299A, 14)] },
+        {"mihn0300", [(0x04042,  7)] },
+        {"mihn0500", [(0x03C36,  8)] },
+        {"nagi0000", [(0x1CD23, 22)] },
+        {"nagi0500", [(0x05E96, 24)] },
+        {"omeg0000", [(0x060EF, 25)] },
+        {"ptkl0800", [(0x026E5,  3)] },
+        {"slik0800", [(0x00A05,  2)] },
+        {"swin0300", [(0x00B57,  4)] },
+        {"swin0900", [(0x00A27,  4)] },
+    };
+
     private static Dictionary<(int, int), uint> originalEntryPoints = new();
     private static string current_event_name = "";
     private static void h_AtelEventSetUp(int event_id) {
@@ -1342,39 +1374,38 @@ public unsafe partial class ArchipelagoFFXModule {
         }
 
         // Celestial weapon locations
-        if (event_to_celestial_offsets.TryGetValue(event_name, out var offsets)) {
+        if (event_to_celestial_offsets.TryGetValue(event_name, out var celestial_offsets)) {
             // Remove CelestialMirrorObtained check
-            set(code_ptr, offsets.hasCelestial + 6, [
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-
-                AtelOp.NOP      .build(),
-
-                AtelOp.NOP      .build(),
-                ]);
-            set(code_ptr, offsets.hasCloudy + 6, [
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-                AtelOp.NOP      .build(),
-
-                AtelOp.NOP      .build(),
-
-                AtelOp.NOP      .build(),
-                ]);
-            set(code_ptr, offsets.celestialObtained, [
+            set(code_ptr, celestial_offsets.hasCelestial + 6, atelNOPArray(8));
+            set(code_ptr, celestial_offsets.hasCloudy + 6, atelNOPArray(8));
+            set(code_ptr, celestial_offsets.celestialObtained, [
                 AtelOp.PUSHII   .build(0xA003),
                 AtelOp.CALL     .build(0x0160),
                 AtelOp.NOP      .build(),
                 ]);
+        }
+
+        if (event_to_primer_offsets.TryGetValue(event_name, out var primer_offsets)) {
+            foreach ((int offset, int primer) in primer_offsets) {
+                set(code_ptr, offset, [
+                    AtelOp.PUSHII   .build((ushort)(primer+1)),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.OTHER_LOCATION_CHECKED),
+                    AtelOp.NOP      .build(),
+                    ]);
+            }
+            {  
+                int? offset = null;
+                if (event_name == "bika0000") offset = 0x15FC;
+                if (event_name == "cdsp0000") offset = 0xC62F;
+                if (offset.HasValue) {
+                    set(code_ptr, offset.Value, [
+                        AtelOp.PUSHII   .build(1),
+                        AtelOp.CALL     .build((ushort)CustomCallTarget.OTHER_LOCATION_CHECKED),
+                        AtelOp.NOT      .build(),
+                        AtelOp.NOP      .build(),
+                        ]);
+                }
+            }
         }
 
         // Inject save sphere hook
@@ -2009,6 +2040,7 @@ public unsafe partial class ArchipelagoFFXModule {
             // New Game
             if (save_data->last_room_id == 0 && save_data->current_room_id == 132) {
                 current_region = RegionEnum.DreamZanarkand;
+                FFXArchipelagoClient.local_checked_locations.Clear();
                 // Load seed here?
                 if (!loadSeed()) {
                     save_data->current_room_id = 23;
@@ -3075,6 +3107,7 @@ public unsafe partial class ArchipelagoFFXModule {
         PUSH_FLOAT,
         CHARACTER_IS_UNLOCKED,
         HAS_CELESTIAL,
+        OTHER_LOCATION_CHECKED,
     }
 
     static AtelCallTarget[] customNameSpace = {
@@ -3082,6 +3115,7 @@ public unsafe partial class ArchipelagoFFXModule {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F001)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F002)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F003)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_F004)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
@@ -3126,6 +3160,14 @@ public unsafe partial class ArchipelagoFFXModule {
         }
 
         return 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_F004(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug("Call target F004");
+        int other_id = atelStack->pop_int();
+
+        return local_checked_locations.Contains(other_id | (long)ArchipelagoLocationType.Other) ? 1 : 0;
     }
 }
 
