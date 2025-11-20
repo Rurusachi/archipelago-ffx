@@ -27,6 +27,7 @@ using static Fahrenheit.Core.FFX.Globals;
 using System.Numerics;
 using Archipelago.MultiClient.Net.Enums;
 using Color = Archipelago.MultiClient.Net.Models.Color;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 
@@ -172,6 +173,21 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public Dictionary<int, ArchipelagoItem> overdrive_mode = seed.OverdriveMode.ToDictionary(x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
         public Dictionary<int, ArchipelagoItem> other =          seed.Other.ToDictionary(        x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
         public Dictionary<int, ArchipelagoItem> sphere_grid =    seed.SphereGrid.ToDictionary(   x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
+
+        public bool location_to_item(int location, [MaybeNullWhen(false)] out ArchipelagoItem item) {
+            var dict = (location & 0xF000) switch {
+                (int)ArchipelagoLocationType.Treasure      => treasure,
+                (int)ArchipelagoLocationType.Boss          => boss,
+                (int)ArchipelagoLocationType.PartyMember   => party_member,
+                (int)ArchipelagoLocationType.Overdrive     => overdrive,
+                (int)ArchipelagoLocationType.OverdriveMode => overdrive_mode,
+                (int)ArchipelagoLocationType.Other         => other,
+                (int)ArchipelagoLocationType.SphereGrid    => sphere_grid,
+                _ => null,
+            };
+            item = dict?.GetValueOrDefault(location);
+            return item is not null;
+        }
     }
 
     public static ArchipelagoSeed seed;

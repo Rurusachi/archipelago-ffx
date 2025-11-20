@@ -424,6 +424,12 @@ public unsafe partial class ArchipelagoFFXModule {
             ptr++;
         }
     }
+    private static void set(byte* code_ptr, int[] offsets, AtelInst opcode) {
+        foreach (int offset in offsets) {
+            set(code_ptr, offset, opcode);
+        }
+    }
+
     private static void set(byte* code_ptr, int offset, AtelInst[] opcodes) {
         byte* ptr = code_ptr + offset;
         foreach (AtelInst op in opcodes) {
@@ -433,6 +439,13 @@ public unsafe partial class ArchipelagoFFXModule {
             }
         }
     }
+    private static void set(byte* code_ptr, int[] offsets, AtelInst[] opcodes) {
+        foreach (int offset in offsets) {
+            set(code_ptr, offset, opcodes);
+        }
+    }
+
+
 
     private static byte* h_FUN_0086bec0(int param_1) {
         byte* result;
@@ -1199,7 +1212,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 // Don't remove Cloudy Mirror
                 set(code_ptr, 0x7C3B, atelNOPArray(6));
 
-                // Check inventory instead of flags for Celestial weapons
+                // Check inventory instead of flags for Celestial weapons and also check for Celestial Mirror
                 set(code_ptr, 0x7AA4, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_TIDUS),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
@@ -1228,7 +1241,12 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALL     .build((ushort)CustomCallTarget.HAS_CELESTIAL),
                     AtelOp.LOR      .build(),
 
-                    .. atelNOPArray(42),
+                    // Common.hasKeyItem [0160h](keyItem=Celestial Mirror [0000A003h])
+                    AtelOp.PUSHII   .build(0xA003),
+                    AtelOp.CALL     .build(0x0160),
+                    AtelOp.LAND     .build(),
+
+                    .. atelNOPArray(35),
                     ]);
 
                 set(code_ptr, 0x7EF7, [
@@ -1286,21 +1304,21 @@ public unsafe partial class ArchipelagoFFXModule {
                 // Yojimbo fight
                 set(code_ptr, 0x441A, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
 
                     .. atelNOPArray(6),
                     ]);
                 // Anima fight
                 set(code_ptr, 0x4509, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
 
                     .. atelNOPArray(6),
                     ]);
                 // Magus Sisters fight
                 set(code_ptr, 0x4614, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_MAGUS1),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
 
                     .. atelNOPArray(6),
                     ]);
@@ -1308,10 +1326,10 @@ public unsafe partial class ArchipelagoFFXModule {
                 // ????
                 set(code_ptr, 0x57D4, [
                     AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
 
                     AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
                     AtelOp.LAND     .build(),
 
                     AtelOp.PUSHII   .build(0x0000),
@@ -1333,23 +1351,12 @@ public unsafe partial class ArchipelagoFFXModule {
                     .. atelNOPArray(12),
                     ]);
 
-                set(code_ptr, 0x5870, [
+                set(code_ptr, [0x5870, 0x5937], [
                     AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
 
                     AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
-                    AtelOp.LAND     .build(),
-
-                    .. atelNOPArray(12),
-                    ]);
-
-                set(code_ptr, 0x5937, [
-                    AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
-
-                    AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.CHARACTER_IS_UNLOCKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
                     AtelOp.LAND     .build(),
 
                     .. atelNOPArray(12),
@@ -1359,6 +1366,20 @@ public unsafe partial class ArchipelagoFFXModule {
                 // Remove min battle requirement for Blitzball prizes
                 set(code_ptr, 0xCCDB, atelNOPArray(10));
                 set(code_ptr, 0xE686, atelNOPArray(10));
+                break;
+            case "nagi0000":
+                // Check Sun Sigil location instead of inventory
+                set(code_ptr, 0x21701, [
+                    AtelOp.PUSHII   .build(274),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_TREASURE_LOCATION_CHECKED),
+                    ]);
+                break;
+            case "mcfr0200":
+                // Check Saturn Sigil location instead of inventory
+                set(code_ptr, [0x2647, 0x283A, 0x298A], [
+                    AtelOp.PUSHII   .build(277),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_TREASURE_LOCATION_CHECKED),
+                    ]);
                 break;
         }
 
@@ -1378,7 +1399,7 @@ public unsafe partial class ArchipelagoFFXModule {
             foreach ((int offset, int primer) in primer_offsets) {
                 set(code_ptr, offset, [
                     AtelOp.PUSHII   .build((ushort)(primer+1)),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.OTHER_LOCATION_CHECKED),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_OTHER_LOCATION_CHECKED),
                     AtelOp.NOP      .build(),
                     ]);
             }
@@ -1389,7 +1410,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 if (offset.HasValue) {
                     set(code_ptr, offset.Value, [
                         AtelOp.PUSHII   .build(1),
-                        AtelOp.CALL     .build((ushort)CustomCallTarget.OTHER_LOCATION_CHECKED),
+                        AtelOp.CALL     .build((ushort)CustomCallTarget.IS_OTHER_LOCATION_CHECKED),
                         AtelOp.NOT      .build(),
                         AtelOp.NOP      .build(),
                         ]);
@@ -2591,7 +2612,6 @@ public unsafe partial class ArchipelagoFFXModule {
         _FUN_007993f0.orig_fptr(param_1, param_2);
     }
 
-
     public static void obtain_item(uint item_id, int amount=-1) {
         if (item_id == 0) return;
         var item_type = (item_id & 0xF000) >> 12;
@@ -3094,9 +3114,10 @@ public unsafe partial class ArchipelagoFFXModule {
     enum CustomCallTarget : ushort {
         PUSH_INT = 0xF000,
         PUSH_FLOAT,
-        CHARACTER_IS_UNLOCKED,
+        IS_CHARACTER_UNLOCKED,
         HAS_CELESTIAL,
-        OTHER_LOCATION_CHECKED,
+        IS_OTHER_LOCATION_CHECKED,
+        IS_TREASURE_LOCATION_CHECKED,
         COLLECTED_PRIMERS,
     }
 
@@ -3106,6 +3127,7 @@ public unsafe partial class ArchipelagoFFXModule {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsCharacterUnlocked)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_HasCelestialWeapon)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsOtherLocationChecked)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsTreasureLocationChecked)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_CollectedPrimers)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
@@ -3158,6 +3180,14 @@ public unsafe partial class ArchipelagoFFXModule {
         logger.Debug($"IsOtherLocationChecked: {other_id | (long)ArchipelagoLocationType.Other}");
 
         return local_checked_locations.Contains(other_id | (long)ArchipelagoLocationType.Other) ? 1 : 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_IsTreasureLocationChecked(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int other_id = atelStack->pop_int();
+        logger.Debug($"IsTreasureLocationChecked: {other_id | (long)ArchipelagoLocationType.Treasure}");
+
+        return local_checked_locations.Contains(other_id | (long)ArchipelagoLocationType.Treasure) ? 1 : 0;
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]

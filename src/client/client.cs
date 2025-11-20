@@ -20,11 +20,13 @@ using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.Client;
 public static class FFXArchipelagoClient {
-    public static          ArchipelagoSession? current_session;
-    public static          int                 received_items = 0;
-    public static readonly HashSet<long>       local_checked_locations = [];
-    public static          bool                local_locations_updated = false;
-    public static          string?             SeedId = null;
+    public static readonly System.Threading.Lock _lock = new();
+    public static          ArchipelagoSession?   current_session;
+    public static          int                   received_items = 0;
+    public static readonly HashSet<long>         local_checked_locations = [];
+    public static          bool                  local_locations_updated = false;
+    public static          bool                  remote_locations_updated = false;
+    public static          string?               SeedId = null;
     
     public static PlayerInfo? active_player => current_session?.Players.ActivePlayer;
     private static bool is_disconnecting = false;
@@ -90,6 +92,13 @@ public static class FFXArchipelagoClient {
         session.Socket.ErrorReceived += Socket_ErrorReceived;
         session.Socket.SocketOpened += Socket_SocketOpened;
         session.Socket.SocketClosed += Socket_SocketClosed;
+        session.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
+    }
+
+    private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations) {
+        lock (local_checked_locations) {
+            remote_locations_updated = true;
+        }
     }
 
     private static void Socket_ErrorReceived(Exception e, string message) {
@@ -143,14 +152,30 @@ public static class FFXArchipelagoClient {
             }
         }
 
-
-        if (local_locations_updated) {
-            var local_only = local_checked_locations.Except(current_session.Locations.AllLocationsChecked);
-            if (local_only.Any()) {
-                current_session.Locations.CompleteLocationChecks(local_only.ToArray());
-                ArchipelagoFFXModule.logger.Debug($"Sent: {string.Join(",", local_only)}");
+        // Possibly unnecessary
+        lock (_lock) {
+            if (local_locations_updated) {
+                var local_only = local_checked_locations.Except(current_session.Locations.AllLocationsChecked);
+                if (local_only.Any()) {
+                    current_session.Locations.CompleteLocationChecks(local_only.ToArray());
+                    ArchipelagoFFXModule.logger.Debug($"Sent: {string.Join(",", local_only)}");
+                }
+                local_locations_updated = false;
             }
-            local_locations_updated = false;
+        }
+
+        lock (_lock) {
+            if (remote_locations_updated) {
+                var remote_only = current_session.Locations.AllLocationsChecked.Except(local_checked_locations);
+                foreach (long location in remote_only) {
+                    if (ArchipelagoFFXModule.item_locations.location_to_item((int)location, out var item)) {
+                        ArchipelagoFFXModule.logger.Debug($"Synced remote location: location:{location}, item:{item.name}, player:{item.player}");
+                        ArchipelagoFFXModule.obtain_item(item.id);
+                    }
+                }
+                local_checked_locations.UnionWith(remote_only);
+                remote_locations_updated = false;
+            }
         }
 
         // TODO: Implement alternate goals
