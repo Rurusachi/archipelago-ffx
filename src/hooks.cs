@@ -1725,6 +1725,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 obtain_item(item.id);
 
                 CustomString name = new CustomString(item.id != 0 ? item.name : $"{item.name} to {item.player}", encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
+                //CustomString name = new CustomString(item.name, encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
                 logger.Info(item.name);
 
                 cached_strings.Add(name);
@@ -1733,8 +1734,13 @@ public unsafe partial class ArchipelagoFFXModule {
                     message_text = _FUN_008bda20(0x4018); // "Obtained %0!"
                 } else {
                     CustomString sent_text = new CustomString("Sent {VAR:00}!");
+                    //CustomString sent_text = new CustomString("Sent {VAR:00} to {VAR:01}!");
                     cached_strings.Add(sent_text);
                     message_text = sent_text.encoded;
+
+                    //CustomString player_name = new CustomString(item.player, encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
+                    //cached_strings.Add(player_name);
+                    //_FUN_008b8930(window_id, 1, (int)player_name.encoded);
                 }
             } else {
                 CustomString sent_text = new CustomString("Already received this item!");

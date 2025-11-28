@@ -822,7 +822,7 @@ public static class ArchipelagoData {
         {"hiku15_00", [20]}, // Airship: Evrae
         {"ssbt00_00", [21]}, // Airship: Sin Left Fin
         {"ssbt01_00", [22]}, // Airship: Sin Right Fin
-        {"ssbt02_00", [23]}, // Airship: Sinspawn Genais
+        {"ssbt02_00", [23]}, // Airship: Sinspawn Genais and Core
         {"ssbt03_00", [24]}, // Airship: Overdrive Sin
         {"hiku15_70", [25]}, // Airship: Penance
         {"bvyt09_12", [26]}, // Bevelle: Isaaru (probably?)
@@ -850,6 +850,8 @@ public static class ArchipelagoData {
         {"kino05_71", [45]}, // Dark Mindy
         {"kino05_70", [46]}, // Dark Sandy
         {"kino01_71", [47]}, // Dark Cindy
+        {"bjyt02_02", [48]}, // Geosgaeno
+        
 
         //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
         //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy
