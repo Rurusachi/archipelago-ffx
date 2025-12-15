@@ -2196,16 +2196,6 @@ public unsafe partial class ArchipelagoFFXModule {
         return _Common_warpToMap.orig_fptr(work, storage, atelStack);
     }
 
-    /* Check here for Aeon name menu's, and send location
-     * 0x40800008 = Valefor
-     * 0x40800009 = Ifrit
-     * 0x4080000A = Ixion
-     * 0x4080000B = Shiva
-     * 0x4080000C = Bahamut
-     * 0x4080000D = Anima
-     * 0x4080000E = Yojimbo
-     * 0x4080000F = Magus Sisters (0x0F, 0x10, 0x11)
-     */
     private static void h_SgEvent_showModularMenuInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int menu = atelStack->values.as_int()[0];
         int unknown1 = menu >> 24 & 0xFF;
@@ -2234,14 +2224,6 @@ public unsafe partial class ArchipelagoFFXModule {
             FhUtil.set_at(0x01efb4d4, 0); // Don't wait for menu
             return;
         }
-        //if (menu == 0x40800008) {   //Valefor
-        //    logger.Debug($"set_aeon_collected: {index}");
-        //    if (item_locations.other.TryGetValue(52, out var item)) {
-        //        if (FFXArchipelagoClient.sendLocation(52, ArchipelagoLocationType.Other)) {
-        //            obtain_item(item.id);
-        //        }
-        //    }
-        //}
         if (menuType == 0x80) {
             logger.Info($"Unknown tutorial?");
         }
