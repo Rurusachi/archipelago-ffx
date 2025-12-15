@@ -483,6 +483,16 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Besaid, new(){ story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
             story_checks = {
+                { 182,  new() {check_delegate = (r) => {
+                    int treasure_id = 52;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 210, new() {check_delegate = (r) => {
                     // Send and obtain Map and Brotherhood locations if skipped by CSR
                     int treasure_id = 459;
@@ -507,6 +517,16 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Kilika, new(){ story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
             story_checks = {
+                { 348,  new() {check_delegate = (r) => {
+                    int treasure_id = 53;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 372, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Kilika visit 1 complete"); } } },
                 { 400, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Winno visit complete"); } } },
                 { 402, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 98, next_entrance = 3, return_if_locked = RegionEnum.Luca, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Winno visit complete"); } } },
@@ -531,6 +551,16 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Djose, new(){ story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
             story_checks = {
+                { 1010,  new() {check_delegate = (r) => {
+                    int treasure_id = 54;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 1030, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 82, next_entrance = 0, return_if_locked = RegionEnum.Moonflow, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Djose visit 1 complete"); } } },
             } } },
         {RegionEnum.Moonflow, new(){ story_progress = 1030, room_id = 75, entrance = 0, airship_destination_index = 7,

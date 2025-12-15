@@ -2234,14 +2234,14 @@ public unsafe partial class ArchipelagoFFXModule {
             FhUtil.set_at(0x01efb4d4, 0); // Don't wait for menu
             return;
         }
-        if (menu == 0x40800008) {   //Valefor
-            logger.Debug($"set_aeon_collected: {index}");
-            if (item_locations.other.TryGetValue(52, out var item)) {
-                if (FFXArchipelagoClient.sendLocation(52, ArchipelagoLocationType.Other)) {
-                    obtain_item(item.id);
-                }
-            }
-        }
+        //if (menu == 0x40800008) {   //Valefor
+        //    logger.Debug($"set_aeon_collected: {index}");
+        //    if (item_locations.other.TryGetValue(52, out var item)) {
+        //        if (FFXArchipelagoClient.sendLocation(52, ArchipelagoLocationType.Other)) {
+        //            obtain_item(item.id);
+        //        }
+        //    }
+        //}
         if (menuType == 0x80) {
             logger.Info($"Unknown tutorial?");
         }
