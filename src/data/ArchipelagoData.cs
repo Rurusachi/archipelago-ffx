@@ -484,10 +484,11 @@ public static class ArchipelagoData {
         {RegionEnum.Besaid, new(){ story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
             story_checks = {
                 { 182,  new() {check_delegate = (r) => {
-                    int treasure_id = 52;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
-                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                    // Send Valefor location
+                    int treasure_id = 8;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -518,10 +519,11 @@ public static class ArchipelagoData {
         {RegionEnum.Kilika, new(){ story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
             story_checks = {
                 { 348,  new() {check_delegate = (r) => {
-                    int treasure_id = 53;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
-                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                    // Send Ifrit location
+                    int treasure_id = 9;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -552,10 +554,11 @@ public static class ArchipelagoData {
         {RegionEnum.Djose, new(){ story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
             story_checks = {
                 { 1010,  new() {check_delegate = (r) => {
-                    int treasure_id = 54;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
-                        if (ArchipelagoFFXModule.item_locations.other.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.Other)) {
+                    //Send Ixion location
+                    int treasure_id = 10;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -609,6 +612,17 @@ public static class ArchipelagoData {
                             }
                         }
                     } } } },
+                { 1545,  new() {check_delegate = (r) => {
+                    //Send Shiva location
+                    int treasure_id = 11;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 1704, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 215, next_entrance = 1, return_if_locked = RegionEnum.Bikanel, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Lake Macalania visit 1 complete"); } } },
             } } },
         {RegionEnum.Bikanel, new(){ story_progress = 1704, room_id = 129, entrance = 0, airship_destination_index = 11,
@@ -647,6 +661,17 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Bevelle, new(){ story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 12, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
             story_checks = {
+                { 2220,  new() {check_delegate = (r) => {
+                    //Send Bahamut location
+                    int treasure_id = 12;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 2385, new() {visit_complete = true, next_story_progress = 2920, next_room_id = 208, next_entrance = 1, return_if_locked = RegionEnum.CalmLands, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 1 complete"); } } },
                 { 2945, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 208, next_entrance = 1, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Bevelle visit 2 complete"); } } },
             } } }, 
