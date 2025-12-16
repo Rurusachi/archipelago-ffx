@@ -35,7 +35,7 @@ public unsafe static class ArchipelagoGUI {
     public static bool experiments_enabled = false;
     private static bool show = true;
 
-    private static string client_input_address = "";
+    private static string client_input_address = "archipelago.gg:";
     private static string client_input_name = "";
     private static string client_input_password = "";
 
@@ -663,29 +663,29 @@ public unsafe static class ArchipelagoGUI {
                 string[] cmd = client_input_command.Split(" ");
 
                 Action fn = cmd switch {
-                    //["/warp", string map, string entrance] => () => {
-                    //    if (int.TryParse(map, out int map_id)) {
-                    //        if (int.TryParse(entrance, out int entrance_id)) {
-                    //            List<(string, Color)> message = [("Warping to ", Color.White), ($"{map_id} (entrance {entrance_id})", Color.Blue)];
-                    //            add_log_message(message);
-                    //            ArchipelagoFFXModule.call_warp_to_map(map_id, entrance_id);
-                    //        }
-                    //        else {
-                    //            List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entrance, Color.Blue)];
-                    //            add_log_message(message);
-                    //        }
-                    //    }
-                    //    else {
-                    //        List<(string, Color)> message = [("invalid map_id: ", Color.Red), (map, Color.Blue)];
-                    //        add_log_message(message);
-                    //    }
-                    //}
-                    //,
-                    //["/warp", ..] => () => {
-                    //    List<(string, Color)> message = [("Wrong arguments for /warp: Should be ", Color.Red), ($"/warp map_id entrance_id", Color.Blue)];
-                    //    add_log_message(message);
-                    //}
-                    //,
+                    ["/warp", string map, string entrance] => () => {
+                        if (int.TryParse(map, out int map_id)) {
+                            if (int.TryParse(entrance, out int entrance_id)) {
+                                List<(string, Color)> message = [("Warping to ", Color.White), ($"{map_id} (entrance {entrance_id})", Color.Blue)];
+                                add_log_message(message);
+                                ArchipelagoFFXModule.call_warp_to_map(map_id, entrance_id);
+                            }
+                            else {
+                                List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entrance, Color.Blue)];
+                                add_log_message(message);
+                            }
+                        }
+                        else {
+                            List<(string, Color)> message = [("invalid map_id: ", Color.Red), (map, Color.Blue)];
+                            add_log_message(message);
+                        }
+                    }
+                    ,
+                    ["/warp", ..] => () => {
+                        List<(string, Color)> message = [("Wrong arguments for /warp: Should be ", Color.Red), ($"/warp map_id entrance_id", Color.Blue)];
+                        add_log_message(message);
+                    }
+                    ,
                     ["/resetregion", string regionString] => () => {
                         if (Enum.TryParse(regionString, out RegionEnum region)) {
                             ArchipelagoFFXModule.region_states[region] = region_starting_state[region];

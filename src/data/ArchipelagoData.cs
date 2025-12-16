@@ -469,6 +469,18 @@ public static class ArchipelagoData {
     public static unsafe Dictionary<RegionEnum, ArchipelagoRegion> region_starting_state => new(){
         {RegionEnum.DreamZanarkand, new(){ story_progress = 0, room_id = 132, entrance = 0, airship_destination_index = 99,
             story_checks = {
+                // Dream Zanarkand region does not exist in Apworld, so no place to put Tidus location. Revisit when starting party member rando is added.
+                //{ 4,  new() {check_delegate = (r) => {
+                //    // Tidus
+                //    int partyMember_id = 0;
+                //    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                //        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                //            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                //                ArchipelagoFFXModule.obtain_item(item.id);
+                //            }
+                //        }
+                //    }
+                //} } },
                 { 5, new() {check_delegate = (r) => {
                     ArchipelagoFFXModule.logger.Info("Dream Zanarkand complete");
                     ArchipelagoFFXModule.save_party();
@@ -483,12 +495,23 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Besaid, new(){ story_progress = 111, room_id = 70, entrance = 0, airship_destination_index = 2,
             story_checks = {
+                { 119,  new() {check_delegate = (r) => {
+                    // Wakka
+                    int partyMember_id = 4;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 182,  new() {check_delegate = (r) => {
-                    // Send Valefor location
-                    int treasure_id = 8;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                    // Valefor
+                    int partyMember_id = 8;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -514,16 +537,26 @@ public static class ArchipelagoData {
                     }
                 } } },
                 { 228, new() {check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Besaid visit 1 complete"); } } },
+                { 248,  new() {check_delegate = (r) => {
+                    int partyMember_id = 3; // Kimahri
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 290, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 19, next_entrance = 1, return_if_locked = RegionEnum.Kilika, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Liki visit complete"); } } },
             } } },
         {RegionEnum.Kilika, new(){ story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
             story_checks = {
                 { 348,  new() {check_delegate = (r) => {
-                    // Send Ifrit location
-                    int treasure_id = 9;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                    // Ifrit
+                    int partyMember_id = 9;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -535,6 +568,17 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Luca, new(){ story_progress = 402, room_id = 267, entrance = 0, airship_destination_index = 4,
             story_checks = {
+                { 600,  new() {check_delegate = (r) => {
+                    // Auron
+                    int partyMember_id = 2;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 730, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 123, next_entrance = 6, return_if_locked = RegionEnum.MiihenHighroad, 
                     check_delegate = (r) => {
                         ArchipelagoFFXModule.logger.Info("Luca visit complete"); 
@@ -549,16 +593,27 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.MushroomRockRoad, new(){ story_progress = 787, room_id = 79, entrance = 0, airship_destination_index = 6,
             story_checks = {
+                { 865,  new() {check_delegate = (r) => {
+                    // Seymour
+                    int partyMember_id = 10;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                } } },
                 { 960, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 131, next_entrance = 3, return_if_locked = RegionEnum.Djose, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mushroom Rock Road visit complete"); } } },
             } } },
         {RegionEnum.Djose, new(){ story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
             story_checks = {
                 { 1010,  new() {check_delegate = (r) => {
-                    //Send Ixion location
-                    int treasure_id = 10;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                    // Ixion
+                    int partyMember_id = 10;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -568,7 +623,19 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Moonflow, new(){ story_progress = 1030, room_id = 75, entrance = 0, airship_destination_index = 7,
             story_checks = {
-                { 1085, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 235, next_entrance = 1, return_if_locked = RegionEnum.Guadosalam, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Moonflow visit complete"); } } },
+                { 1085,  new() {visit_complete = true, next_story_progress = 3210, next_room_id = 235, next_entrance = 1, return_if_locked = RegionEnum.Guadosalam, 
+                    check_delegate = (r) => {
+                    // Rikku
+                    int partyMember_id = 6;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                    ArchipelagoFFXModule.logger.Info("Moonflow visit complete");
+                } } },
             } } },
         {RegionEnum.Guadosalam, new(){ story_progress = 1085, room_id = 135, entrance = 0, airship_destination_index = 8,
             story_checks = {
@@ -613,11 +680,11 @@ public static class ArchipelagoData {
                         }
                     } } } },
                 { 1545,  new() {check_delegate = (r) => {
-                    //Send Shiva location
-                    int treasure_id = 11;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                    // Shiva
+                    int partyMember_id = 11;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -662,11 +729,11 @@ public static class ArchipelagoData {
         {RegionEnum.Bevelle, new(){ story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 12, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
             story_checks = {
                 { 2220,  new() {check_delegate = (r) => {
-                    //Send Bahamut location
-                    int treasure_id = 12;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(treasure_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(treasure_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(treasure_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                    // Bahamut
+                    int partyMember_id = 12;
+                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                                 ArchipelagoFFXModule.obtain_item(item.id);
                             }
                         }
@@ -771,10 +838,30 @@ public static class ArchipelagoData {
         //{"bika00_10", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_LULU, PlySaveId.PC_AURON], true, false) },
 
         // Tutorials
-        // Will softlock with Lulu
-        {"bsil07_51", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_LULU], true, false) },
+        // Will softlock without Lulu
+        {"bsil07_51", () => {
+            ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_LULU], true, false);
+            int partyMember_id = 5; // Lulu
+            if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                    if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        ArchipelagoFFXModule.obtain_item(item.id);
+                    }
+                }
+            }
+        } },
         // Yuna is unable to act without an aeon, causing a softlock.
-        {"bsil05_50", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_LULU, PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_YUNA, PlySaveId.PC_VALEFOR], true, false) },
+        {"bsil05_50", () => {
+            ArchipelagoFFXModule.set_party([PlySaveId.PC_LULU, PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_YUNA, PlySaveId.PC_VALEFOR], true, false);
+            int partyMember_id = 1; // Yuna
+            if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                    if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        ArchipelagoFFXModule.obtain_item(item.id);
+                    }
+                }
+            }
+        } },
 
         // Tidus only gets 1 turn?
         {"klyt00_50", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_KIMAHRI, PlySaveId.PC_LULU], true, false) },
