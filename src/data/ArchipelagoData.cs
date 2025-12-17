@@ -593,17 +593,6 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.MushroomRockRoad, new(){ story_progress = 787, room_id = 79, entrance = 0, airship_destination_index = 6,
             story_checks = {
-                { 865,  new() {check_delegate = (r) => {
-                    // Seymour
-                    int partyMember_id = 10;
-                    if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
-                            if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                                ArchipelagoFFXModule.obtain_item(item.id);
-                            }
-                        }
-                    }
-                } } },
                 { 960, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 131, next_entrance = 3, return_if_locked = RegionEnum.Djose, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Mushroom Rock Road visit complete"); } } },
             } } },
         {RegionEnum.Djose, new(){ story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
@@ -854,6 +843,18 @@ public static class ArchipelagoData {
         {"bsil05_50", () => {
             ArchipelagoFFXModule.set_party([PlySaveId.PC_LULU, PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_YUNA, PlySaveId.PC_VALEFOR], true, false);
             int partyMember_id = 1; // Yuna
+            if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                    if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        ArchipelagoFFXModule.obtain_item(item.id);
+                    }
+                }
+            }
+        } },
+
+        // Gui 2
+        {"kino03_10", () => {
+            int partyMember_id = 7; // Seymour
             if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                 if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
                     if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
