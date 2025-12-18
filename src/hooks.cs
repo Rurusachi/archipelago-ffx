@@ -1323,14 +1323,20 @@ public unsafe partial class ArchipelagoFFXModule {
                     .. atelNOPArray(6),
                     ]);
 
+                //// Fayth Door
+                //set(code_ptr, [0x58A1, 0x5965, 0x5ABB, 0x58C5, 0x59DA, 0x5A43], [
+                //    .. atelNOPArray(1),
+                //    ]);
+
                 // ????
                 set(code_ptr, 0x57D4, [
-                    AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
+                    //AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
+                    //AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
 
-                    AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
-                    AtelOp.LAND     .build(),
+                    //AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
+                    //AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
+                    //AtelOp.LAND     .build(),
+                    .. atelNOPArray(13),
 
                     AtelOp.PUSHII   .build(0x0000),
                     AtelOp.PUSHAR   .build(0x0005),
@@ -1352,14 +1358,20 @@ public unsafe partial class ArchipelagoFFXModule {
                     ]);
 
                 set(code_ptr, [0x5870, 0x5937], [
-                    AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
+                    //AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
+                    //AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
 
-                    AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
-                    AtelOp.LAND     .build(),
+                    //AtelOp.PUSHII   .build(PlySaveId.PC_ANIMA),
+                    //AtelOp.CALL     .build((ushort)CustomCallTarget.IS_CHARACTER_UNLOCKED),
+                    //AtelOp.LAND     .build(),
+                    
+                    AtelOp.PUSHII.build(1),
+                    .. atelNOPArray(24),
+                    ]);
 
-                    .. atelNOPArray(12),
+                set(code_ptr, 0x5B9C, [
+                    AtelOp.PUSHII   .build(15),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
                     ]);
                 break;
             case "bltz0200":
@@ -3134,6 +3146,7 @@ public unsafe partial class ArchipelagoFFXModule {
         IS_OTHER_LOCATION_CHECKED,
         IS_TREASURE_LOCATION_CHECKED,
         COLLECTED_PRIMERS,
+        SEND_PARTY_MEMBER_LOCATION,
     }
 
     static AtelCallTarget[] customNameSpace = {
@@ -3144,6 +3157,7 @@ public unsafe partial class ArchipelagoFFXModule {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsOtherLocationChecked)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsTreasureLocationChecked)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_CollectedPrimers)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_SendPartyMemberLocation)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
@@ -3214,6 +3228,19 @@ public unsafe partial class ArchipelagoFFXModule {
         logger.Debug($"CollectedPrimers: {collected_primers}");
 
         return collected_primers;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_SendPartyMemberLocation(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int partyMember_id =  atelStack->pop_int();
+        if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+            if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                    ArchipelagoFFXModule.obtain_item(item.id);
+                }
+            }
+        }
+        return 1;
     }
 }
 
