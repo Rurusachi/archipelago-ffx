@@ -1366,10 +1366,10 @@ public unsafe partial class ArchipelagoFFXModule {
                     //AtelOp.LAND     .build(),
                     
                     AtelOp.PUSHII.build(1),
-                    .. atelNOPArray(24),
+                    .. atelNOPArray(22),
                     ]);
 
-                set(code_ptr, 0x5B9C, [
+                set(code_ptr, 0x5BC6, [
                     AtelOp.PUSHII   .build(15),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
                     ]);
@@ -2236,7 +2236,7 @@ public unsafe partial class ArchipelagoFFXModule {
             int x => $"Unknown({x})",
         };
 
-        if (menu == 0x40800001 || menu == 0x40800002 || menu == 0x40800003 || menu == 0x40800004 || menu == 0x40800005) {
+        if (menu == 0x40800001 || menu == 0x40800002 || menu == 0x40800003 || menu == 0x40800004 || menu == 0x40800005 || menu == 0x4008000F || menu == 0x40080010 || menu == 0x40080011) {
             logger.Debug($"Skipping menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
             //FhUtil.set_at(0x00efbbf0, 0x40080000);
             //FhUtil.set_at(0x00efbbf4, 0xffffffff);
