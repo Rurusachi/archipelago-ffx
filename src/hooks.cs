@@ -2244,9 +2244,21 @@ public unsafe partial class ArchipelagoFFXModule {
             FhUtil.set_at(0x01efb4d4, 0); // Don't wait for menu
             return;
         }
+        else if (menu == 0x4008000E) {
+            int partyMember_id = 14; // Yojimbo
+            if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
+                    if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        ArchipelagoFFXModule.obtain_item(item.id);
+                    }
+                }
+            }
+        }
+
         if (menuType == 0x80) {
             logger.Info($"Unknown tutorial?");
         }
+        
         logger.Info($"Opening menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
         _SgEvent_showModularMenuInit.orig_fptr(work, storage, atelStack);
     }
