@@ -1323,11 +1323,6 @@ public unsafe partial class ArchipelagoFFXModule {
                     .. atelNOPArray(6),
                     ]);
 
-                //// Fayth Door
-                //set(code_ptr, [0x58A1, 0x5965, 0x5ABB, 0x58C5, 0x59DA, 0x5A43], [
-                //    .. atelNOPArray(1),
-                //    ]);
-
                 // ????
                 set(code_ptr, 0x57D4, [
                     //AtelOp.PUSHII   .build(PlySaveId.PC_YOJIMBO),
