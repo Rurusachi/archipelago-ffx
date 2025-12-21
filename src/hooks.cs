@@ -1948,12 +1948,12 @@ public unsafe partial class ArchipelagoFFXModule {
                         if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers) return 1;
                         break;
                     case GoalRequirement.Pilgrimage:
-                        if (local_checked_locations.Contains(8 | (long)ArchipelagoLocationType.PartyMember) &&
-                            local_checked_locations.Contains(9 | (long)ArchipelagoLocationType.PartyMember) &&
+                        if (local_checked_locations.Contains( 8 | (long)ArchipelagoLocationType.PartyMember) &&
+                            local_checked_locations.Contains( 9 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(10 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(11 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(12 | (long)ArchipelagoLocationType.PartyMember) &&
-                            local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss)) {
+                            local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss       )) {
                                 return 1;
                         }
                         //if (pilgrimageRegions.All(region => region_states[region].completed_visits > 0)) {
