@@ -35,7 +35,7 @@ public unsafe static class ArchipelagoGUI {
     public static bool experiments_enabled = false;
     private static bool show = true;
 
-    private static string client_input_address = "";
+    private static string client_input_address = "archipelago.gg:";
     private static string client_input_name = "";
     private static string client_input_password = "";
 
