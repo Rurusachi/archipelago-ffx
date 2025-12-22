@@ -1951,9 +1951,6 @@ public unsafe partial class ArchipelagoFFXModule {
                             local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss       )) {
                                 return 1;
                         }
-                        //if (pilgrimageRegions.All(region => region_states[region].completed_visits > 0)) {
-                        //    return 1;
-                        //}
                         break;
                 }
                 return 0;

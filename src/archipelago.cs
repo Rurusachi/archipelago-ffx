@@ -405,11 +405,12 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 return;
             }
             foreach (var region in loaded_state.region_states) {
-                    region_states[region.Key].story_progress = region.Value.story_progress;
-                    region_states[region.Key].room_id = region.Value.room_id;
-                    region_states[region.Key].entrance = region.Value.entrance;
-                    region_states[region.Key].completed_visits = region.Value.completed_visits;
-                }
+                region_states[region.Key].story_progress = region.Value.story_progress;
+                region_states[region.Key].room_id = region.Value.room_id;
+                region_states[region.Key].entrance = region.Value.entrance;
+                region_states[region.Key].completed_visits = region.Value.completed_visits;
+                region_states[region.Key].pilgrimage_completed = region.Value.pilgrimage_completed;
+            }
             foreach (var region in loaded_state.region_is_unlocked) {
                 region_is_unlocked[region.Key] = region.Value;
             }
@@ -477,14 +478,15 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                     region.room_id = storyCheck.next_room_id ?? region.room_id;
                     region.entrance = storyCheck.next_entrance ?? region.entrance;
                     region.completed_visits += storyCheck.visit_complete ? 1 : 0;
+                    region.pilgrimage_completed = storyCheck.pilgrimage;
                     skip_state_updates = storyCheck.next_story_progress.HasValue || storyCheck.next_room_id.HasValue || storyCheck.next_entrance.HasValue;
 
-                    if (storyCheck.visit_complete && region.completed_visits == 1 && pilgrimageRegions.Contains(current_region)) {
-                        int completedPilgrimages = pilgrimageRegions.Count(region => region_states[region].completed_visits > 0);
+                    if (storyCheck.pilgrimage && pilgrimageStoryChecks.Contains(story_progress)) {
+                        int completedPilgrimages = pilgrimageRegions.Count(region => region_states[region].pilgrimage_completed);
 
-                        string message = $"{completedPilgrimages}/{pilgrimageRegions.Length} pilgrimage regions completed";
+                        string message = $"{completedPilgrimages}/{pilgrimageStoryChecks.Length} pilgrimage regions completed";
                         Color color = Color.White;
-                        if (completedPilgrimages >= pilgrimageRegions.Length) {
+                        if (completedPilgrimages >= pilgrimageStoryChecks.Length) {
                             color = Color.Green;
                         }
                         ArchipelagoGUI.add_log_message([(message, color)]);

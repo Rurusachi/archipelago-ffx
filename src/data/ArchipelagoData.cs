@@ -79,6 +79,15 @@ public static class ArchipelagoData {
         RegionEnum.ZanarkandRuins,
     ];
 
+    public static ushort[] pilgrimageStoryChecks = [
+        182,    // Valefor
+        348,    // Ifrit
+        1010,   // Ixion
+        1545,   // Shiva
+        2220,   // Bahamut
+        2850    // Yunalesca
+    ];
+
     public static Dictionary<RegionEnum, List<int>> region_to_ids = new(){
         { RegionEnum.DreamZanarkand, [
             132,
@@ -453,6 +462,7 @@ public static class ArchipelagoData {
         public ushort? next_room_id;
         public ushort? next_entrance;
         public bool    visit_complete = false;
+        public bool    pilgrimage = false;
         public RegionEnum return_if_locked;
         public ArchipelagoStoryCheckDelegate? check_delegate;
     }
@@ -463,6 +473,7 @@ public static class ArchipelagoData {
         public ushort story_progress { get; set; }
         public ushort room_id { get; set; }
         public ushort entrance { get; set; }
+        public bool pilgrimage_completed { get; set; }
         public uint airship_destination_index;
     }
 
@@ -506,7 +517,7 @@ public static class ArchipelagoData {
                         }
                     }
                 } } },
-                { 182,  new() {check_delegate = (r) => {
+                { 182,  new() {pilgrimage = true, check_delegate = (r) => {
                     // Valefor
                     int partyMember_id = 8;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
@@ -551,7 +562,7 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Kilika, new(){ story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
             story_checks = {
-                { 348,  new() {check_delegate = (r) => {
+                { 348,  new() {pilgrimage = true, check_delegate = (r) => {
                     // Ifrit
                     int partyMember_id = 9;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
@@ -597,7 +608,7 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Djose, new(){ story_progress = 960, room_id = 93, entrance = 0, airship_destination_index = 99,
             story_checks = {
-                { 1010,  new() {check_delegate = (r) => {
+                { 1010,  new() {pilgrimage = true, check_delegate = (r) => {
                     // Ixion
                     int partyMember_id = 10;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
@@ -668,7 +679,7 @@ public static class ArchipelagoData {
                             }
                         }
                     } } } },
-                { 1545,  new() {check_delegate = (r) => {
+                { 1545,  new() {pilgrimage = true, check_delegate = (r) => {
                     // Shiva
                     int partyMember_id = 11;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
@@ -717,7 +728,7 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.Bevelle, new(){ story_progress = 2040, room_id = 205, entrance = 0, airship_destination_index = 12, // Destination 12 doesn't work (12 = Bevelle but doesn't have destination, 18 = Highbridge) 
             story_checks = {
-                { 2220,  new() {check_delegate = (r) => {
+                { 2220,  new() {pilgrimage = true, check_delegate = (r) => {
                     // Bahamut
                     int partyMember_id = 12;
                     if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
@@ -743,6 +754,7 @@ public static class ArchipelagoData {
             } } },
         {RegionEnum.ZanarkandRuins, new(){ story_progress = 2680, room_id = 132, entrance = 0, airship_destination_index = 15,
             story_checks = {
+                { 2850, new() {pilgrimage = true } },
                 { 2875, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Zanarkand Ruins complete"); } } },
                 { 2900, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 313, next_entrance = 3, return_if_locked = RegionEnum.Airship, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("Zanarkand Ruins complete"); } } },
             } } },
