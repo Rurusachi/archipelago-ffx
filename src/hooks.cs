@@ -1104,6 +1104,35 @@ public unsafe partial class ArchipelagoFFXModule {
         {"swin0900", [(0x00A27,  4)] },
     };
 
+    //TODO: Figure out how to split & handle the multiple NPC's in one room.
+    private static readonly Dictionary<string, (int offset, ushort recruit_id)[]> event_to_recruit_offsets = new(){
+        {"bsvr0400", [(0x2462, 19)] }, // Vilucha
+        {"djyt0000", [(0x3E81,  6)] }, // Kyou
+        {"genk1100", [(0x1246, 10)] }, // Miyu
+        {"guad0300", [(0x1F70, 22)] }, // Yuma Guado
+        {"hiku0000", [(0x577C, 13)] }, // Rin
+        {"hiku0500", [(0x730F, 13)] }, // Rin
+        {"hiku0800", [(0x5662, 20), (0xC916,  2)] }, // Wakka & Brother
+        {"hiku0801", [(0x3351, 20), (0x66F5,  2)] }, // Wakka & Brother
+        {"hiku1900", [(0x223A, 20), (0x66B9,  2)] }, // Wakka & Brother
+        {"kami0100", [(0x9905,  9)] }, // Mifurey
+        {"klyt0600", [(0x113A,  8)] }, // Mep
+        {"lchb0000", [(0x1ABC,  1), (0x336E,  21)] }, // Biggs & Wedge
+        {"lchb0100", [(0x401C, 12)] }, // Nedus
+        {"lchb0500", [(0x3462, 24)] }, // Zev Ronso
+        {"lchb0900", [(0x1DCE, 23)] }, // Zalitz
+        {"lchb1800", [(0x427D, 15)] }, // Shaami
+        {"luca0100", [(0x6C2F,  4)] }, // Jumal
+        {"luca0400", [(0x4278, 16)] }, // Shuu
+        {"mcyt0000", [(0x39F3,  7)] }, // Linna
+        {"mihn0300", [(0x88C0, 14)] }, // Ropp
+        {"nagi0000", [(0x86E8, 17), (0x33C53, 11)] }, // Svanda & Naida
+        {"nagi0400", [(0x2587,  3)] }, // Durren
+        {"ptkl0200", [(0x63AE, 18)] }, // Tatts
+        {"ptkl0600", [(0x2937, 18)] }, // Tatts
+        {"swin0000", [(0x87F7,  5)] }, // Kiyuri
+    };
+
     private static Dictionary<(int, int), uint> originalEntryPoints = new();
     private static string current_event_name = "";
     private static void h_AtelEventSetUp(int event_id) {
@@ -1389,7 +1418,17 @@ public unsafe partial class ArchipelagoFFXModule {
                     ]);
                 break;
         }
-
+        
+        // Blitz Recruit locations (RecruitSanity)
+        if (event_to_recruit_offsets.TryGetValue(event_name, out var recruit_offsets)) {
+            foreach ((int offset, ushort recruit_id) in recruit_offsets) {
+                set(code_ptr, offset, [
+                    AtelOp.PUSHII   .build(recruit_id),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_RECRUIT_LOCATION)
+                    ]);
+            }
+        }
+        
         // Celestial weapon locations
         if (event_to_celestial_offsets.TryGetValue(event_name, out var celestial_offsets)) {
             // Remove CelestialMirrorObtained check
@@ -3161,6 +3200,7 @@ public unsafe partial class ArchipelagoFFXModule {
         IS_TREASURE_LOCATION_CHECKED,
         COLLECTED_PRIMERS,
         SEND_PARTY_MEMBER_LOCATION,
+        SEND_RECRUIT_LOCATION,
     }
 
     static AtelCallTarget[] customNameSpace = {
@@ -3172,6 +3212,7 @@ public unsafe partial class ArchipelagoFFXModule {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsTreasureLocationChecked)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_CollectedPrimers)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_SendPartyMemberLocation)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_SendRecruitLocation)}
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
@@ -3256,5 +3297,19 @@ public unsafe partial class ArchipelagoFFXModule {
         }
         return 1;
     }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_SendRecruitLocation(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int recruit_id =  atelStack->pop_int();
+        if (!FFXArchipelagoClient.local_checked_locations.Contains(recruit_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Recruit)) {
+            if (ArchipelagoFFXModule.item_locations.recruit.TryGetValue(recruit_id, out var item)) {
+                if (FFXArchipelagoClient.sendLocation(recruit_id, FFXArchipelagoClient.ArchipelagoLocationType.Recruit)) {
+                    ArchipelagoFFXModule.obtain_item(item.id);
+                }
+            }
+        }
+        return 1;
+    }
+     
 }
 
