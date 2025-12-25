@@ -1963,6 +1963,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
 
                 update_region_state(false);
+                refill_spheres();
             }
             else if (call_type == 9) { // Lock party member
                 int party_member = atelStack->pop_int();
@@ -2204,6 +2205,14 @@ public unsafe partial class ArchipelagoFFXModule {
             current_region = RegionEnum.None;
             skip_state_updates = false;
         }
+    }
+
+    private static void refill_spheres() {
+        logger.Debug($"refill red spheres...");
+        h_give_item(8262, 99);  // Power Sphere
+        h_give_item(8263, 99);  // Mana Sphere
+        h_give_item(8264, 99);  // Speed Sphere
+        h_give_item(8265, 99);  // Ability Sphere
     }
 
     private static int h_Common_transitionToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
