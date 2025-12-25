@@ -15,17 +15,12 @@ using System.Runtime.InteropServices;
 //using Fahrenheit.Modules.ArchipelagoFFX.GUI;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
-using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
-using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Reflection;
-using System.Collections;
-using Fahrenheit.Core.FFX.Battle;
 using static Fahrenheit.Core.FFX.Globals;
 using System.Numerics;
-using Archipelago.MultiClient.Net.Enums;
 using Color = Archipelago.MultiClient.Net.Models.Color;
 using System.Diagnostics.CodeAnalysis;
 
@@ -70,14 +65,16 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     public static FhLangId? VoiceLanguage;
     public static FhLangId? TextLanguage;
     private class ArchipelagoGlobalState { 
-        public string   LastVersion { get; set; }
+        public string    LastVersion   { get; set; }
         public FhLangId? VoiceLanguage { get; set; }
-        public FhLangId? TextLanguage { get; set; }
+        public FhLangId? TextLanguage  { get; set; }
+        public int       FontSize     { get; set; }
 
         public ArchipelagoGlobalState() {
             this.LastVersion   = ArchipelagoFFXModule.Version.ToString();
             this.VoiceLanguage = ArchipelagoFFXModule.VoiceLanguage;
             this.TextLanguage  = ArchipelagoFFXModule.TextLanguage;
+            this.FontSize      = ArchipelagoGUI.font_size;
         }
     }
 
@@ -104,13 +101,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
     }
 
-    private const int TreasureOffset = 0x1000;
-    private const int BossOffset = 0x2000;
-    private const int PartyMemberOffset = 0x3000;
-    private const int OverdriveOffset = 0x4000;
-    private const int OverdriveModeOffset = 0x5000;
-    private const int OtherOffset = 0x6000;
-    private const int SphereGridOffset = 0x7000;
     public record Location(string location_name, int location_id, uint item_id, string item_name, string player_name);
     public struct ArchipelagoSeed {
         [JsonInclude]
@@ -164,7 +154,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
     }
     public record ArchipelagoItem(uint id, string name, string player) {
-        //public GCHandle name_handle = GCHandle.Alloc(FhCharset.Us.to_bytes(name), GCHandleType.Pinned);
+        //public GCHandle name_handle = GCHandle.Alloc(FhEncoding.Us.to_bytes(name), GCHandleType.Pinned);
     }
 
     public static List<CustomString> cached_strings = [];
@@ -397,39 +387,41 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
         var loaded_state = JsonSerializer.Deserialize<ArchipelagoState>(local_state_file);
         if (loaded_state != null) {
-            var seed = loaded_seeds.FirstOrDefault(s => s.SeedId == loaded_state.SeedId);
-            if (seed.SeedId is not null) {
-                if (!loadSeed(seed)) {
+            // Don't let client sync remote locations until seed is fully loaded
+            lock (FFXArchipelagoClient.client_lock) {
+                var seed = loaded_seeds.FirstOrDefault(s => s.SeedId == loaded_state.SeedId);
+                if (seed.SeedId is not null) {
+                    if (!loadSeed(seed)) {
+                        FFXArchipelagoClient.disconnect();
+                        return;
+                    }
+                }
+                else {
+                    logger.Error($"Seed for loaded state not found");
                     FFXArchipelagoClient.disconnect();
                     return;
                 }
+                foreach (var region in loaded_state.region_states) {
+                    region_states[region.Key].story_progress = region.Value.story_progress;
+                    region_states[region.Key].room_id = region.Value.room_id;
+                    region_states[region.Key].entrance = region.Value.entrance;
+                    region_states[region.Key].completed_visits = region.Value.completed_visits;
+                    region_states[region.Key].pilgrimage_completed = region.Value.pilgrimage_completed;
+                }
+                foreach (var region in loaded_state.region_is_unlocked) {
+                    region_is_unlocked[region.Key] = region.Value;
+                }
+                foreach (var character in loaded_state.unlocked_characters) {
+                    unlocked_characters[character.Key] = character.Value;
+                    locked_characters[character.Key] = false;
+                }
+                loaded_state.celestial_level.CopyTo(celestial_level, 0);
+                FFXArchipelagoClient.local_checked_locations.Clear();
+                FFXArchipelagoClient.local_checked_locations.UnionWith(loaded_state.local_checked_locations);
+                FFXArchipelagoClient.local_locations_updated = true;
+                FFXArchipelagoClient.received_items = loaded_state.received_items;
+                skip_state_updates = loaded_state.skip_state_updates;
             }
-            else { 
-                logger.Error($"Seed for loaded state not found");
-                FFXArchipelagoClient.disconnect();
-                return;
-            }
-            foreach (var region in loaded_state.region_states) {
-                region_states[region.Key].story_progress = region.Value.story_progress;
-                region_states[region.Key].room_id = region.Value.room_id;
-                region_states[region.Key].entrance = region.Value.entrance;
-                region_states[region.Key].completed_visits = region.Value.completed_visits;
-                region_states[region.Key].pilgrimage_completed = region.Value.pilgrimage_completed;
-            }
-            foreach (var region in loaded_state.region_is_unlocked) {
-                region_is_unlocked[region.Key] = region.Value;
-            }
-            foreach (var character in loaded_state.unlocked_characters) {
-                unlocked_characters[character.Key] = character.Value;
-                locked_characters[character.Key] = false;
-            }
-            loaded_state.celestial_level.CopyTo(celestial_level, 0);
-            FFXArchipelagoClient.local_checked_locations.Clear();
-            FFXArchipelagoClient.local_checked_locations.UnionWith(loaded_state.local_checked_locations);
-            //FFXArchipelagoClient.local_checked_locations.AddRange(loaded_state.local_checked_locations);
-            FFXArchipelagoClient.local_locations_updated = true;
-            FFXArchipelagoClient.received_items = loaded_state.received_items;
-            skip_state_updates = loaded_state.skip_state_updates;
         }
     }
 
@@ -445,6 +437,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 TextLanguage = loaded_state.TextLanguage;
                 ArchipelagoGUI.voice_lang = VoiceLanguage.HasValue ? (byte)VoiceLanguage.Value : (byte)0xFF;
                 ArchipelagoGUI.text_lang  = TextLanguage.HasValue  ? (byte)TextLanguage.Value  : (byte)0xFF;
+                ArchipelagoGUI.font_size = loaded_state.FontSize;
             }
             return true;
         }

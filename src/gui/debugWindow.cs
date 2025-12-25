@@ -1,27 +1,17 @@
-﻿using Archipelago.MultiClient.Net.Models;
-using Fahrenheit.Core;
-using Fahrenheit.Core.Atel;
+﻿using Fahrenheit.Core;
 using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Battle;
-using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
-//using Fahrenheit.Core.ImGuiNET;
 using Hexa.NET.ImGui;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using TerraFX.Interop.DirectX;
-using TerraFX.Interop.Windows;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoFFXModule;
-using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Color = Archipelago.MultiClient.Net.Models.Color;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.GUI;
@@ -41,6 +31,7 @@ public unsafe static class ArchipelagoGUI {
 
     private static string client_input_command = "";
 
+    public static readonly System.Threading.Lock client_log_lock = new();
     private static List<List<(string text, Color color)>> client_log = [];
     public static bool client_log_updated = false;
     private static float previous_scroll = 1;
@@ -70,6 +61,16 @@ public unsafe static class ArchipelagoGUI {
 
     public static int selected_seed;
 
+    public static int font_size = -1;
+
+    private static bool show_popup;
+    public static string popup_content { 
+        get;
+        set {
+            field = value;
+            show_popup = value != "";
+        }
+    }
 
     public static void render() {
         //ImGui.ShowDebugLogWindow();
@@ -81,11 +82,24 @@ public unsafe static class ArchipelagoGUI {
         //ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4 { X = 0.5f, Y = 0.5f, Z = 0.5f });
         //ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         //ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
-        
+        if (font_size == -1) font_size = (int)ImGui.GetFontSize();
+        ImGui.PushFont(null, font_size);
+
+        if (show_popup) { 
+            ImGui.OpenPopup("Archipelago.GUI.Popup");
+            show_popup = false;
+        }
+        ImGui.SetNextWindowPos(ImGui.GetCenter(ImGui.GetMainViewport()), ImGuiCond.Appearing, new(0.5f, 0.5f));
+        if (ImGui.BeginPopup("Archipelago.GUI.Popup")) {
+            ImGui.Text(popup_content);
+            ImGui.EndPopup();
+        }
+
         render_client();
 #if DEBUG
         render_experiments();
 #endif
+        ImGui.PopFont();
         //render_pane(pane_width);
 
         // Reset style
@@ -116,12 +130,28 @@ public unsafe static class ArchipelagoGUI {
             //int requirement = (int)seed.GoalRequirement;
             //ImGui.InputInt("Goal Requirement", ref requirement);
             //seed.GoalRequirement = (GoalRequirement)requirement;
+
             float frameHeight = ImGui.GetFrameHeight();
             Vector2 windowPos = ImGui.GetWindowPos();
             float windowBorderSize = ImGui.GetStyle().WindowBorderSize;
             ImGui.Text($"frameHeight: {frameHeight}, windowBorderSize: {windowBorderSize}");
             if (shiori_image != null) ImGui.GetForegroundDrawList().AddImage(shiori_image.TextureRef, windowPos + new Vector2(windowBorderSize), new(windowPos.X + frameHeight - windowBorderSize, windowPos.Y + frameHeight - windowBorderSize));
-            
+
+            //Span<byte> tidus_name = new Span<byte>(Globals.save_data->character_names[0].raw, 20);
+            //byte[] tidus_decoded = new byte[FhEncoding.compute_decode_buffer_size(tidus_name)];
+            //
+            //FhEncoding.decode(tidus_name, tidus_decoded);
+            //string tidus_string = Encoding.UTF8.GetString(tidus_decoded);
+            //fixed (byte* name_string = tidus_decoded) {
+            //    if (ImGui.InputText("Tidus Name", ref tidus_string, 19, ImGuiInputTextFlags.EnterReturnsTrue)) {
+            //        string final_string = tidus_string + "{END}";
+            //        FhEncoding.encode(Encoding.UTF8.GetBytes(final_string), tidus_name);
+            //    }
+            //}
+            Vector4* Vector4f_ARRAY_00c86010 = FhUtil.ptr_at<Vector4>(0x886010);
+
+            ImGui.InputFloat4("Tidus ambient(?) color", &Vector4f_ARRAY_00c86010->X);
+
             var goalRequirements = Enum.GetNames<GoalRequirement>();
             int currentRequirement = (int)seed.GoalRequirement;
             if (ImGui.Combo("Goal Requirement", ref currentRequirement, goalRequirements, goalRequirements.Length)) {
@@ -190,8 +220,8 @@ public unsafe static class ArchipelagoGUI {
             //var tempString = ArchipelagoFFXModule.customStrings[0];
             //
             //
-            //byte[] decoded = new byte[FhCharset.compute_decode_buffer_size(new ReadOnlySpan<byte>(tempString.encoded, 1000))];
-            //FhCharset.decode(new Span<byte>(tempString.encoded, tempString.encodedLength), decoded);
+            //byte[] decoded = new byte[FhEncoding.compute_decode_buffer_size(new ReadOnlySpan<byte>(tempString.encoded, 1000))];
+            //FhEncoding.decode(new Span<byte>(tempString.encoded, tempString.encodedLength), decoded);
             //string tempText = Encoding.UTF8.GetString(decoded);
             //ImGui.Text(tempText);
 
@@ -199,12 +229,12 @@ public unsafe static class ArchipelagoGUI {
             ReadOnlySpan<byte> testString = "{TIME:00}Ready to fight Sin?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8;
             //ReadOnlySpan<byte> testString = "{TIME:00}いいですか？{LF}{CHOICE:00}はい{LF}{CHOICE:01}いいえ"u8;
 
-            byte[] encoded = new byte[FhCharset.compute_encode_buffer_size(testString)];
-            FhCharset.encode(testString, encoded);
+            byte[] encoded = new byte[FhEncoding.compute_encode_buffer_size(testString)];
+            FhEncoding.encode(testString, encoded);
 
             byte[] decoded = new byte[100];
-            int expected_size = FhCharset.compute_decode_buffer_size(encoded);
-            int actual_size = FhCharset.decode(encoded, decoded);
+            int expected_size = FhEncoding.compute_decode_buffer_size(encoded);
+            int actual_size = FhEncoding.decode(encoded, decoded);
 
             string decodedString = Encoding.UTF8.GetString(decoded);
 
@@ -594,7 +624,7 @@ public unsafe static class ArchipelagoGUI {
     }
 
     public static void add_log_message(List<(string, Color)> message) {
-        lock (client_log) {
+        lock (client_log_lock) {
             client_log.Add(message);
             client_log_updated = true;
         }
@@ -604,7 +634,7 @@ public unsafe static class ArchipelagoGUI {
         ImGuiStylePtr style = ImGui.GetStyle();
         if (ImGui.BeginChild("Archipelago.GUI.Log", new(0, ImGui.GetContentRegionAvail().Y - ImGui.GetTextLineHeight() - 3 * style.ItemSpacing.Y), ImGuiChildFlags.Borders, ImGuiWindowFlags.NoMove)) {
             //var curr_scroll = ImGui.GetScrollY() / previous_scroll_max;
-            lock (client_log) {
+            lock (client_log_lock) {
                 foreach (var line in client_log) {
                     byte part_counter = 0;
                     int part_length = line.Count;
@@ -689,6 +719,9 @@ public unsafe static class ArchipelagoGUI {
                     ["/resetregion", string regionString] => () => {
                         if (Enum.TryParse(regionString, out RegionEnum region)) {
                             ArchipelagoFFXModule.region_states[region] = region_starting_state[region];
+
+                            List<(string, Color)> message = [(regionString, Color.Blue), (" has been reset", Color.White)];
+                            add_log_message(message);
                         }
                         else {
                             List<(string, Color)> message = [("invalid region: ", Color.Red), (regionString, Color.Blue)];
@@ -711,6 +744,9 @@ public unsafe static class ArchipelagoGUI {
                                         r.story_progress = progress;
                                         r.room_id = map;
                                         r.entrance = entrance;
+
+                                        List<(string, Color)> message = [(regionString, Color.Blue), ($"'s state has been set to (story_progress: {progress}, room_id: {map}, entrance: {entrance})", Color.White)];
+                                        add_log_message(message);
                                     }
                                     else {
                                         List<(string, Color)> message = [("invalid entrance_id: ", Color.Red), (entranceString, Color.Blue)];
@@ -741,10 +777,15 @@ public unsafe static class ArchipelagoGUI {
                     }
                     ,
 #endif
-                    ["/send_checks"] => () => {FFXArchipelagoClient.local_locations_updated = true; }
+                    ["/send_checks"] => () => {
+                        FFXArchipelagoClient.local_locations_updated = true;
+
+                        List<(string, Color)> message = [("Resending local checks", Color.White)];
+                        add_log_message(message);
+                    }
                     ,
                     ["/clear"] => () => {
-                        lock (client_log) {
+                        lock (client_log_lock) {
                             client_log.Clear(); 
                         }
                     }
@@ -866,6 +907,7 @@ public unsafe static class ArchipelagoGUI {
     }
 
     private static void render_settings() {
+        ImGui.SliderInt("Font size", ref font_size, 10, 60);
 
         if (ImGui.BeginCombo("Voice", voice_lang == 0xFF ? "Default" : ((FhLangId)voice_lang).ToString())) {
             if (ImGui.Selectable("Default", voice_lang == 0xFF)) {
@@ -892,7 +934,7 @@ public unsafe static class ArchipelagoGUI {
             ImGui.EndCombo();
         }
 
-        if (ImGui.Button("Save languages")) {
+        if (ImGui.Button("Save settings")) {
             ArchipelagoFFXModule.VoiceLanguage = voice_lang != 0xFF ? (FhLangId)voice_lang : null;
             ArchipelagoFFXModule.TextLanguage = text_lang != 0xFF ? (FhLangId)text_lang : null;
             ArchipelagoFFXModule.save_settings();

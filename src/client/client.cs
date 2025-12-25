@@ -20,7 +20,7 @@ using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.Client;
 public static class FFXArchipelagoClient {
-    public static readonly System.Threading.Lock _lock = new();
+    public static readonly System.Threading.Lock client_lock = new();
     public static          ArchipelagoSession?   current_session;
     public static          int                   received_items = 0;
     public static readonly HashSet<long>         local_checked_locations = [];
@@ -96,7 +96,7 @@ public static class FFXArchipelagoClient {
     }
 
     private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations) {
-        lock (local_checked_locations) {
+        lock (client_lock) {
             remote_locations_updated = true;
         }
     }
@@ -153,7 +153,7 @@ public static class FFXArchipelagoClient {
         }
 
         // Possibly unnecessary
-        lock (_lock) {
+        lock (client_lock) {
             if (local_locations_updated) {
                 var local_only = local_checked_locations.Except(current_session.Locations.AllLocationsChecked);
                 if (local_only.Any()) {
@@ -164,7 +164,7 @@ public static class FFXArchipelagoClient {
             }
         }
 
-        lock (_lock) {
+        lock (client_lock) {
             if (remote_locations_updated) {
                 var remote_only = current_session.Locations.AllLocationsChecked.Except(local_checked_locations);
                 foreach (long location in remote_only) {

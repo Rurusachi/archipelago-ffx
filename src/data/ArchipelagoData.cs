@@ -4,13 +4,7 @@ using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using TerraFX.Interop.DirectX;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 
@@ -951,6 +945,12 @@ public static class ArchipelagoData {
         {"bsil03_03", () => ArchipelagoFFXModule.set_underwater_party()},
         // S.S Liki
         {"slik02_01", () => ArchipelagoFFXModule.set_underwater_party()},
+        
+        // Monster Arena
+        {"zzzz00_52", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"zzzz00_54", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"zzzz00_73", () => ArchipelagoFFXModule.set_underwater_party()},
+        {"zzzz02_83", () => ArchipelagoFFXModule.set_underwater_party()},
     };
 
 

@@ -453,8 +453,8 @@ public unsafe partial class ArchipelagoFFXModule {
             int custom_index = param_1 & 0x7FFF;
             result = customStrings[custom_index].encoded;
             //result = (byte*)customStringHandles[custom_index].AddrOfPinnedObject();
-            //FhCharset.compute_decode_buffer_size(result);
-            //string decoded = FhCharset.Us.to_string(result);
+            //FhEncoding.compute_decode_buffer_size(result);
+            //string decoded = FhEncoding.Us.to_string(result);
             logger.Debug(customStrings[custom_index].decoded);
         } else {
             // May crash if called with invalid index
@@ -484,13 +484,13 @@ public unsafe partial class ArchipelagoFFXModule {
     //public static readonly byte[][] customStrings = {
     //    //new byte[][] {
     //    //    [TIME, 0x30],
-    //    //    FhCharset.Us.to_bytes("Ready to fight Sin?"),
+    //    //    FhEncoding.Us.to_bytes("Ready to fight Sin?"),
     //    //    [NEWLINE, CHOICE, 0x30],
-    //    //    FhCharset.Us.to_bytes("Yes"),
+    //    //    FhEncoding.Us.to_bytes("Yes"),
     //    //    [NEWLINE, CHOICE, 0x31],
-    //    //    FhCharset.Us.to_bytes("No"),
+    //    //    FhEncoding.Us.to_bytes("No"),
     //    //}.SelectMany(x => x).ToArray(),
-    //    //FhCharset.Us.to_bytes("{TIME:0}Ready to fight {COLOR:BLUE}Sin{COLOR:WHITE}?\n{CHOICE:0}Yes\n{CHOICE:1}No"),
+    //    //FhEncoding.Us.to_bytes("{TIME:0}Ready to fight {COLOR:BLUE}Sin{COLOR:WHITE}?\n{CHOICE:0}Yes\n{CHOICE:1}No"),
     //};
     public struct CustomString {
         public byte* encoded;
@@ -505,9 +505,9 @@ public unsafe partial class ArchipelagoFFXModule {
 
             this.decoded = Encoding.UTF8.GetString(text);
 
-            this.encodedLength = FhCharset.compute_encode_buffer_size(text, flags: encodingFlags);
+            this.encodedLength = FhEncoding.compute_encode_buffer_size(text, flags: encodingFlags);
             this.encoded = (byte*)NativeMemory.AllocZeroed((nuint)encodedLength + 1);
-            int actual_size = FhCharset.encode(text, new Span<byte>(encoded, encodedLength), flags: encodingFlags);
+            int actual_size = FhEncoding.encode(text, new Span<byte>(encoded, encodedLength), flags: encodingFlags);
         }
 
         public CustomString(string text, int choices = 0, int flags = 0, FhEncodingFlags encodingFlags = default) {
@@ -517,9 +517,9 @@ public unsafe partial class ArchipelagoFFXModule {
 
             ReadOnlySpan<byte> utf8String = Encoding.UTF8.GetBytes(text);
 
-            this.encodedLength = FhCharset.compute_encode_buffer_size(utf8String, flags: encodingFlags);
+            this.encodedLength = FhEncoding.compute_encode_buffer_size(utf8String, flags: encodingFlags);
             this.encoded = (byte*)NativeMemory.AllocZeroed((nuint)encodedLength + 1);
-            int actual_size = FhCharset.encode(utf8String, new Span<byte>(encoded, encodedLength), flags: encodingFlags);
+            int actual_size = FhEncoding.encode(utf8String, new Span<byte>(encoded, encodedLength), flags: encodingFlags);
         }
 
         public readonly void Free() {
@@ -560,15 +560,15 @@ public unsafe partial class ArchipelagoFFXModule {
 
     //private static readonly byte[] sinString = new byte[][] {
     //        [TIME, 0x30],
-    //        FhCharset.Us.to_bytes("Ready to fight Sin?"),
+    //        FhEncoding.Us.to_bytes("Ready to fight Sin?"),
     //        [NEWLINE, CHOICE, 0x30],
-    //        FhCharset.Us.to_bytes("Yes"),
+    //        FhEncoding.Us.to_bytes("Yes"),
     //        [NEWLINE, CHOICE, 0x31],
-    //        FhCharset.Us.to_bytes("No"),
+    //        FhEncoding.Us.to_bytes("No"),
     //    }.SelectMany(x => x).ToArray();
 
     private static readonly GCHandle APItemString;
-    //private static readonly GCHandle APItemString = GCHandle.Alloc(FhCharset.encode("Archipelago Item"), GCHandleType.Pinned);
+    //private static readonly GCHandle APItemString = GCHandle.Alloc(FhEncoding.encode("Archipelago Item"), GCHandleType.Pinned);
 
     private static AtelInst[] atelDisplayFieldString(ushort boxIndex, ushort stringIndex, ushort x, ushort y, ushort align = 4, ushort textFlags = 0, ushort transparent = 0) {
         return [
@@ -1216,6 +1216,12 @@ public unsafe partial class ArchipelagoFFXModule {
                 //    ]);
                 break;
             case "mcfr0100":
+                // Check Saturn Sigil location instead of inventory (butterfly minigame)
+                set(code_ptr, [0x5792, 0x5985, 0x5AD5], [
+                    AtelOp.PUSHII   .build(277),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_TREASURE_LOCATION_CHECKED),
+                    ]);
+
                 // Remove NPC
                 set(code_ptr, 0x1601, [
                     AtelOp.JMP.build(0x0001),
@@ -1665,7 +1671,7 @@ public unsafe partial class ArchipelagoFFXModule {
             int tutorial_offset = 0x571;
             ushort tutorial_jump = 0x23;
             int airship_warp_offset = 0x657;
-            if (event_name == "mihn0000" || event_name == "mihn0200" || event_name == "mihn0300" || event_name == "mihn0600") {
+            if (event_name == "mihn0000" || event_name == "mihn0200" || event_name == "mihn0300" || event_name == "mihn0400" || event_name == "mihn0600") {
                 tutorial_offset = 0x59B;
                 airship_warp_offset = 0x695;
             }
@@ -1806,10 +1812,10 @@ public unsafe partial class ArchipelagoFFXModule {
                 message_text = _FUN_008bda20(0x4019); // "Obtained %0 x%1!"
             }
 
-            byte[] decoded = new byte[FhCharset.compute_decode_buffer_size(new ReadOnlySpan<byte>(item_name, 1000))];
+            byte[] decoded = new byte[FhEncoding.compute_decode_buffer_size(new ReadOnlySpan<byte>(item_name, 1000))];
 
-            FhCharset.decode(new ReadOnlySpan<byte>(item_name, 1000), decoded);
-            //string decoded = FhCharset.Us.to_string(item_name);
+            FhEncoding.decode(new ReadOnlySpan<byte>(item_name, 1000), decoded);
+            //string decoded = FhEncoding.Us.to_string(item_name);
             logger.Info(Encoding.UTF8.GetString(decoded));
 
             _MsSaveItemUse(Battle.reward_data->items[0], Battle.reward_data->items_amounts[0]);
@@ -2275,7 +2281,8 @@ public unsafe partial class ArchipelagoFFXModule {
             0x80 => "Tutorial",
             int x => $"Unknown({x})",
         };
-        
+
+        // TODO: Investigate why Magus Sisters naming menus (0x4008000F, 0x40080010, 0x40080011) need to be skipped
         if (menu == 0x40800001 || menu == 0x40800002 || menu == 0x40800003 || menu == 0x40800004 || menu == 0x40800005 || menu == 0x4008000F || menu == 0x40080010 || menu == 0x40080011) {
             logger.Debug($"Skipping menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
             //FhUtil.set_at(0x00efbbf0, 0x40080000);

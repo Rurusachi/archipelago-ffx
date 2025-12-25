@@ -5,7 +5,6 @@ using Fahrenheit.Core.FFX.Battle;
 using Hexa.NET.DirectXTex;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static Fahrenheit.Core.FFX.FhCall;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 public static unsafe class delegates {
