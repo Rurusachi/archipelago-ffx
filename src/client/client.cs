@@ -241,7 +241,8 @@ public unsafe static void connectHandlers() {
         Overdrive     = 0x4000,
         OverdriveMode = 0x5000,
         Other         = 0x6000,
-        SphereGrid    = 0x7000,
+        Recruit       = 0x7000,
+        SphereGrid    = 0x8000,
     }
 
     public static bool sendLocation(long locationId, ArchipelagoLocationType locationType) {
