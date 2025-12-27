@@ -54,8 +54,8 @@
 	</ItemGroup>
 	
 	<!-- BUILD EVENTS -->
-	<Target Name="PostBuild" BeforeTargets="PostBuildEvent">
-		<Exec Command="powershell Set-Content 'archipelago-ffx.manifest.json' ((Get-Content 'archipelago-ffx.manifest.json').Replace('{Version}','$(Version)'))" WorkingDirectory="$(OutDir)" />
+	<Target Name="VersionAfterPublish" AfterTargets="Publish">
+		<Exec Command="powershell Set-Content 'archipelago-ffx.manifest.json' ((Get-Content 'archipelago-ffx.manifest.json').Replace('{Version}','$(Version)'))" WorkingDirectory="$(PublishDir)" />
 	</Target>
 
 	<!-- PROJECT REFERENCES -->

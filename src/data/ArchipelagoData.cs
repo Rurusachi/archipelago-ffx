@@ -47,13 +47,13 @@ public static class ArchipelagoData {
         ThunderPlains,
         Macalania,
         Bikanel,
+        Airship,
         Bevelle,
         CalmLands,
         CavernOfTheStolenFayth,
         MtGagazet,
         ZanarkandRuins,
         Sin,
-        Airship,
         OmegaRuins,
     }
 
@@ -339,6 +339,22 @@ public static class ArchipelagoData {
             261,
             391, // Luca flashback
             ] },
+        { RegionEnum.Airship, [
+            194,
+            265,
+            351,
+            211,
+            277,
+            255,
+            392,
+            //205,
+            199,
+            200,
+            201,
+            374, // Unsure
+            375, // Unsure
+            202, // Unsure
+            ] },
         { RegionEnum.Bevelle, [
             205,
             180,
@@ -424,22 +440,6 @@ public static class ArchipelagoData {
             387, // Ending
             388, // Ending
             390, // Ending
-            ] },
-        { RegionEnum.Airship, [
-            194,
-            265,
-            351,
-            211,
-            277,
-            255,
-            392,
-            //205,
-            199,
-            200,
-            201,
-            374, // Unsure
-            375, // Unsure
-            202, // Unsure
             ] },
         { RegionEnum.OmegaRuins, [
             258,

@@ -39,6 +39,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     public static RegionEnum current_region = RegionEnum.None;
     public static Dictionary<RegionEnum, bool> region_is_unlocked = [];
     public static Dictionary<RegionEnum, ArchipelagoRegion> region_states = [];
+    public static Dictionary<uint, int> excess_inventory = [];
 
     public const int NUM_CHARACTERS = 0x12;
     public static Dictionary<int, bool> unlocked_characters = [];
@@ -79,10 +80,11 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     }
 
     private class ArchipelagoState {
-        public string                                    SeedId                 { get; set; }
+        public string                                    SeedId                  { get; set; }
         public Dictionary<RegionEnum, ArchipelagoRegion> region_states           { get; set; }
         public Dictionary<RegionEnum, bool>              region_is_unlocked      { get; set; }
         public Dictionary<int,        bool>              unlocked_characters     { get; set; }
+        public Dictionary<uint,       int >              excess_inventory        { get; set; }
         public int[]                                     celestial_level         { get; set; }
         public HashSet<long>                             local_checked_locations { get; set; }
         public int                                       received_items          { get; set; }
@@ -94,6 +96,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             this.region_states           = ArchipelagoFFXModule.region_states;
             this.region_is_unlocked      = ArchipelagoFFXModule.region_is_unlocked;
             this.unlocked_characters     = ArchipelagoFFXModule.unlocked_characters;
+            this.excess_inventory        = ArchipelagoFFXModule.excess_inventory;
             this.celestial_level         = ArchipelagoFFXModule.celestial_level;
             this.skip_state_updates      = ArchipelagoFFXModule.skip_state_updates;
             this.local_checked_locations = FFXArchipelagoClient.local_checked_locations;
@@ -129,13 +132,6 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public List<Location>  Recruit;
         [JsonInclude]          
         public List<Location>  SphereGrid;
-        //public Dictionary<int, Location> Treasure;
-        //public Dictionary<int, Location> Boss;
-        //public Dictionary<int, Location> PartyMember;
-        //public Dictionary<int, Location> Overdrive;
-        //public Dictionary<int, Location> OverdriveMode;
-        //public Dictionary<int, Location> Other;
-        //public Dictionary<int, Location> SphereGrid;
 
         public ArchipelagoSeed() {
             SeedId = "";
@@ -273,6 +269,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         }
         unlocked_characters.Clear();
         locked_characters.Clear();
+        excess_inventory.Clear();
         celestial_level.Initialize();
         for (int i = 0; i < NUM_CHARACTERS; i++) {
             unlocked_characters.Add(i, false);
@@ -293,15 +290,20 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
     private record SemVer(int major,
                           int minor,
                           int patch,
-                          string prerelease,
-                          string buildmetadata) : IComparable<SemVer>, IEquatable<SemVer> {
+                          string prerelease = "",
+                          string buildmetadata = "") : IComparable<SemVer>, IEquatable<SemVer> {
         public SemVer(string versionString) : this(0, 0, 0, "", "") {
-            var version_match = RegexSemVer().Match(versionString);
-            major = int.Parse(version_match.Groups["major"].Value);
-            minor = int.Parse(version_match.Groups["minor"].Value);
-            patch = int.Parse(version_match.Groups["patch"].Value);
-            prerelease = version_match.Groups["prerelease"].Value;
-            buildmetadata = version_match.Groups["buildmetadata"].Value;
+            try {
+                var version_match = RegexSemVer().Match(versionString);
+                major = int.Parse(version_match.Groups["major"].Value);
+                minor = int.Parse(version_match.Groups["minor"].Value);
+                patch = int.Parse(version_match.Groups["patch"].Value);
+                prerelease = version_match.Groups["prerelease"].Value;
+                buildmetadata = version_match.Groups["buildmetadata"].Value;
+            } catch {
+                major = minor = patch = 0;
+                prerelease = buildmetadata = "";
+            }
         }
 
         public SemVer WithoutMetadata() {
@@ -383,6 +385,18 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         SemVer save_version = new(local_state_info.Version);
         if (save_version != Version) {
             logger.Warning($"Saved with different AP version: current:{Version} save:{save_version}");
+
+            if (save_version == new SemVer(0, 0, 0)) {
+                string message = "Invalid save version. Returning to main menu";
+                ArchipelagoGUI.add_log_message([(message, Color.Red)]);
+                logger.Error(message);
+                return;
+            } else if (save_version < new SemVer(0, 3, 0, "alpha")) {
+                string message = "Incompatible version. Returning to main menu";
+                ArchipelagoGUI.add_log_message([(message, Color.Red)]);
+                logger.Info(message);
+                return;
+            }
         }
 
         var loaded_state = JsonSerializer.Deserialize<ArchipelagoState>(local_state_file);
@@ -397,7 +411,9 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                     }
                 }
                 else {
-                    logger.Error($"Seed for loaded state not found");
+                    string message = "Seed for loaded state not found";
+                    ArchipelagoGUI.add_log_message([(message, Color.Red)]);
+                    logger.Error(message);
                     FFXArchipelagoClient.disconnect();
                     return;
                 }
@@ -415,6 +431,9 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                     unlocked_characters[character.Key] = character.Value;
                     locked_characters[character.Key] = false;
                 }
+                foreach ((uint item_id, int amount) in loaded_state.excess_inventory) {
+                    excess_inventory[item_id] = amount;
+                } 
                 loaded_state.celestial_level.CopyTo(celestial_level, 0);
                 FFXArchipelagoClient.local_checked_locations.Clear();
                 FFXArchipelagoClient.local_checked_locations.UnionWith(loaded_state.local_checked_locations);

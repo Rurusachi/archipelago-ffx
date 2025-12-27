@@ -1814,9 +1814,9 @@ public unsafe partial class ArchipelagoFFXModule {
 
             byte[] decoded = new byte[FhEncoding.compute_decode_buffer_size(new ReadOnlySpan<byte>(item_name, 1000))];
 
-            FhEncoding.decode(new ReadOnlySpan<byte>(item_name, 1000), decoded);
+            int decoded_length = FhEncoding.decode(new ReadOnlySpan<byte>(item_name, 1000), decoded, flags:FhEncodingFlags.IMPLICIT_END);
             //string decoded = FhEncoding.Us.to_string(item_name);
-            logger.Info(Encoding.UTF8.GetString(decoded));
+            logger.Info(Encoding.UTF8.GetString(decoded, 0, decoded_length));
 
             _MsSaveItemUse(Battle.reward_data->items[0], Battle.reward_data->items_amounts[0]);
         }
@@ -2214,11 +2214,19 @@ public unsafe partial class ArchipelagoFFXModule {
     }
 
     private static void refill_spheres() {
-        logger.Debug($"refill red spheres...");
-        h_give_item(8262, 99);  // Power Sphere
-        h_give_item(8263, 99);  // Mana Sphere
-        h_give_item(8264, 99);  // Speed Sphere
-        h_give_item(8265, 99);  // Ability Sphere
+        logger.Debug($"Refill inventory");
+        h_give_item(0x2046, 0);  // Power Sphere
+        h_give_item(0x2047, 0);  // Mana Sphere
+        h_give_item(0x2048, 0);  // Speed Sphere
+        h_give_item(0x2049, 0);  // Ability Sphere
+        
+        foreach ((var item_id, var amount) in excess_inventory) {
+            if (amount > 0 && save_data->get_item_count((int)item_id) < 99) {
+                excess_inventory[item_id] = 0;
+                h_give_item(item_id, amount);
+            }
+        }
+
     }
 
     private static int h_Common_transitionToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
@@ -2669,10 +2677,26 @@ public unsafe partial class ArchipelagoFFXModule {
         return _MsBtlGetPos.orig_fptr(param_1, chr, btl_pos_a, btl_pos_b, btl_pos_c, out_pos);
     }
 
-    private static uint h_give_item(uint param_1, int param_2) {
-        logger.Debug($"give_item: {param_2} x {param_1}");
+    private static uint h_give_item(uint item_id, int amount) {
+        logger.Debug($"give_item: {amount} x {item_id}");
 
-        return _FUN_007905a0.orig_fptr(param_1, param_2);
+        // Infinite basic spheres
+        if (item_id == 0x2046 ||
+            item_id == 0x2047 || 
+            item_id == 0x2048 || 
+            item_id == 0x2049) {
+            return _FUN_007905a0.orig_fptr(item_id, 99);
+        }
+
+        int new_amount = (int)(save_data->get_item_count((int)item_id) + amount);
+        if (new_amount > 99) {
+            int excess = new_amount - 99;
+            int old_excess = excess_inventory.GetValueOrDefault(item_id, 0);
+            excess_inventory[item_id] = excess + old_excess;
+            amount -= excess;
+        }
+
+        return _FUN_007905a0.orig_fptr(item_id, amount);
     }
     private static void h_TkMsImportantSet(uint param_1) {
         logger.Debug($"give_key_item: {param_1}");
@@ -3158,6 +3182,18 @@ public unsafe partial class ArchipelagoFFXModule {
 
         }
 
+    }
+
+    private static Dictionary<uint, string> item_name_cache = [];
+    public static string get_item_name(uint item_id) {
+        if (item_name_cache.TryGetValue(item_id, out var name)) return name;
+        byte* item_name;
+        _TkMsGetRomItem(item_id, (int*)&item_name);
+        byte[] decoded = new byte[FhEncoding.compute_decode_buffer_size(new ReadOnlySpan<byte>(item_name, 1000))];
+        int decoded_length = FhEncoding.decode(new ReadOnlySpan<byte>(item_name, 1000), decoded, flags:FhEncodingFlags.IMPLICIT_END);
+        string decoded_string = Encoding.UTF8.GetString(decoded, 0, decoded_length);
+        item_name_cache[item_id] = decoded_string;
+        return decoded_string;
     }
 
 

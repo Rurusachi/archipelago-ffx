@@ -10,6 +10,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoFFXModule;
 using Color = Archipelago.MultiClient.Net.Models.Color;
@@ -140,8 +141,8 @@ public unsafe static class ArchipelagoGUI {
             //Span<byte> tidus_name = new Span<byte>(Globals.save_data->character_names[0].raw, 20);
             //byte[] tidus_decoded = new byte[FhEncoding.compute_decode_buffer_size(tidus_name)];
             //
-            //FhEncoding.decode(tidus_name, tidus_decoded);
-            //string tidus_string = Encoding.UTF8.GetString(tidus_decoded);
+            //int decoded_length = FhEncoding.decode(tidus_name, tidus_decoded);
+            //string tidus_string = Encoding.UTF8.GetString(tidus_decoded, 0, decoded_length);
             //fixed (byte* name_string = tidus_decoded) {
             //    if (ImGui.InputText("Tidus Name", ref tidus_string, 19, ImGuiInputTextFlags.EnterReturnsTrue)) {
             //        string final_string = tidus_string + "{END}";
@@ -221,8 +222,8 @@ public unsafe static class ArchipelagoGUI {
             //
             //
             //byte[] decoded = new byte[FhEncoding.compute_decode_buffer_size(new ReadOnlySpan<byte>(tempString.encoded, 1000))];
-            //FhEncoding.decode(new Span<byte>(tempString.encoded, tempString.encodedLength), decoded);
-            //string tempText = Encoding.UTF8.GetString(decoded);
+            //int decoded_length = FhEncoding.decode(new Span<byte>(tempString.encoded, tempString.encodedLength), decoded);
+            //string tempText = Encoding.UTF8.GetString(decoded, 0, decoded_length);
             //ImGui.Text(tempText);
 
 
@@ -236,7 +237,7 @@ public unsafe static class ArchipelagoGUI {
             int expected_size = FhEncoding.compute_decode_buffer_size(encoded);
             int actual_size = FhEncoding.decode(encoded, decoded);
 
-            string decodedString = Encoding.UTF8.GetString(decoded);
+            string decodedString = Encoding.UTF8.GetString(decoded, 0, actual_size);
 
             ImGui.Text(decodedString);
 
@@ -825,11 +826,27 @@ public unsafe static class ArchipelagoGUI {
         ImGui.Text($"Current region: {ArchipelagoFFXModule.current_region}");
         ImGui.Text($"Current story progress: {Globals.save_data->story_progress}");
 
-
-
-
-        foreach (var region in ArchipelagoFFXModule.region_states) {
-            ImGui.Text($"{region.Key}: story_progress: {region.Value.story_progress}, room: {region.Value.room_id}, entrance: {region.Value.entrance}, completed_visits: {region.Value.completed_visits}");
+        ImGui.SeparatorText("Region states");
+        if (ImGui.BeginTable("Region states", 5)) {
+            ImGui.TableSetupColumn("Region");
+            ImGui.TableSetupColumn("story_progress");
+            ImGui.TableSetupColumn("room");
+            ImGui.TableSetupColumn("entrance");
+            ImGui.TableSetupColumn("completed_visits");
+            ImGui.TableHeadersRow();
+            foreach (var region in ArchipelagoFFXModule.region_states) {
+                ImGui.TableNextColumn();
+                ImGui.Text($"{region.Key}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{region.Value.story_progress}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{region.Value.room_id}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{region.Value.entrance}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{region.Value.completed_visits}");
+            }
+            ImGui.EndTable();
         }
 
         if (Globals.Battle.btl->battle_state != 0) {
@@ -874,35 +891,51 @@ public unsafe static class ArchipelagoGUI {
         string s = "Unlocked regions:";
         ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
         ImGui.Text(s);
-        int counter = 0;
-        int length = ArchipelagoFFXModule.region_is_unlocked.Count;
-        foreach (var (region, i) in ArchipelagoFFXModule.region_is_unlocked.Select((value, i) => (value, i))) {
-#if DEBUG
-            ArchipelagoFFXModule.region_is_unlocked[region.Key] ^= ImGui.Button($"{region.Key} unlocked: {region.Value}");
-            if (counter < 3 && i < length - 1) {
-                ImGui.SameLine();
-            }
-            counter = ++counter % 4;
-#else
-            ImGui.Text($"{region.Key} unlocked: {region.Value}");
+        if (ImGui.BeginTable("Region Unlocks", 3)) {
+            foreach (var (region, i) in ArchipelagoFFXModule.region_is_unlocked.Select((value, i) => (value, i))) {
+                ImGui.TableNextColumn();
+                Color color = region.Value ? Color.Green : Color.Red;
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, 1.0f));
+#if !DEBUG
+                ImGui.BeginDisabled();
 #endif
+                bool unlocked = ArchipelagoFFXModule.region_is_unlocked[region.Key];
+                if (ImGui.Checkbox($"###Archipelago.GUI.Unlocks.{region.Key}", &unlocked)) {
+                    ArchipelagoFFXModule.region_is_unlocked[region.Key] = unlocked;
+                }
+#if !DEBUG
+                ImGui.EndDisabled();
+#endif
+                ImGui.SameLine();
+                ImGui.Text($"{region.Key}");
+                ImGui.PopStyleColor();
+            }
+            ImGui.EndTable();
         }
 
         s = "Unlocked characters:";
         ImGui.SetCursorPosX((ImGui.GetWindowWidth() - ImGui.CalcTextSize(s).X) * 0.5f);
         ImGui.Text(s);
-        counter = 0;
-        length = ArchipelagoFFXModule.unlocked_characters.Count;
-        foreach (var (character, i) in ArchipelagoFFXModule.unlocked_characters.Select((value, i) => (value, i))) {
-#if DEBUG
-            ArchipelagoFFXModule.unlocked_characters[character.Key] ^= ImGui.Button($"{id_to_character[character.Key]} unlocked: {character.Value}");
-            if (counter < 3 && i < length - 1) {
-                ImGui.SameLine();
-            }
-            counter = ++counter % 4;
-#else
-            ImGui.Text($"{id_to_character[character.Key]} unlocked: {character.Value}");
+        if (ImGui.BeginTable("Character Unlocks", 3)) {
+            foreach (var (character, i) in ArchipelagoFFXModule.unlocked_characters.Select((value, i) => (value, i))) {
+                ImGui.TableNextColumn();
+                Color color = character.Value ? Color.Green : Color.Red;
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, 1.0f));
+#if !DEBUG
+                ImGui.BeginDisabled();
 #endif
+                bool unlocked = ArchipelagoFFXModule.unlocked_characters[character.Key];
+                if (ImGui.Checkbox($"###Archipelago.GUI.Unlocks.{id_to_character[character.Key]}", &unlocked)) {
+                    ArchipelagoFFXModule.unlocked_characters[character.Key] = unlocked;
+                }
+#if !DEBUG
+                ImGui.EndDisabled();
+#endif
+                ImGui.SameLine();
+                ImGui.Text($"{id_to_character[character.Key]}");
+                ImGui.PopStyleColor();
+            }
+            ImGui.EndTable();
         }
     }
 
@@ -955,6 +988,17 @@ public unsafe static class ArchipelagoGUI {
                     render_connection();
 
                     render_console();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Excess Inventory###Archipelago.GUI.TabBar.Inventory")) {
+                    if (excess_inventory.Count == 0) {
+                        ImGui.Text("Empty");
+                    } else { 
+                        foreach ((uint item_id, int amount) in excess_inventory) {
+                            string item_name = get_item_name(item_id);
+                            ImGui.Text($"{item_name}: {amount}");
+                        }
+                    }
                     ImGui.EndTabItem();
                 }
                 if (ImGui.BeginTabItem("Unlocks###Archipelago.GUI.TabBar.Unlocks")) {
