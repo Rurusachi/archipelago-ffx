@@ -631,6 +631,33 @@ public unsafe static class ArchipelagoGUI {
         }
     }
 
+    private static LinkedList<string> client_input_history = new();
+    private static LinkedListNode<string>? client_input_history_current = null;
+    private static ImGuiInputTextCallback _client_input_ImGuiInputTextCallback = client_input_ImGuiInputTextCallback;
+    private static bool focus_client_input = false;
+    private static int client_input_ImGuiInputTextCallback(ImGuiInputTextCallbackData* data) {
+        if (data->EventFlag == ImGuiInputTextFlags.CallbackHistory) {
+            if (data->EventKey == ImGuiKey.UpArrow) {
+                if (client_input_history_current is null && client_input_history.First is not null) {
+                    client_input_history_current = client_input_history.First;
+                    data->DeleteChars(0, data->BufTextLen);
+                    data->InsertChars(0, client_input_history_current.Value);
+                } else if (client_input_history_current?.Next is not null) {
+                    client_input_history_current = client_input_history_current.Next;
+                    data->DeleteChars(0, data->BufTextLen);
+                    data->InsertChars(0, client_input_history_current.Value);
+                }
+            } else if (data->EventKey == ImGuiKey.DownArrow) {
+
+                client_input_history_current = client_input_history_current?.Previous;
+                data->DeleteChars(0, data->BufTextLen);
+                if (client_input_history_current is not null) {
+                    data->InsertChars(0, client_input_history_current.Value);
+                }
+            }
+        }
+        return 0;
+    }
     private static void render_console() {
         ImGuiStylePtr style = ImGui.GetStyle();
         if (ImGui.BeginChild("Archipelago.GUI.Log", new(0, ImGui.GetContentRegionAvail().Y - ImGui.GetTextLineHeight() - 3 * style.ItemSpacing.Y), ImGuiChildFlags.Borders, ImGuiWindowFlags.NoMove)) {
@@ -678,10 +705,25 @@ public unsafe static class ArchipelagoGUI {
         }
         ImGui.EndChild();
 
-
-        bool process_input = ImGui.InputText("Input", ref client_input_command, 50, ImGuiInputTextFlags.EnterReturnsTrue);
+        if (focus_client_input) {
+            ImGui.SetKeyboardFocusHere();
+            focus_client_input = false;
+        }
+        bool process_input = ImGui.InputText("Input",
+                                             ref client_input_command,
+                                             50,
+                                             ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.CallbackHistory,
+                                             _client_input_ImGuiInputTextCallback);
 
         if (process_input) {
+            client_input_history.AddFirst(client_input_command);
+            if (client_input_history.Count > 10) {
+                client_input_history.RemoveLast();
+            }
+            client_input_history_current = null;
+
+            focus_client_input = true;
+
             if (!client_input_command.StartsWith("/")) {
                 // Say
                 if (FFXArchipelagoClient.is_connected) {
@@ -719,7 +761,16 @@ public unsafe static class ArchipelagoGUI {
                     //,
                     ["/resetregion", string regionString] => () => {
                         if (Enum.TryParse(regionString, out RegionEnum region)) {
-                            ArchipelagoFFXModule.region_states[region] = region_starting_state[region];
+                            ArchipelagoFFXModule.region_states[region].story_progress = region_starting_state[region].story_progress;
+                            ArchipelagoFFXModule.region_states[region].room_id        = region_starting_state[region].room_id;
+                            ArchipelagoFFXModule.region_states[region].entrance       = region_starting_state[region].entrance;
+                            switch (region) {
+                                case RegionEnum.Kilika:
+                                    // Reset Ochu
+                                    nint* KilikaForestTreasureFlags = (nint*)((nint)save_data + 0x03AC);
+                                    KilikaForestTreasureFlags->set_bit(2, false);
+                                    break;
+                            }
 
                             List<(string, Color)> message = [(regionString, Color.Blue), (" has been reset", Color.White)];
                             add_log_message(message);
