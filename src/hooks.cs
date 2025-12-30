@@ -1969,7 +1969,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
 
                 update_region_state(false);
-                refill_spheres();
+                refill_inventory();
             }
             else if (call_type == 9) { // Lock party member
                 int party_member = atelStack->pop_int();
@@ -2214,19 +2214,32 @@ public unsafe partial class ArchipelagoFFXModule {
     }
 
     private static void refill_spheres() {
+        uint[] spheres = {
+            0x2046, // Power Sphere
+            0x2047, // Mana Sphere
+            0x2048, // Speed Sphere
+            0x2049  // Ability Sphere
+        };
+
+        foreach (var item_id in spheres) {
+            uint inventory_amount = save_data->get_item_count((int)item_id);
+            if (inventory_amount < 40) {
+                h_give_item(item_id, 40 - (int)inventory_amount);
+            }
+        }
+    }
+
+    private static void refill_inventory() {
         logger.Debug($"Refill inventory");
-        h_give_item(0x2046, 0);  // Power Sphere
-        h_give_item(0x2047, 0);  // Mana Sphere
-        h_give_item(0x2048, 0);  // Speed Sphere
-        h_give_item(0x2049, 0);  // Ability Sphere
-        
+
+        refill_spheres();
+
         foreach ((var item_id, var amount) in excess_inventory) {
             if (amount > 0 && save_data->get_item_count((int)item_id) < 99) {
                 excess_inventory[item_id] = 0;
                 h_give_item(item_id, amount);
             }
         }
-
     }
 
     private static int h_Common_transitionToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
@@ -2679,14 +2692,6 @@ public unsafe partial class ArchipelagoFFXModule {
 
     private static uint h_give_item(uint item_id, int amount) {
         logger.Debug($"give_item: {amount} x {item_id}");
-
-        // Infinite basic spheres
-        if (item_id == 0x2046 ||
-            item_id == 0x2047 || 
-            item_id == 0x2048 || 
-            item_id == 0x2049) {
-            return _FUN_007905a0.orig_fptr(item_id, 99);
-        }
 
         int new_amount = (int)(save_data->get_item_count((int)item_id) + amount);
         if (new_amount > 99) {
