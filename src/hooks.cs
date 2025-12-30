@@ -1106,31 +1106,31 @@ public unsafe partial class ArchipelagoFFXModule {
 
     //TODO: Figure out how to split & handle the multiple NPC's in one room.
     private static readonly Dictionary<string, (int offset, ushort recruit_id)[]> event_to_recruit_offsets = new(){
-        {"bsvr0400", [(0x2462, 19)] }, // Vilucha
-        {"djyt0000", [(0x3E81,  6)] }, // Kyou
-        {"genk1100", [(0x1246, 10)] }, // Miyu
-        {"guad0300", [(0x1F70, 22)] }, // Yuma Guado
-        {"hiku0000", [(0x577C, 13)] }, // Rin
-        {"hiku0500", [(0x730F, 13)] }, // Rin
-        {"hiku0800", [(0x5662, 20), (0xC916,  2)] }, // Wakka & Brother
-        {"hiku0801", [(0x3351, 20), (0x66F5,  2)] }, // Wakka & Brother
-        {"hiku1900", [(0x223A, 20), (0x66B9,  2)] }, // Wakka & Brother
-        {"kami0100", [(0x9905,  9)] }, // Mifurey
-        {"klyt0600", [(0x113A,  8)] }, // Mep
-        {"lchb0000", [(0x1ABC,  1), (0x336E,  21)] }, // Biggs & Wedge
-        {"lchb0100", [(0x401C, 12)] }, // Nedus
-        {"lchb0500", [(0x3462, 24)] }, // Zev Ronso
-        {"lchb0900", [(0x1DCE, 23)] }, // Zalitz
-        {"lchb1800", [(0x427D, 15)] }, // Shaami
-        {"luca0100", [(0x6C2F,  4)] }, // Jumal
-        {"luca0400", [(0x4278, 16)] }, // Shuu
-        {"mcyt0000", [(0x39F3,  7)] }, // Linna
-        {"mihn0300", [(0x88C0, 14)] }, // Ropp
-        {"nagi0000", [(0x86E8, 17), (0x33C53, 11)] }, // Svanda & Naida
-        {"nagi0400", [(0x2587,  3)] }, // Durren
-        {"ptkl0200", [(0x63AE, 18)] }, // Tatts
-        {"ptkl0600", [(0x2937, 18)] }, // Tatts
-        {"swin0000", [(0x87F7,  5)] }, // Kiyuri
+        {"bsvr0400", [(0x25EC, 19)] }, // Vilucha
+        {"djyt0000", [(0x400B,  6)] }, // Kyou
+        {"genk1100", [(0x13D0, 10)] }, // Miyu
+        {"guad0300", [(0x20FA, 22)] }, // Yuma Guado
+        {"hiku0000", [(0x5906, 13)] }, // Rin
+        {"hiku0500", [(0x7499, 13)] }, // Rin
+        {"hiku0800", [(0x57EC, 20), (0xCAA0,  2)] }, // Wakka & Brother
+        {"hiku0801", [(0x34DB, 20), (0x687F,  2)] }, // Wakka & Brother
+        {"hiku1900", [(0x23C4, 20), (0x6843,  2)] }, // Wakka & Brother
+        {"kami0100", [(0x9A8F,  9)] }, // Mifurey
+        {"klyt0600", [(0x12C4,  8)] }, // Mep
+        {"lchb0000", [(0x1C46,  1), (0x34F8,  21)] }, // Biggs & Wedge
+        {"lchb0100", [(0x41A6, 12)] }, // Nedus
+        {"lchb0500", [(0x35EC, 24)] }, // Zev Ronso
+        {"lchb0900", [(0x1F58, 23)] }, // Zalitz
+        {"lchb1800", [(0x4407, 15)] }, // Shaami
+        {"luca0100", [(0x6D89,  4)] }, // Jumal
+        {"luca0400", [(0x4402, 16)] }, // Shuu
+        {"mcyt0000", [(0x3B7D,  7)] }, // Linna
+        {"mihn0300", [(0x8A4A, 14)] }, // Ropp
+        {"nagi0000", [(0x8872, 17), (0x33DDD, 11)] }, // Svanda & Naida
+        {"nagi0400", [(0x2711,  3)] }, // Durren
+        {"ptkl0200", [(0x6538, 18)] }, // Tatts
+        {"ptkl0600", [(0x2AC1, 18)] }, // Tatts
+        {"swin0000", [(0x8981,  5)] }, // Kiyuri
     };
 
     private static Dictionary<(int, int), uint> originalEntryPoints = new();
@@ -1430,7 +1430,8 @@ public unsafe partial class ArchipelagoFFXModule {
             foreach ((int offset, ushort recruit_id) in recruit_offsets) {
                 set(code_ptr, offset, [
                     AtelOp.PUSHII   .build(recruit_id),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_RECRUIT_LOCATION)
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_RECRUIT_LOCATION),
+                    AtelOp.NOP      .build()
                     ]);
             }
         }
