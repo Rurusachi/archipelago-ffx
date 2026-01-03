@@ -787,6 +787,22 @@ public unsafe static class ArchipelagoGUI {
                     }
                     ,
 #if DEBUG
+                    ["/setdatastorage", string key, string value] => () => {
+                        if (FFXArchipelagoClient.is_connected && ushort.TryParse(value, out ushort ushort_value)) {
+                            FFXArchipelagoClient.DataStorage_Set(FFXArchipelagoClient.current_session!, key, ushort_value);
+                        }
+                    }
+                    ,
+                    ["/getdatastorage", string key] => () => {
+                        if (FFXArchipelagoClient.is_connected) {
+                            string? message_text = FFXArchipelagoClient.DataStorage_Get(FFXArchipelagoClient.current_session!, key).Result;
+                            if (message_text != null) {
+                                List<(string, Color)> message = [(key, Color.Blue), (message_text, Color.White)];
+                                add_log_message(message);
+                            }
+                        }
+                    }
+                    ,
                     ["/setregion", string regionString, string progressString, string mapString, string entranceString] => () => {
                         if (Enum.TryParse(regionString, out RegionEnum region)) {
                             if (ushort.TryParse(progressString, out ushort progress)) {

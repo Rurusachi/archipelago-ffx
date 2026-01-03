@@ -216,6 +216,21 @@ public static class FFXArchipelagoClient {
         ArchipelagoGUI.add_log_message(messageParts);
     }
 
+    public static void DataStorage_Set(ArchipelagoSession session, string key, ushort value) {
+        if (session != null) {
+            key = FFXArchipelagoClient.active_player!.Slot + "_" + key;
+            session.DataStorage[key] = value;
+        }
+    }
+
+    public static async Task<string?> DataStorage_Get(ArchipelagoSession session, string key) {
+        if (session != null) {
+            key = FFXArchipelagoClient.active_player!.Slot + "_" + key;
+            return await session.DataStorage[key].GetAsync<string>();
+        }
+        else return null;
+    }
+
     /*
 public unsafe static void connectHandlers() {
    session.Locations.CheckedLocationsUpdated += (newCheckedLocations) => {
