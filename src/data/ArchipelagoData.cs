@@ -554,7 +554,7 @@ public static class ArchipelagoData {
                 } } },
                 { 290, new() {visit_complete = true, next_story_progress = 3210, next_room_id = 19, next_entrance = 1, return_if_locked = RegionEnum.Kilika, check_delegate = (r) => {ArchipelagoFFXModule.logger.Info("S.S Liki visit complete"); } } },
             } } },
-        {RegionEnum.Kilika, new(){ story_progress = 290, room_id = 43, entrance = 0, airship_destination_index = 3,
+        {RegionEnum.Kilika, new(){ story_progress = 304, room_id = 16, entrance = 0, airship_destination_index = 3,
             story_checks = {
                 { 348,  new() {pilgrimage = true, check_delegate = (r) => {
                     // Ifrit
