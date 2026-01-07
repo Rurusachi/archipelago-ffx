@@ -79,6 +79,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
     private static MsBtlListGroup _MsBtlListGroup;
     private static FhMethodHandle<MsBattleExe> _MsBattleExe;
+    private static FhMethodHandle<MsMonsterCapture> _MsMonsterCapture;
     public static MsBattleLabelExe _MsBattleLabelExe;
     private static FhMethodHandle<FUN_00791820> _FUN_00791820;
 
@@ -255,6 +256,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         _MsBtlReadSetScene = new FhMethodHandle<MsBtlReadSetScene>(this, game, 0x00383ed0, h_MsBtlReadSetScene);
 
+        _MsMonsterCapture = new FhMethodHandle<MsMonsterCapture>(this, game, __addr_MsMonsterCapture, h_MsMonsterCapture);
 
 
 
@@ -405,7 +407,7 @@ public unsafe partial class ArchipelagoFFXModule {
             && _SgEvent_showModularMenuInit.hook()
             && _Common_addPartyMember.hook() && _Common_removePartyMember.hook() && _Common_removePartyMemberLongTerm.hook() && _Common_setWeaponVisibilty.hook()
             && _Common_putPartyMemberInSlot.hook() && _Common_pushParty.hook() && _Common_popParty.hook() && _MsBattleExe.hook() && _FUN_00791820.hook()
-            && _MsApUp.hook() && _MsBtlReadSetScene.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
+            && _MsApUp.hook() && _MsBtlReadSetScene.hook() && _MsMonsterCapture.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
             && _eiAbmParaGet.hook() // && _FUN_00a48910.hook()
             && _FUN_0086bec0.hook() && _FUN_0086bea0.hook() // Custom strings
             && _graphicInitFMVPlayer.hook() && _FmodVoice_dataChange.hook()
@@ -2464,6 +2466,12 @@ public unsafe partial class ArchipelagoFFXModule {
             reset_party();
         }
         _MsBattleExe.orig_fptr(param_1, field_idx, group_idx, formation_idx);
+    }
+    
+    public static bool h_MsMonsterCapture(int target_id, int arena_idx) {
+        
+
+        return _MsMonsterCapture.orig_fptr(target_id, arena_idx);
     }
 
     // Battle loop?
