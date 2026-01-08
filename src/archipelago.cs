@@ -113,6 +113,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         [JsonInclude]
         public int             RequiredPartyMembers;
         [JsonInclude]
+        public int             RequiredPrimers;
+        [JsonInclude]
         public int             APMultiplier;
         [JsonInclude]          
         public List<uint>      StartingItems;
@@ -137,6 +139,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             SeedId = "";
             GoalRequirement = GoalRequirement.None;
             RequiredPartyMembers = 1;
+            RequiredPrimers = 0;
             APMultiplier = 1;
             StartingItems = [];
             Treasure = [];
