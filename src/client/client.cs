@@ -216,7 +216,6 @@ public static class FFXArchipelagoClient {
         ArchipelagoGUI.add_log_message(messageParts);
     }
 
-
     /*
 public unsafe static void connectHandlers() {
    session.Locations.CheckedLocationsUpdated += (newCheckedLocations) => {
