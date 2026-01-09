@@ -216,19 +216,17 @@ public static class FFXArchipelagoClient {
         ArchipelagoGUI.add_log_message(messageParts);
     }
 
-    public static void DataStorage_Set(ArchipelagoSession session, string key, ushort value) {
-        if (session != null) {
-            key = FFXArchipelagoClient.active_player!.Slot + "_" + key;
-            session.DataStorage[key] = value;
+    public static void DataStorage_Set<T>(string key, T value, Scope scope) {
+        if (current_session != null && value!.ToString() != null) {
+            current_session.DataStorage[scope, key] = value.ToString();
         }
     }
 
-    public static async Task<string?> DataStorage_Get(ArchipelagoSession session, string key) {
-        if (session != null) {
-            key = FFXArchipelagoClient.active_player!.Slot + "_" + key;
-            return await session.DataStorage[key].GetAsync<string>();
+    public static async Task<T?> DataStorage_Get<T>(string key, Scope scope) {
+        if (current_session != null) {
+            return await current_session.DataStorage[scope, key].GetAsync<T?>();
         }
-        else return null;
+        else return default;
     }
 
     /*

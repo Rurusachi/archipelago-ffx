@@ -519,7 +519,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             last_room_id = Globals.save_data->current_room_id;
             last_entrance_id = Globals.save_data->current_spawnpoint;
 
-            FFXArchipelagoClient.DataStorage_Set(FFXArchipelagoClient.current_session!, "FFX_ROOM", last_room_id);
+            FFXArchipelagoClient.DataStorage_Set("FFX_ROOM", last_room_id, Archipelago.MultiClient.Net.Enums.Scope.Slot);
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using Fahrenheit.Core;
+﻿using Archipelago.MultiClient.Net.Enums;
+using Fahrenheit.Core;
 using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
@@ -788,14 +789,14 @@ public unsafe static class ArchipelagoGUI {
                     ,
 #if DEBUG
                     ["/setdatastorage", string key, string value] => () => {
-                        if (FFXArchipelagoClient.is_connected && ushort.TryParse(value, out ushort ushort_value)) {
-                            FFXArchipelagoClient.DataStorage_Set(FFXArchipelagoClient.current_session!, key, ushort_value);
+                        if (FFXArchipelagoClient.is_connected) {
+                            FFXArchipelagoClient.DataStorage_Set(key, value, Scope.Slot);
                         }
                     }
                     ,
                     ["/getdatastorage", string key] => () => {
                         if (FFXArchipelagoClient.is_connected) {
-                            string? message_text = FFXArchipelagoClient.DataStorage_Get(FFXArchipelagoClient.current_session!, key).Result;
+                            string? message_text = FFXArchipelagoClient.DataStorage_Get<string>(key, Scope.Slot).Result;
                             if (message_text != null) {
                                 List<(string, Color)> message = [(key, Color.Blue), (message_text, Color.White)];
                                 add_log_message(message);
