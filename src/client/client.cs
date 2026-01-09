@@ -222,9 +222,13 @@ public static class FFXArchipelagoClient {
         }
     }
 
-    public static async Task<T?> DataStorage_Get<T>(string key, Scope scope) {
+    public static T? DataStorage_Get<T>(string key, Scope scope) {
         if (current_session != null) {
-            return await current_session.DataStorage[scope, key].GetAsync<T?>();
+            try {
+                return current_session.DataStorage[scope, key].To<T>();
+            } catch {
+                return default;
+            }
         }
         else return default;
     }

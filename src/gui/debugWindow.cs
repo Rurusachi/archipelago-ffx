@@ -796,7 +796,7 @@ public unsafe static class ArchipelagoGUI {
                     ,
                     ["/getdatastorage", string key] => () => {
                         if (FFXArchipelagoClient.is_connected) {
-                            string? message_text = FFXArchipelagoClient.DataStorage_Get<string>(key, Scope.Slot).Result;
+                            string? message_text = FFXArchipelagoClient.DataStorage_Get<string>(key, Scope.Slot);
                             if (message_text != null) {
                                 List<(string, Color)> message = [(key, Color.Blue), (message_text, Color.White)];
                                 add_log_message(message);
