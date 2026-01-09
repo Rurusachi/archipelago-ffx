@@ -790,13 +790,13 @@ public unsafe static class ArchipelagoGUI {
 #if DEBUG
                     ["/setdatastorage", string key, string value] => () => {
                         if (FFXArchipelagoClient.is_connected) {
-                            FFXArchipelagoClient.DataStorage_Set(key, value, Scope.Slot);
+                            FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_ROOM"] = value;
                         }
                     }
                     ,
                     ["/getdatastorage", string key] => () => {
                         if (FFXArchipelagoClient.is_connected) {
-                            string? message_text = FFXArchipelagoClient.DataStorage_Get<string>(key, Scope.Slot);
+                            string? message_text = FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, key];
                             if (message_text != null) {
                                 List<(string, Color)> message = [(key, Color.Blue), (message_text, Color.White)];
                                 add_log_message(message);

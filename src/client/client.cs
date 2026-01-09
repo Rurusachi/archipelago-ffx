@@ -216,22 +216,6 @@ public static class FFXArchipelagoClient {
         ArchipelagoGUI.add_log_message(messageParts);
     }
 
-    public static void DataStorage_Set<T>(string key, T value, Scope scope) {
-        if (current_session != null && value!.ToString() != null) {
-            current_session.DataStorage[scope, key] = value.ToString();
-        }
-    }
-
-    public static T? DataStorage_Get<T>(string key, Scope scope) {
-        if (current_session != null) {
-            try {
-                return current_session.DataStorage[scope, key].To<T>();
-            } catch {
-                return default;
-            }
-        }
-        else return default;
-    }
 
     /*
 public unsafe static void connectHandlers() {
