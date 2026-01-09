@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 //using Fahrenheit.Modules.ArchipelagoFFX.GUI;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
+using Archipelago.MultiClient.Net.Enums;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -518,6 +519,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             on_map_change();
             last_room_id = Globals.save_data->current_room_id;
             last_entrance_id = Globals.save_data->current_spawnpoint;
+
+            FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_ROOM"] = last_room_id;
         }
     }
 
