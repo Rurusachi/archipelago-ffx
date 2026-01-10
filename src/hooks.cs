@@ -1977,17 +1977,23 @@ public unsafe partial class ArchipelagoFFXModule {
                 locked_characters[party_member] = true;
             }
             else if (call_type == 0xA) { // Check if final battle is unlocked
+                bool goal_requirement = false;
+                bool primer_requirement = false;
+                
                 switch (seed.GoalRequirement) {
                     case GoalRequirement.None:
-                        return 1;
+                        goal_requirement = true;
+                        break;
                     case GoalRequirement.PartyMembers:
-                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) return 1;
+                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) 
+                            goal_requirement = true;
                         //if (unlocked_characters.All(c => c.Value)) {
                         //    return 1;
                         //}
                         break;
                     case GoalRequirement.PartyMembersAndAeons:
-                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers) return 1;
+                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers)
+                            goal_requirement = true;
                         break;
                     case GoalRequirement.Pilgrimage:
                         if (local_checked_locations.Contains( 8 | (long)ArchipelagoLocationType.PartyMember) &&
@@ -1996,11 +2002,25 @@ public unsafe partial class ArchipelagoFFXModule {
                             local_checked_locations.Contains(11 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(12 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss       )) {
-                                return 1;
+                                goal_requirement = true;
                         }
                         break;
                 }
-                return 0;
+
+                if (seed.RequiredPrimers > 0) {
+                    int collected_primers = 0;
+                    for (int i = 0; i < 26; i++) {
+                        collected_primers += Globals.save_data->unlocked_primers.get_bit(i) ? 1 : 0;
+                    }
+                    
+                    if (collected_primers >= seed.RequiredPrimers)
+                        primer_requirement = true;
+                }
+                else
+                    primer_requirement = true;
+
+               
+                return goal_requirement && primer_requirement ? 1 : 0;
             }
             else if (call_type == 0xB) { // Replace worker entry point
                 int jump_index = param >> 8;
