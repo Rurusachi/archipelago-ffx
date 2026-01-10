@@ -478,6 +478,10 @@ public static unsafe class delegates {
     public const nint __addr_MsGetExcelData = 0x3AB890;
 
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void TkMenuAppearMainCmdWindow(int param_1, int param_2);
+    public static int __addr_TkMenuAppearMainCmdWindow = 0x004e1c60;
+
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int UpgradeBrotherhood(int level);

@@ -110,6 +110,8 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhCall.TODrawCrossBoxXYWHC2 _TODrawCrossBoxXYWHC2;
 
 
+    private static FhMethodHandle<TkMenuAppearMainCmdWindow> _TkMenuAppearMainCmdWindow;
+
     // Sphere Grid Experiment
     private static FhMethodHandle<eiAbmParaGet> _eiAbmParaGet;
     private static FhMethodHandle<FUN_00a48910> _FUN_00a48910;
@@ -338,6 +340,8 @@ public unsafe partial class ArchipelagoFFXModule {
 
         _FUN_00656c90 = new FhMethodHandle<FUN_00656c90>(this, game, 0x00256c90, h_FUN_00656c90);
 
+        _TkMenuAppearMainCmdWindow = new FhMethodHandle<TkMenuAppearMainCmdWindow>(this, game, __addr_TkMenuAppearMainCmdWindow, h_TkMenuAppearMainCmdWindow);
+
         // For loading texture from game
         _FUN_0065ee30 = FhUtil.get_fptr<FUN_0065ee30>(__addr_ClusterManager_FUN_0065ee30);
         _ClusterManager_loadPCluster = FhUtil.get_fptr<ClusterManager_loadPCluster>(__addr_ClusterManager_loadPCluster);
@@ -410,7 +414,8 @@ public unsafe partial class ArchipelagoFFXModule {
             && _FUN_0086bec0.hook() && _FUN_0086bea0.hook() // Custom strings
             && _graphicInitFMVPlayer.hook() && _FmodVoice_dataChange.hook()
             && _AtelInitTotal.hook()
-            && _LocalizationManager_Initialize.hook();
+            && _LocalizationManager_Initialize.hook()
+            && _TkMenuAppearMainCmdWindow.hook();
         //&& _FUN_00656c90.hook() && _FUN_0065ee30.hook();
         //&& _openFile.hook() && _FUN_0070aec0.hook();
         //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
@@ -3027,6 +3032,14 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
         _FUN_00656c90.orig_fptr(param_1, param_2, fileName);
+    }
+
+    private static void h_TkMenuAppearMainCmdWindow(int param_1, int param_2) {
+        // All menu options are enabled at progress 0
+        ushort progress = save_data->story_progress;
+        save_data->story_progress = 0;
+        _TkMenuAppearMainCmdWindow.orig_fptr(param_1, param_2);
+        save_data->story_progress = progress;
     }
 
     //private static void h_FUN_0065ee30(FixedClusterData* data) {
