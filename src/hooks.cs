@@ -2121,6 +2121,8 @@ public unsafe partial class ArchipelagoFFXModule {
             if (save_data->last_room_id == 0 && save_data->current_room_id == 132) {
                 current_region = RegionEnum.DreamZanarkand;
                 FFXArchipelagoClient.local_checked_locations.Clear();
+                FFXArchipelagoClient.received_items = 0;
+                FFXArchipelagoClient.remote_locations_updated = true;
                 // Load seed here?
                 if (!loadSeed()) {
                     save_data->current_room_id = 23;

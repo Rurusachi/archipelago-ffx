@@ -438,6 +438,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 FFXArchipelagoClient.local_checked_locations.Clear();
                 FFXArchipelagoClient.local_checked_locations.UnionWith(loaded_state.local_checked_locations);
                 FFXArchipelagoClient.local_locations_updated = true;
+                FFXArchipelagoClient.remote_locations_updated = true;
                 FFXArchipelagoClient.received_items = loaded_state.received_items;
                 skip_state_updates = loaded_state.skip_state_updates;
             }
