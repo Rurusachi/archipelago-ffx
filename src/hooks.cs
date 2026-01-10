@@ -1111,31 +1111,31 @@ public unsafe partial class ArchipelagoFFXModule {
 
     //TODO: Figure out how to split & handle the multiple NPC's in one room.
     private static readonly Dictionary<string, (int offset, ushort recruit_id)[]> event_to_recruit_offsets = new(){
-        {"bsvr0400", [(0x2462, 19)] }, // Vilucha
-        {"djyt0000", [(0x3E81,  6)] }, // Kyou
-        {"genk1100", [(0x1246, 10)] }, // Miyu
-        {"guad0300", [(0x1F70, 22)] }, // Yuma Guado
-        {"hiku0000", [(0x577C, 13)] }, // Rin
-        {"hiku0500", [(0x730F, 13)] }, // Rin
-        {"hiku0800", [(0x5662, 20), (0xC916,  2)] }, // Wakka & Brother
-        {"hiku0801", [(0x3351, 20), (0x66F5,  2)] }, // Wakka & Brother
-        {"hiku1900", [(0x223A, 20), (0x66B9,  2)] }, // Wakka & Brother
-        {"kami0100", [(0x9905,  9)] }, // Mifurey
-        {"klyt0600", [(0x113A,  8)] }, // Mep
-        {"lchb0000", [(0x1ABC,  1), (0x336E,  21)] }, // Biggs & Wedge
-        {"lchb0100", [(0x401C, 12)] }, // Nedus
-        {"lchb0500", [(0x3462, 24)] }, // Zev Ronso
-        {"lchb0900", [(0x1DCE, 23)] }, // Zalitz
-        {"lchb1800", [(0x427D, 15)] }, // Shaami
-        {"luca0100", [(0x6C2F,  4)] }, // Jumal
-        {"luca0400", [(0x4278, 16)] }, // Shuu
-        {"mcyt0000", [(0x39F3,  7)] }, // Linna
-        {"mihn0300", [(0x88C0, 14)] }, // Ropp
-        {"nagi0000", [(0x86E8, 17), (0x33C53, 11)] }, // Svanda & Naida
-        {"nagi0400", [(0x2587,  3)] }, // Durren
-        {"ptkl0200", [(0x63AE, 18)] }, // Tatts
-        {"ptkl0600", [(0x2937, 18)] }, // Tatts
-        {"swin0000", [(0x87F7,  5)] }, // Kiyuri
+        {"bsvr0400", [(0x25EC, 19)] }, // Vilucha
+        {"djyt0000", [(0x400B,  6)] }, // Kyou
+        {"genk1100", [(0x13D0, 10)] }, // Miyu
+        {"guad0300", [(0x20FA, 22)] }, // Yuma Guado
+        {"hiku0000", [(0x5906, 13)] }, // Rin
+        {"hiku0500", [(0x7499, 13)] }, // Rin
+        {"hiku0800", [(0x57EC, 20), (0xCAA0,  2)] }, // Wakka & Brother
+        {"hiku0801", [(0x34DB, 20), (0x687F,  2)] }, // Wakka & Brother
+        {"hiku1900", [(0x23C4, 20), (0x6843,  2)] }, // Wakka & Brother
+        {"kami0100", [(0x9A8F,  9)] }, // Mifurey
+        {"klyt0600", [(0x12C4,  8)] }, // Mep
+        {"lchb0000", [(0x1C46,  1), (0x34F8,  21)] }, // Biggs & Wedge
+        {"lchb0100", [(0x41A6, 12)] }, // Nedus
+        {"lchb0500", [(0x35EC, 24)] }, // Zev Ronso
+        {"lchb0900", [(0x1F58, 23)] }, // Zalitz
+        {"lchb1800", [(0x4407, 15)] }, // Shaami
+        {"luca0100", [(0x6D89,  4)] }, // Jumal
+        {"luca0400", [(0x4402, 16)] }, // Shuu
+        {"mcyt0000", [(0x3B7D,  7)] }, // Linna
+        {"mihn0300", [(0x8A4A, 14)] }, // Ropp
+        {"nagi0000", [(0x8872, 17), (0x33DDD, 11)] }, // Svanda & Naida
+        {"nagi0400", [(0x2711,  3)] }, // Durren
+        {"ptkl0200", [(0x6538, 18)] }, // Tatts
+        {"ptkl0600", [(0x2AC1, 18)] }, // Tatts
+        {"swin0000", [(0x8981,  5)] }, // Kiyuri
     };
 
     private static Dictionary<(int, int), uint> originalEntryPoints = new();
@@ -1435,7 +1435,8 @@ public unsafe partial class ArchipelagoFFXModule {
             foreach ((int offset, ushort recruit_id) in recruit_offsets) {
                 set(code_ptr, offset, [
                     AtelOp.PUSHII   .build(recruit_id),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_RECRUIT_LOCATION)
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_RECRUIT_LOCATION),
+                    AtelOp.NOP      .build()
                     ]);
             }
         }
@@ -1974,24 +1975,30 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
 
                 update_region_state(false);
-                refill_spheres();
+                refill_inventory();
             }
             else if (call_type == 9) { // Lock party member
                 int party_member = atelStack->pop_int();
                 locked_characters[party_member] = true;
             }
             else if (call_type == 0xA) { // Check if final battle is unlocked
+                bool goal_requirement = false;
+                bool primer_requirement = false;
+                
                 switch (seed.GoalRequirement) {
                     case GoalRequirement.None:
-                        return 1;
+                        goal_requirement = true;
+                        break;
                     case GoalRequirement.PartyMembers:
-                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) return 1;
+                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) 
+                            goal_requirement = true;
                         //if (unlocked_characters.All(c => c.Value)) {
                         //    return 1;
                         //}
                         break;
                     case GoalRequirement.PartyMembersAndAeons:
-                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers) return 1;
+                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers)
+                            goal_requirement = true;
                         break;
                     case GoalRequirement.Pilgrimage:
                         if (local_checked_locations.Contains( 8 | (long)ArchipelagoLocationType.PartyMember) &&
@@ -2000,11 +2007,25 @@ public unsafe partial class ArchipelagoFFXModule {
                             local_checked_locations.Contains(11 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(12 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss       )) {
-                                return 1;
+                                goal_requirement = true;
                         }
                         break;
                 }
-                return 0;
+
+                if (seed.RequiredPrimers > 0) {
+                    int collected_primers = 0;
+                    for (int i = 0; i < 26; i++) {
+                        collected_primers += Globals.save_data->unlocked_primers.get_bit(i) ? 1 : 0;
+                    }
+                    
+                    if (collected_primers >= seed.RequiredPrimers)
+                        primer_requirement = true;
+                }
+                else
+                    primer_requirement = true;
+
+               
+                return goal_requirement && primer_requirement ? 1 : 0;
             }
             else if (call_type == 0xB) { // Replace worker entry point
                 int jump_index = param >> 8;
@@ -2221,19 +2242,32 @@ public unsafe partial class ArchipelagoFFXModule {
     }
 
     private static void refill_spheres() {
+        uint[] spheres = {
+            0x2046, // Power Sphere
+            0x2047, // Mana Sphere
+            0x2048, // Speed Sphere
+            0x2049  // Ability Sphere
+        };
+
+        foreach (var item_id in spheres) {
+            uint inventory_amount = save_data->get_item_count((int)item_id);
+            if (inventory_amount < 40) {
+                h_give_item(item_id, 40 - (int)inventory_amount);
+            }
+        }
+    }
+
+    private static void refill_inventory() {
         logger.Debug($"Refill inventory");
-        h_give_item(0x2046, 0);  // Power Sphere
-        h_give_item(0x2047, 0);  // Mana Sphere
-        h_give_item(0x2048, 0);  // Speed Sphere
-        h_give_item(0x2049, 0);  // Ability Sphere
-        
+
+        refill_spheres();
+
         foreach ((var item_id, var amount) in excess_inventory) {
             if (amount > 0 && save_data->get_item_count((int)item_id) < 99) {
                 excess_inventory[item_id] = 0;
                 h_give_item(item_id, amount);
             }
         }
-
     }
 
     private static int h_Common_transitionToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
@@ -2686,14 +2720,6 @@ public unsafe partial class ArchipelagoFFXModule {
 
     private static uint h_give_item(uint item_id, int amount) {
         logger.Debug($"give_item: {amount} x {item_id}");
-
-        // Infinite basic spheres
-        if (item_id == 0x2046 ||
-            item_id == 0x2047 || 
-            item_id == 0x2048 || 
-            item_id == 0x2049) {
-            return _FUN_007905a0.orig_fptr(item_id, 99);
-        }
 
         int new_amount = (int)(save_data->get_item_count((int)item_id) + amount);
         if (new_amount > 99) {

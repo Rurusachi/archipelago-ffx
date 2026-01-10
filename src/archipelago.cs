@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 //using Fahrenheit.Modules.ArchipelagoFFX.GUI;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
+using Archipelago.MultiClient.Net.Enums;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -113,6 +114,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         [JsonInclude]
         public int             RequiredPartyMembers;
         [JsonInclude]
+        public int             RequiredPrimers;
+        [JsonInclude]
         public int             APMultiplier;
         [JsonInclude]          
         public List<uint>      StartingItems;
@@ -137,6 +140,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             SeedId = "";
             GoalRequirement = GoalRequirement.None;
             RequiredPartyMembers = 1;
+            RequiredPrimers = 0;
             APMultiplier = 1;
             StartingItems = [];
             Treasure = [];
@@ -519,6 +523,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             on_map_change();
             last_room_id = Globals.save_data->current_room_id;
             last_entrance_id = Globals.save_data->current_spawnpoint;
+
+            FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_ROOM"] = last_room_id;
         }
     }
 
