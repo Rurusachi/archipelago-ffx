@@ -5,6 +5,7 @@ using Fahrenheit.Core.FFX.Battle;
 using Fahrenheit.Core.FFX.Ids;
 using Fahrenheit.Modules.ArchipelagoFFX.Client;
 using Fahrenheit.Modules.ArchipelagoFFX.GUI;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,7 @@ using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
 using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 using Color = Archipelago.MultiClient.Net.Models.Color;
+using Scope = Archipelago.MultiClient.Net.Enums.Scope;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 public unsafe partial class ArchipelagoFFXModule {
@@ -1431,7 +1433,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     ]);
                 break;
         }
-        
+
         // Blitz Recruit locations (RecruitSanity)
         if (event_to_recruit_offsets.TryGetValue(event_name, out var recruit_offsets)) {
             foreach ((int offset, ushort recruit_id) in recruit_offsets) {
@@ -1442,7 +1444,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     ]);
             }
         }
-        
+
         // Celestial weapon locations
         if (event_to_celestial_offsets.TryGetValue(event_name, out var celestial_offsets)) {
             // Remove CelestialMirrorObtained check
@@ -1463,7 +1465,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.NOP      .build(),
                     ]);
             }
-            {  
+            {
                 int? offset = null;
                 if (event_name == "bika0000") offset = 0x15FC;
                 if (event_name == "cdsp0000") offset = 0xC62F;
@@ -1668,7 +1670,7 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelBasicWorker* save_sphere_worker_2 = Globals.Atel.current_controller->worker(0x14);
             // Custom switch
             save_sphere_worker_2->table_jump[1] = (uint)(customScriptHandles[6].AddrOfPinnedObject() - (nint)save_sphere_worker_2->code_ptr);
-        } 
+        }
         else {
             AtelInst? previous_op = null;
             AtelInst? current_op = null;
@@ -1986,13 +1988,13 @@ public unsafe partial class ArchipelagoFFXModule {
             else if (call_type == 0xA) { // Check if final battle is unlocked
                 bool goal_requirement = false;
                 bool primer_requirement = false;
-                
+
                 switch (seed.GoalRequirement) {
                     case GoalRequirement.None:
                         goal_requirement = true;
                         break;
                     case GoalRequirement.PartyMembers:
-                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) 
+                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8))
                             goal_requirement = true;
                         //if (unlocked_characters.All(c => c.Value)) {
                         //    return 1;
@@ -2009,7 +2011,7 @@ public unsafe partial class ArchipelagoFFXModule {
                             local_checked_locations.Contains(11 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(12 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss       )) {
-                                goal_requirement = true;
+                            goal_requirement = true;
                         }
                         break;
                     case GoalRequirement.Nemesis:
@@ -2024,14 +2026,14 @@ public unsafe partial class ArchipelagoFFXModule {
                     for (int i = 0; i < 26; i++) {
                         collected_primers += Globals.save_data->unlocked_primers.get_bit(i) ? 1 : 0;
                     }
-                    
+
                     if (collected_primers >= seed.RequiredPrimers)
                         primer_requirement = true;
                 }
                 else
                     primer_requirement = true;
 
-               
+
                 return goal_requirement && primer_requirement ? 1 : 0;
             }
             else if (call_type == 0xB) { // Replace worker entry point
@@ -2371,7 +2373,7 @@ public unsafe partial class ArchipelagoFFXModule {
         if (menuType == 0x80) {
             logger.Info($"Unknown tutorial?");
         }
-        
+
         logger.Info($"Opening menu: type={menuTypeString}, index={index} {(unknown1 == 0x40 ? "" : $", Unknown1={unknown1}")} {(unknown2 == 0x00 ? "" : $", Unknown2={unknown2}")}");
         _SgEvent_showModularMenuInit.orig_fptr(work, storage, atelStack);
     }
@@ -2499,20 +2501,42 @@ public unsafe partial class ArchipelagoFFXModule {
         }
         _MsBattleExe.orig_fptr(param_1, field_idx, group_idx, formation_idx);
     }
-    
+
     public static bool h_MsMonsterCapture(int target_id, int arena_idx) {
         bool captured = _MsMonsterCapture.orig_fptr(target_id, arena_idx);
 
-        logger.Info($"Fiend Capture: Target={target_id}, Arena Index={arena_idx}, Captured={captured.ToString()}");
+        logger.Info($"Fiend Capture: Target={target_id}, Arena Index={arena_idx}, Captured={captured}");
 
+        // Send AP Location if successfully captured
         if (captured) {
             if (arenaIndexToCaptureLocationDict.TryGetValue(arena_idx, out int capture_location)) {
                 if (sendLocation(capture_location, ArchipelagoLocationType.Capture) && item_locations.capture.TryGetValue(capture_location, out var item)) {
                     ArchipelagoFFXModule.obtain_item(item.id);
                 }
             }
-        }
 
+            // Retrieve AP DataStorage object for Fiend Captures. Initialize a new one if one does not exists
+            ArchipelagoCaptures? capture_object = JObject.Parse(FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE"]).ToObject<ArchipelagoCaptures>();
+            if (capture_object == null) {
+                capture_object = new ArchipelagoCaptures();
+            }
+
+            // Find Capture object for fiend if one exists. Initialize a new one if one is not found
+            // Increment number of captures (to max of 10) for fiend
+            ArchipelagoCaptures.Capture? fiend = capture_object.captures.Find(i => i.arena_idx == arena_idx);
+            if (fiend != null) {
+                fiend.captured = Math.Min(fiend.captured + 1, 10);
+            } else {
+                fiend = new ArchipelagoCaptures.Capture {
+                    arena_idx = arena_idx,
+                    captured = 1
+                };
+                capture_object.captures.Add(fiend);
+            }
+
+            // Send updated Captures object back to AP DataStorage
+            FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE"] = JObject.FromObject(capture_object).ToString();
+        }
         return captured;
     }
 

@@ -1151,4 +1151,17 @@ public static class ArchipelagoData {
         {102,  93}, //Floating Death
         {103,  98}, //Machea
     };
+
+    public class ArchipelagoCaptures {
+        public ArchipelagoCaptures() {
+            this.captures = new List<Capture>();
+        }
+        
+        public List<Capture> captures { get; set; }
+
+        public class Capture {
+            public int arena_idx { get; set; }
+            public int captured { get; set; }
+        }
+    }
 }
