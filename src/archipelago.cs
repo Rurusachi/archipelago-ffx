@@ -135,6 +135,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public List<Location>  Recruit;
         [JsonInclude]          
         public List<Location>  SphereGrid;
+        [JsonInclude]
+        public List<Location>  Capture;
 
         public ArchipelagoSeed() {
             SeedId = "";
@@ -151,6 +153,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             Other = [];
             Recruit = [];
             SphereGrid = [];
+            Capture = [];
         }
     }
     public record ArchipelagoItem(uint id, string name, string player) {
@@ -167,6 +170,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public Dictionary<int, ArchipelagoItem> other =          seed.Other.ToDictionary(        x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
         public Dictionary<int, ArchipelagoItem> recruit =        seed.Recruit.ToDictionary(      x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
         public Dictionary<int, ArchipelagoItem> sphere_grid =    seed.SphereGrid.ToDictionary(   x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
+        public Dictionary<int, ArchipelagoItem> capture =        seed.Capture.ToDictionary(      x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
 
         public bool location_to_item(int location, [MaybeNullWhen(false)] out ArchipelagoItem item) {
             var dict = (location & 0xF000) switch {
@@ -178,6 +182,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 (int)ArchipelagoLocationType.Other         => other,
                 (int)ArchipelagoLocationType.Recruit       => recruit,
                 (int)ArchipelagoLocationType.SphereGrid    => sphere_grid,
+                (int)ArchipelagoLocationType.Capture       => capture,
                 _ => null,
             };
             item = dict?.GetValueOrDefault(location);

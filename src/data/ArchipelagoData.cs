@@ -955,7 +955,7 @@ public static class ArchipelagoData {
 
 
     public static Dictionary<string, int[]> encounterToLocationDict = new(){
-        {"bjyt04_01",  [0]}, // Baaj Temple: Klikk Defeated
+        {"bjyt04_01",   [0]}, // Baaj Temple: Klikk Defeated
         {"cdsp07_00",   [1]}, // Al Bhed Ship: Tros Defeated
         {"bsil07_70",   [2]}, // Besaid: Dark Valefor
         {"slik02_00",   [3]}, // S.S. Liki: Sin Fin
@@ -984,7 +984,6 @@ public static class ArchipelagoData {
         {"stbv00_10",  [27]}, // Bevelle: Evrae Altana
         {"stbv01_10",  [28]}, // Bevelle: Seymour Natus
         {"nagi01_00",  [29]}, // Calm Lands: Defender X
-        {"zzzz02_76",  [30]}, // Monster Arena: Nemesis
         {"nagi05_74",  [31]}, // Cavern of the Stolen Fayth: Dark Yojimbo
         {"mtgz01_10",  [32]}, // Gagazet (Outside): Biran and Yenke
         {"mtgz02_00",  [33]}, // Gagazet (Outside): Seymour Flux
@@ -1040,11 +1039,115 @@ public static class ArchipelagoData {
         {"zzzz00_105", [80]}, // Neslug
         {"zzzz02_80",  [81]}, // Ultima Buster
         {"zzzz02_83",  [82]}, // Shinryu
-        {"zzzz02_76",  [83]}, // Nemesis
-        
+        {"zzzz02_76",  [83]}, // Monster Arena: Nemesis
 
         //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
         //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy
         //{"kino00_70", 47}, {"kino01_70", 47}, {"kino01_71", 47},                    // Dark Cindy
+    };
+
+    public static Dictionary<int, int> arenaIndexToCaptureLocationDict = new() {
+        {  0,  11}, //Raldo
+        {  1,  26}, //Bunyip
+        {  2,  43}, //Murussu
+        {  3,  44}, //Mafdet
+        {  4,  56}, //Shred
+        {  5,  16}, //Gandarewa
+        {  6,  30}, //Aerouge
+        {  7,  52}, //Imp
+        {  8,   0}, //Dingo
+        {  9,   7}, //Mi'ihen Fang
+        { 10,  22}, //Garm
+        { 11,  37}, //Snow Wolf
+        { 12,  47}, //Sand Wolf
+        { 13,  53}, //Skoll
+        { 14,  71}, //Bandersnatch
+        { 15,   2}, //Water Flan
+        { 16,  17}, //Thunder Flan
+        { 17,  25}, //Snow Flan
+        { 18,  41}, //Ice Flan
+        { 19,  55}, //Flame Flan
+        { 20,  73}, //Dark Flan
+        { 21,   3}, //Dinonix
+        { 22,   8}, //Ipiria
+        { 23,  15}, //Raptor
+        { 24,  29}, //Melusine
+        { 25,  38}, //Iguion
+        { 26,  62}, //Yowie
+        { 27,   1}, //Condor
+        { 28,  23}, //Simurgh
+        { 29,  48}, //Alcyone
+        { 30,   4}, //Killer Bee
+        { 31,  24}, //Bite Bug
+        { 32,  39}, //Wasp
+        { 33,  54}, //Nebiros
+        { 34,   9}, //Floating Eye
+        { 35,  31}, //Buer
+        { 36,  40}, //Evil Eye
+        { 37,  72}, //Ahriman
+        { 38,   6}, //Ragora
+        { 39,  75}, //Grat
+        { 40,  21}, //Garuda
+        { 41,  50}, //Zu
+        { 42,  51}, //Sand Worm
+        { 44,  69}, //Ghost
+        { 45,  81}, //Achelous
+        { 46,  82}, //Maelspike
+        { 47,  14}, //Dual Horn
+        { 48,  67}, //Valaha
+        { 49,  76}, //Grendel
+        { 50,  12}, //Vouivre
+        { 51,  19}, //Lamashtu
+        { 52,  33}, //Kusariqqu
+        { 53,  49}, //Mushussu
+        { 54,  65}, //Nidhogg
+        { 55,  61}, //Malboro
+        { 56,  88}, //Great Malboro
+        { 57,  58}, //Ogre
+        { 58,  77}, //Bashura
+        { 60,  80}, //Splasher
+        { 61,   5}, //Yellow Element
+        { 62,  10}, //White Element
+        { 63,  18}, //Red Element
+        { 64,  32}, //Gold Element
+        { 65,  42}, //Blue Element
+        { 66,  64}, //Dark Element
+        { 67,  94}, //Black Element
+        { 68,  68}, //Epaaj
+        { 69,  79}, //Behemoth
+        { 70,  91}, //Behemoth King
+        { 71,  46}, //Chimera
+        { 72,  60}, //Chimera Brain
+        { 73,  59}, //Coeurl
+        { 74,  99}, //Master Coeurl
+        { 75,  87}, //Demonolith
+        { 76,  35}, //Iron Giant
+        { 77,  85}, //Gemini
+        { 78,  86}, //Gemini
+        { 79,  27}, //Basilisk
+        { 80,  57}, //Anacondaur
+        { 81,  90}, //Adamantoise
+        { 82, 101}, //Varuna
+        { 83,  28}, //Ochu
+        { 84,  78}, //Mandragora
+        { 85,  13}, //Bomb
+        { 86,  74}, //Grenade
+        { 87,  36}, //Qactuar
+        { 88,  52}, //Cactuar
+        { 89,  34}, //Larva
+        { 90,  89}, //Barbatos
+        { 91,  20}, //Funguar
+        { 92,  66}, //Thorn
+        { 93,  83}, //Exoray
+        { 94,  45}, //Xiphos
+        { 95,  96}, //Puroboros
+        { 96,  97}, //Spirit
+        { 97,  84}, //Wraith
+        { 98,  70}, //Tonberry
+        { 99, 100}, //Master Tonberry
+        {100,  92}, //Zaurus
+        {101,  95}, //Halma
+        {102,  93}, //Floating Death
+        {103,  98}, //Machea
     };
 }

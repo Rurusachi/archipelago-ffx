@@ -2496,16 +2496,26 @@ public unsafe partial class ArchipelagoFFXModule {
     }
     
     public static bool h_MsMonsterCapture(int target_id, int arena_idx) {
-        
+        bool captured = _MsMonsterCapture.orig_fptr(target_id, arena_idx);
 
-        return _MsMonsterCapture.orig_fptr(target_id, arena_idx);
+        logger.Info($"Fiend Capture: Target={target_id}, Arena Index={arena_idx}, Captured={captured.ToString()}");
+
+        if (captured) {
+            if (arenaIndexToCaptureLocationDict.TryGetValue(arena_idx, out int capture_location)) {
+                if (sendLocation(capture_location, ArchipelagoLocationType.Capture) && item_locations.capture.TryGetValue(capture_location, out var item)) {
+                    ArchipelagoFFXModule.obtain_item(item.id);
+                }
+            }
+        }
+
+        return captured;
     }
 
     // Battle loop?
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
         string encounter_name = Marshal.PtrToStringAnsi((nint)Battle.btl->field_name);
-        if (Battle.btl->battle_end_type > 1 && Battle.btl->battle_state == 0x21) {
+        if (Battle.btl->battle_end_type == 2 && Battle.btl->battle_state == 0x21) {
             logger.Info($"Victory: type={Battle.btl->battle_end_type}, encounter={encounter_name}");
             //if (save_data->atel_is_push_member == 1) {
             if (party_overridden) {
