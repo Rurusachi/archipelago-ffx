@@ -111,6 +111,8 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhCall.TODrawCrossBoxXYWHC2 _TODrawCrossBoxXYWHC2;
 
 
+    private static FhMethodHandle<TkMenuAppearMainCmdWindow> _TkMenuAppearMainCmdWindow;
+
     // Sphere Grid Experiment
     private static FhMethodHandle<eiAbmParaGet> _eiAbmParaGet;
     private static FhMethodHandle<FUN_00a48910> _FUN_00a48910;
@@ -340,6 +342,8 @@ public unsafe partial class ArchipelagoFFXModule {
 
         _FUN_00656c90 = new FhMethodHandle<FUN_00656c90>(this, game, 0x00256c90, h_FUN_00656c90);
 
+        _TkMenuAppearMainCmdWindow = new FhMethodHandle<TkMenuAppearMainCmdWindow>(this, game, __addr_TkMenuAppearMainCmdWindow, h_TkMenuAppearMainCmdWindow);
+
         // For loading texture from game
         _FUN_0065ee30 = FhUtil.get_fptr<FUN_0065ee30>(__addr_ClusterManager_FUN_0065ee30);
         _ClusterManager_loadPCluster = FhUtil.get_fptr<ClusterManager_loadPCluster>(__addr_ClusterManager_loadPCluster);
@@ -412,7 +416,8 @@ public unsafe partial class ArchipelagoFFXModule {
             && _FUN_0086bec0.hook() && _FUN_0086bea0.hook() // Custom strings
             && _graphicInitFMVPlayer.hook() && _FmodVoice_dataChange.hook()
             && _AtelInitTotal.hook()
-            && _LocalizationManager_Initialize.hook();
+            && _LocalizationManager_Initialize.hook()
+            && _TkMenuAppearMainCmdWindow.hook();
         //&& _FUN_00656c90.hook() && _FUN_0065ee30.hook();
         //&& _openFile.hook() && _FUN_0070aec0.hook();
         //&& _MsCheckLeftWindow.hook() && _MsCheckUseCommand.hook() && _TOBtlDrawStatusLimitGauge.hook();
@@ -1979,17 +1984,23 @@ public unsafe partial class ArchipelagoFFXModule {
                 locked_characters[party_member] = true;
             }
             else if (call_type == 0xA) { // Check if final battle is unlocked
+                bool goal_requirement = false;
+                bool primer_requirement = false;
+                
                 switch (seed.GoalRequirement) {
                     case GoalRequirement.None:
-                        return 1;
+                        goal_requirement = true;
+                        break;
                     case GoalRequirement.PartyMembers:
-                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) return 1;
+                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8)) 
+                            goal_requirement = true;
                         //if (unlocked_characters.All(c => c.Value)) {
                         //    return 1;
                         //}
                         break;
                     case GoalRequirement.PartyMembersAndAeons:
-                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers) return 1;
+                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers)
+                            goal_requirement = true;
                         break;
                     case GoalRequirement.Pilgrimage:
                         if (local_checked_locations.Contains( 8 | (long)ArchipelagoLocationType.PartyMember) &&
@@ -1998,11 +2009,25 @@ public unsafe partial class ArchipelagoFFXModule {
                             local_checked_locations.Contains(11 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(12 | (long)ArchipelagoLocationType.PartyMember) &&
                             local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss       )) {
-                                return 1;
+                                goal_requirement = true;
                         }
                         break;
                 }
-                return 0;
+
+                if (seed.RequiredPrimers > 0) {
+                    int collected_primers = 0;
+                    for (int i = 0; i < 26; i++) {
+                        collected_primers += Globals.save_data->unlocked_primers.get_bit(i) ? 1 : 0;
+                    }
+                    
+                    if (collected_primers >= seed.RequiredPrimers)
+                        primer_requirement = true;
+                }
+                else
+                    primer_requirement = true;
+
+               
+                return goal_requirement && primer_requirement ? 1 : 0;
             }
             else if (call_type == 0xB) { // Replace worker entry point
                 int jump_index = param >> 8;
@@ -2119,6 +2144,8 @@ public unsafe partial class ArchipelagoFFXModule {
             if (save_data->last_room_id == 0 && save_data->current_room_id == 132) {
                 current_region = RegionEnum.DreamZanarkand;
                 FFXArchipelagoClient.local_checked_locations.Clear();
+                FFXArchipelagoClient.received_items = 0;
+                FFXArchipelagoClient.remote_locations_updated = true;
                 // Load seed here?
                 if (!loadSeed()) {
                     save_data->current_room_id = 23;
@@ -3041,6 +3068,14 @@ public unsafe partial class ArchipelagoFFXModule {
 
 
         _FUN_00656c90.orig_fptr(param_1, param_2, fileName);
+    }
+
+    private static void h_TkMenuAppearMainCmdWindow(int param_1, int param_2) {
+        // All menu options are enabled at progress 0
+        ushort progress = save_data->story_progress;
+        save_data->story_progress = 0;
+        _TkMenuAppearMainCmdWindow.orig_fptr(param_1, param_2);
+        save_data->story_progress = progress;
     }
 
     //private static void h_FUN_0065ee30(FixedClusterData* data) {
