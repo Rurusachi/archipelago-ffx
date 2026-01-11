@@ -2012,6 +2012,11 @@ public unsafe partial class ArchipelagoFFXModule {
                                 goal_requirement = true;
                         }
                         break;
+                    case GoalRequirement.Nemesis:
+                        if (local_checked_locations.Contains(83 | (long)ArchipelagoLocationType.Boss)) {
+                            goal_requirement = true;
+                        }
+                        break;
                 }
 
                 if (seed.RequiredPrimers > 0) {

@@ -62,6 +62,7 @@ public static class ArchipelagoData {
         PartyMembers,
         Pilgrimage,
         PartyMembersAndAeons,
+        Nemesis
     }
 
     public static RegionEnum[] pilgrimageRegions = [
