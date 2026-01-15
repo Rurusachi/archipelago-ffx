@@ -2516,14 +2516,17 @@ public unsafe partial class ArchipelagoFFXModule {
             }
 
             // Retrieve AP DataStorage object for Fiend Captures. Initialize a new one if one does not exists
-            ArchipelagoCaptures? capture_object = JObject.Parse(FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE"]).ToObject<ArchipelagoCaptures>();
-            if (capture_object == null) {
+            string? json_string = FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE"];
+            ArchipelagoCaptures? capture_object;
+            if (json_string != null) {
+                capture_object = JObject.Parse(json_string).ToObject<ArchipelagoCaptures>();
+            } else {
                 capture_object = new ArchipelagoCaptures();
             }
 
             // Find Capture object for fiend if one exists. Initialize a new one if one is not found
             // Increment number of captures (to max of 10) for fiend
-            ArchipelagoCaptures.Capture? fiend = capture_object.captures.Find(i => i.arena_idx == arena_idx);
+            ArchipelagoCaptures.Capture? fiend = capture_object!.captures.Find(i => i.arena_idx == arena_idx);
             if (fiend != null) {
                 fiend.captured = Math.Min(fiend.captured + 1, 10);
             } else {
