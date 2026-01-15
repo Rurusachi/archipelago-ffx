@@ -2496,7 +2496,8 @@ public unsafe partial class ArchipelagoFFXModule {
     // Battle loop?
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
-        string encounter_name = Marshal.PtrToStringAnsi((nint)Battle.btl->field_name);
+        string encounter_name = Encoding.UTF8.GetString(Battle.btl->field_name).Replace("\0", "");
+
         if (Battle.btl->battle_end_type > 1 && Battle.btl->battle_state == 0x21) {
             logger.Info($"Victory: type={Battle.btl->battle_end_type}, encounter={encounter_name}");
             //if (save_data->atel_is_push_member == 1) {
@@ -2504,10 +2505,10 @@ public unsafe partial class ArchipelagoFFXModule {
                 reset_party();
                 // Battle frontline gets copied after this so have to set here
                 for (int i = 0; i < 3; i++) {
-                    Battle.btl->frontline[i] = save_data->party_order[i];
+                    Battle.btl->__0x1FC5[i] = save_data->party_order[i];
                 }
                 for (int i = 0; i < 4; i++) {
-                    Battle.btl->backline[i] = save_data->party_order[i + 3];
+                    Battle.btl->__0x1FD3[i] = save_data->party_order[i + 3];
                 }
                 party_overridden = false;
             }
@@ -2963,12 +2964,12 @@ public unsafe partial class ArchipelagoFFXModule {
         _eiAbmParaGet.orig_fptr();
 
         // Guaranteed access to all sphere types
-        for (int i = 0; i < 18; i++) {
-            save_data->ply_arr[i].abi_map.has_extract_power = true;
-            save_data->ply_arr[i].abi_map.has_extract_mana = true;
-            save_data->ply_arr[i].abi_map.has_extract_speed = true;
-            save_data->ply_arr[i].abi_map.has_extract_ability = true;
-        }
+        //for (int i = 0; i < 18; i++) {
+        //    save_data->ply_arr[i].abi_map.has_extract_power = true;
+        //    save_data->ply_arr[i].abi_map.has_extract_mana = true;
+        //    save_data->ply_arr[i].abi_map.has_extract_speed = true;
+        //    save_data->ply_arr[i].abi_map.has_extract_ability = true;
+        //}
     }
 
     private static void h_MsSetSaveParam(uint chr_id) {
@@ -2976,58 +2977,58 @@ public unsafe partial class ArchipelagoFFXModule {
         _MsSetSaveParam.orig_fptr(chr_id);
 
         return;
-        PlySave ply = save_data->ply_arr[(int)chr_id];
-        Equipment*[] equips =
-        [
-            (Equipment*)_MsGetSaveWeapon(ply.wpn_inv_idx, 0x0),
-            (Equipment*)_MsGetSaveWeapon(ply.arm_inv_idx, 0x0),
-        ];
-        int strength_mult = 0;
-        int defense_mult = 0;
-        int magic_mult = 0;
-        int magic_defense_mult = 0;
-        int agility_mult = 0;
-        int luck_mult = 0;
-        int evasion_mult = 0;
-        int accuracy_mult = 0;
-        int hp_mult = 0;
-        int mp_mult = 0;
-        int strength_bonus_mult = 0;
-        int defense_bonus_mult = 0;
-        int magic_bonus_mult = 0;
-        int magic_defense_bonus_mult = 0;
+        //PlySave ply = save_data->ply_arr[(int)chr_id];
+        //Equipment*[] equips =
+        //[
+        //    (Equipment*)_MsGetSaveWeapon(ply.wpn_inv_idx, 0x0),
+        //    (Equipment*)_MsGetSaveWeapon(ply.arm_inv_idx, 0x0),
+        //];
+        //int strength_mult = 0;
+        //int defense_mult = 0;
+        //int magic_mult = 0;
+        //int magic_defense_mult = 0;
+        //int agility_mult = 0;
+        //int luck_mult = 0;
+        //int evasion_mult = 0;
+        //int accuracy_mult = 0;
+        //int hp_mult = 0;
+        //int mp_mult = 0;
+        //int strength_bonus_mult = 0;
+        //int defense_bonus_mult = 0;
+        //int magic_bonus_mult = 0;
+        //int magic_defense_bonus_mult = 0;
 
-        foreach (Equipment* equip in equips) {
-            for (int i = 0; i < 4; i++) {
-                if (equip->abilities[i] == 0 || equip->abilities[i] == 0xFF) continue;
-                AutoAbility* a_ability = (AutoAbility*)_MsGetExcelData(equip->abilities[i] & 0xFFF, Battle.btl->ptr_a_ability_bin, (int*)0x0);
-                strength_mult += a_ability->stat_inc_flags.strength() ? a_ability->stat_inc_amount : 0;
-                defense_mult += a_ability->stat_inc_flags.defense() ? a_ability->stat_inc_amount : 0;
-                magic_mult += a_ability->stat_inc_flags.magic() ? a_ability->stat_inc_amount : 0;
-                magic_defense_mult += a_ability->stat_inc_flags.magic_defense() ? a_ability->stat_inc_amount : 0;
-                agility_mult += a_ability->stat_inc_flags.agility() ? a_ability->stat_inc_amount : 0;
-                luck_mult += a_ability->stat_inc_flags.luck() ? a_ability->stat_inc_amount : 0;
-                evasion_mult += a_ability->stat_inc_flags.evasion() ? a_ability->stat_inc_amount : 0;
-                accuracy_mult += a_ability->stat_inc_flags.accuracy() ? a_ability->stat_inc_amount : 0;
-                hp_mult += a_ability->stat_inc_flags.hp() ? a_ability->stat_inc_amount : 0;
-                mp_mult += a_ability->stat_inc_flags.mp() ? a_ability->stat_inc_amount : 0;
-                strength_bonus_mult += a_ability->stat_inc_flags.strength_bonus() ? a_ability->stat_inc_amount : 0;
-                defense_bonus_mult += a_ability->stat_inc_flags.defense_bonus() ? a_ability->stat_inc_amount : 0;
-                magic_bonus_mult += a_ability->stat_inc_flags.magic_bonus() ? a_ability->stat_inc_amount : 0;
-                magic_defense_bonus_mult += a_ability->stat_inc_flags.magic_defense_bonus() ? a_ability->stat_inc_amount : 0;
-            }
-        }
+        //foreach (Equipment* equip in equips) {
+        //    for (int i = 0; i < 4; i++) {
+        //        if (equip->abilities[i] == 0 || equip->abilities[i] == 0xFF) continue;
+        //        AutoAbility* a_ability = (AutoAbility*)_MsGetExcelData(equip->abilities[i] & 0xFFF, Battle.btl->ptr_a_ability_bin, (int*)0x0);
+        //        strength_mult += a_ability->stat_inc_flags.strength() ? a_ability->stat_inc_amount : 0;
+        //        defense_mult += a_ability->stat_inc_flags.defense() ? a_ability->stat_inc_amount : 0;
+        //        magic_mult += a_ability->stat_inc_flags.magic() ? a_ability->stat_inc_amount : 0;
+        //        magic_defense_mult += a_ability->stat_inc_flags.magic_defense() ? a_ability->stat_inc_amount : 0;
+        //        agility_mult += a_ability->stat_inc_flags.agility() ? a_ability->stat_inc_amount : 0;
+        //        luck_mult += a_ability->stat_inc_flags.luck() ? a_ability->stat_inc_amount : 0;
+        //        evasion_mult += a_ability->stat_inc_flags.evasion() ? a_ability->stat_inc_amount : 0;
+        //        accuracy_mult += a_ability->stat_inc_flags.accuracy() ? a_ability->stat_inc_amount : 0;
+        //        hp_mult += a_ability->stat_inc_flags.hp() ? a_ability->stat_inc_amount : 0;
+        //        mp_mult += a_ability->stat_inc_flags.mp() ? a_ability->stat_inc_amount : 0;
+        //        strength_bonus_mult += a_ability->stat_inc_flags.strength_bonus() ? a_ability->stat_inc_amount : 0;
+        //        defense_bonus_mult += a_ability->stat_inc_flags.defense_bonus() ? a_ability->stat_inc_amount : 0;
+        //        magic_bonus_mult += a_ability->stat_inc_flags.magic_bonus() ? a_ability->stat_inc_amount : 0;
+        //        magic_defense_bonus_mult += a_ability->stat_inc_flags.magic_defense_bonus() ? a_ability->stat_inc_amount : 0;
+        //    }
+        //}
 
-        ply.strength = (byte)Math.Clamp(ply.strength * strength_mult / 100, 0, 255);
-        ply.defense = (byte)Math.Clamp(ply.defense * defense_mult / 100, 0, 255);
-        ply.magic = (byte)Math.Clamp(ply.magic * magic_mult / 100, 0, 255);
-        ply.magic_defense = (byte)Math.Clamp(ply.magic_defense * magic_defense_mult / 100, 0, 255);
-        ply.agility = (byte)Math.Clamp(ply.agility * agility_mult / 100, 0, 255);
-        ply.luck = (byte)Math.Clamp(ply.luck * luck_mult / 100, 0, 255);
-        ply.evasion = (byte)Math.Clamp(ply.evasion * evasion_mult / 100, 0, 255);
-        ply.accuracy = (byte)Math.Clamp(ply.accuracy * accuracy_mult / 100, 0, 255);
-        ply.hp = (uint)Math.Clamp(ply.hp * hp_mult / 100, 0, ply.auto_ability_effects.has_break_hp_limit ? 99999 : 9999);
-        ply.mp = (uint)Math.Clamp(ply.mp * mp_mult / 100, 0, ply.auto_ability_effects.has_break_mp_limit ? 9999 : 999);
+        //ply.strength = (byte)Math.Clamp(ply.strength * strength_mult / 100, 0, 255);
+        //ply.defense = (byte)Math.Clamp(ply.defense * defense_mult / 100, 0, 255);
+        //ply.magic = (byte)Math.Clamp(ply.magic * magic_mult / 100, 0, 255);
+        //ply.magic_defense = (byte)Math.Clamp(ply.magic_defense * magic_defense_mult / 100, 0, 255);
+        //ply.agility = (byte)Math.Clamp(ply.agility * agility_mult / 100, 0, 255);
+        //ply.luck = (byte)Math.Clamp(ply.luck * luck_mult / 100, 0, 255);
+        //ply.evasion = (byte)Math.Clamp(ply.evasion * evasion_mult / 100, 0, 255);
+        //ply.accuracy = (byte)Math.Clamp(ply.accuracy * accuracy_mult / 100, 0, 255);
+        //ply.hp = (uint)Math.Clamp(ply.hp * hp_mult / 100, 0, ply.auto_ability_effects.has_break_hp_limit ? 99999 : 9999);
+        //ply.mp = (uint)Math.Clamp(ply.mp * mp_mult / 100, 0, ply.auto_ability_effects.has_break_mp_limit ? 9999 : 999);
     }
 
     public static void h_FUN_00a48910(uint chr_id, int node_idx) {
