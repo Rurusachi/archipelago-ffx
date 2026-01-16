@@ -2520,6 +2520,8 @@ public unsafe partial class ArchipelagoFFXModule {
                 int qty = save_data->monsters_captured[i];
                 if (qty > 0)
                     FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE:" + i] = qty;
+                else
+                    FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE:" + i] = 0;
             }
         }
         return captured;
