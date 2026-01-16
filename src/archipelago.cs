@@ -442,7 +442,13 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 }
                 foreach ((uint item_id, int amount) in loaded_state.excess_inventory) {
                     excess_inventory[item_id] = amount;
-                } 
+                }
+                // Requires resolution of Fh Issue #70: https://github.com/peppy-enterprises/fahrenheit/issues/70
+                //for (int i = 0; i <= 103; i++) {
+                //    int captured = save_data->monsters_captured[i];
+                //    if (captured > 0)
+                //        FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE:" + i] = captured;
+                //}
                 loaded_state.celestial_level.CopyTo(celestial_level, 0);
                 FFXArchipelagoClient.local_checked_locations.Clear();
                 FFXArchipelagoClient.local_checked_locations.UnionWith(loaded_state.local_checked_locations);
