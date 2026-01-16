@@ -2515,30 +2515,12 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
             }
 
-            // Retrieve AP DataStorage object for Fiend Captures. Initialize a new one if one does not exists
-            string? json_string = FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE"];
-            ArchipelagoCaptures? capture_object;
-            if (json_string != null) {
-                capture_object = JObject.Parse(json_string).ToObject<ArchipelagoCaptures>();
-            } else {
-                capture_object = new ArchipelagoCaptures();
+            //Iterate through all indexes and send values to AP DataStorage
+            for (int i = 0; i <= 103; i++) {
+                int qty = save_data->monsters_captured[i];
+                if (qty > 0)
+                    FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE:" + i] = qty;
             }
-
-            // Find Capture object for fiend if one exists. Initialize a new one if one is not found
-            // Increment number of captures (to max of 10) for fiend
-            ArchipelagoCaptures.Capture? fiend = capture_object!.captures.Find(i => i.arena_idx == arena_idx);
-            if (fiend != null) {
-                fiend.captured = Math.Min(fiend.captured + 1, 10);
-            } else {
-                fiend = new ArchipelagoCaptures.Capture {
-                    arena_idx = arena_idx,
-                    captured = 1
-                };
-                capture_object.captures.Add(fiend);
-            }
-
-            // Send updated Captures object back to AP DataStorage
-            FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE"] = JObject.FromObject(capture_object).ToString();
         }
         return captured;
     }
@@ -2546,7 +2528,7 @@ public unsafe partial class ArchipelagoFFXModule {
     // Battle loop?
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
-        string encounter_name = Encoding.UTF8.GetString(Battle.btl->field_name).Replace("\0", "");
+        string encounter_name = Marshal.PtrToStringAnsi((nint)(&Battle.btl->field_name));
         if (Battle.btl->battle_end_type == 2 && Battle.btl->battle_state == 0x21) {
             logger.Info($"Victory: type={Battle.btl->battle_end_type}, encounter={encounter_name}");
             //if (save_data->atel_is_push_member == 1) {
