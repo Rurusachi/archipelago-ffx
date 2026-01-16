@@ -2496,8 +2496,7 @@ public unsafe partial class ArchipelagoFFXModule {
     // Battle loop?
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
-        string encounter_name = Encoding.UTF8.GetString(Battle.btl->field_name).Replace("\0", "");
-
+        string encounter_name = Marshal.PtrToStringAnsi((nint)(&Battle.btl->field_name));
         if (Battle.btl->battle_end_type > 1 && Battle.btl->battle_state == 0x21) {
             logger.Info($"Victory: type={Battle.btl->battle_end_type}, encounter={encounter_name}");
             //if (save_data->atel_is_push_member == 1) {
