@@ -2509,10 +2509,8 @@ public unsafe partial class ArchipelagoFFXModule {
 
         // Send AP Location if successfully captured
         if (captured) {
-            if (arenaIndexToCaptureLocationDict.TryGetValue(arena_idx, out int capture_location)) {
-                if (sendLocation(capture_location, ArchipelagoLocationType.Capture) && item_locations.capture.TryGetValue(capture_location, out var item)) {
-                    ArchipelagoFFXModule.obtain_item(item.id);
-                }
+            if (sendLocation(arena_idx, ArchipelagoLocationType.Capture) && item_locations.capture.TryGetValue(arena_idx, out var item)) {
+                ArchipelagoFFXModule.obtain_item(item.id);
             }
 
             //Iterate through all indexes and send values to AP DataStorage
