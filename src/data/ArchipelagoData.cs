@@ -1006,7 +1006,7 @@ public static class ArchipelagoData {
         {"kino05_70", [46]}, // Dark Sandy
         {"kino01_71", [47]}, // Dark Cindy
         {"bjyt02_02", [48]}, // Geosgaeno
-        {"bika00_10", [49]}, // Bikanel: Zu
+        {"bika00_10", [84]}, // Bikanel: Zu
         
 
         //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
