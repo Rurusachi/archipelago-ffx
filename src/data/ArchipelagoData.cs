@@ -1041,6 +1041,8 @@ public static class ArchipelagoData {
         {"zzzz02_80",  [81]}, // Ultima Buster
         {"zzzz02_83",  [82]}, // Shinryu
         {"zzzz02_76",  [83]}, // Monster Arena: Nemesis
+        {"bika00_10",  [84]}, // Bikanel: Zu        
+
 
         //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
         //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy
