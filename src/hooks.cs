@@ -2513,14 +2513,11 @@ public unsafe partial class ArchipelagoFFXModule {
                 ArchipelagoFFXModule.obtain_item(item.id);
             }
 
-            //Iterate through all indexes and send values to AP DataStorage
-            for (int i = 0; i <= 103; i++) {
-                int qty = save_data->monsters_captured[i];
-                if (qty > 0)
-                    FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE_" + i] = qty;
-                else
-                    FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE_" + i] = 0;
-            }
+            int qty = save_data->monsters_captured[arena_idx];
+            if (qty > 0)
+                FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE_" + arena_idx] = qty;
+            else
+                FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_CAPTURE_" + arena_idx] = 0;
         }
         return captured;
     }
