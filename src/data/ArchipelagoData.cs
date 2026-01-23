@@ -55,6 +55,7 @@ public static class ArchipelagoData {
         ZanarkandRuins,
         Sin,
         OmegaRuins,
+        MonsterArena,
     }
 
     public enum GoalRequirement {
@@ -386,7 +387,6 @@ public static class ArchipelagoData {
             223,
             290,
             308,
-            307,
             279,
             266,
             372,
@@ -445,6 +445,9 @@ public static class ArchipelagoData {
         { RegionEnum.OmegaRuins, [
             258,
             271,
+            ] },
+        { RegionEnum.MonsterArena, [
+            307,
             ] },
     };
 
@@ -766,6 +769,7 @@ public static class ArchipelagoData {
                 } } },
             } } },
         {RegionEnum.OmegaRuins, new(){ story_progress = 3210, room_id = 258, entrance = 2, airship_destination_index = 17 } }, // Story_progress?
+        {RegionEnum.MonsterArena, new(){ story_progress = 3210, room_id = 307, entrance = 0, airship_destination_index = 99 } },
     };
 
     // For battles that don't push/pop but should
