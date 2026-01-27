@@ -5,6 +5,7 @@ using Fahrenheit.Modules.ArchipelagoFFX.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Archipelago.MultiClient.Net.Enums;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 
@@ -823,6 +824,14 @@ public static class ArchipelagoData {
         //
         //    }
         //}
+
+        // Bikanel forced Zu fight
+        {"bika00_10", () =>  FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_LOGIC_ZU"] = true },
+    };
+
+    public static Dictionary<string, Action> encounterEscapeActions => new() {
+        // Bikanel forced Zu fight
+        {"bika00_10", () =>  FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_LOGIC_ZU"] = true },
     };
 
     public static Dictionary<string, Action> encounterToActionDict => new(){
@@ -833,9 +842,6 @@ public static class ArchipelagoData {
         {"lchb07_00", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_AURON], true, false) },
         // Yenke and Biran. Can only target Kimahri and scale on his stats.
         {"mtgz01_10", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_KIMAHRI], true, false) },
-
-        // Bikanel forced Zu fight. Maybe not needed?
-        //{"bika00_10", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_LULU, PlySaveId.PC_AURON], true, false) },
 
         // Tutorials
         // Will softlock without Lulu
@@ -984,7 +990,7 @@ public static class ArchipelagoData {
         {"ssbt01_00",  [22]}, // Airship: Sin Right Fin
         {"ssbt02_00",  [23]}, // Airship: Sinspawn Genais and Core
         {"ssbt03_00",  [24]}, // Airship: Overdrive Sin
-        {"hiku15_70",  [25]}, // Airship: Penance
+     // {"hiku15_70",  [25]}, // Airship: Penance
         {"bvyt09_12",  [26]}, // Bevelle: Isaaru (probably?)
         {"stbv00_10",  [27]}, // Bevelle: Evrae Altana
         {"stbv01_10",  [28]}, // Bevelle: Seymour Natus
@@ -1045,7 +1051,6 @@ public static class ArchipelagoData {
         {"zzzz02_80",  [81]}, // Ultima Buster
         {"zzzz02_83",  [82]}, // Shinryu
         {"zzzz02_76",  [83]}, // Monster Arena: Nemesis
-        {"bika00_10",  [84]}, // Bikanel: Zu        
 
 
         //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy

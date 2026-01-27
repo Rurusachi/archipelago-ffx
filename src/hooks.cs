@@ -2526,10 +2526,8 @@ public unsafe partial class ArchipelagoFFXModule {
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
         string encounter_name = Marshal.PtrToStringAnsi((nint)(&Battle.btl->field_name));
-        if (Battle.btl->battle_end_type == 2 && Battle.btl->battle_state == 0x21) {
 
-            logger.Info($"Victory: type={Battle.btl->battle_end_type}, encounter={encounter_name}");
-            //if (save_data->atel_is_push_member == 1) {
+        if (Battle.btl->battle_end_type > 1 && Battle.btl->battle_state == 0x21) {
             if (party_overridden) {
                 reset_party();
                 // Battle frontline gets copied after this so have to set here
@@ -2541,10 +2539,15 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
                 party_overridden = false;
             }
-            if (encounterVictoryActions.TryGetValue(encounter_name, out Action? action)) {
+        }
+        
+        // Battle Victory
+        if (Battle.btl->battle_end_type == 2 && Battle.btl->battle_state == 0x21) {
+            logger.Info($"Victory: type={Battle.btl->battle_end_type}, encounter={encounter_name}");           
+            if (encounterVictoryActions.TryGetValue(encounter_name!, out Action? action)) {
                 action();
             }
-            if (encounterToLocationDict.TryGetValue(encounter_name, out int[]? boss_locations)) {
+            if (encounterToLocationDict.TryGetValue(encounter_name!, out int[]? boss_locations)) {
                 foreach (int location_id in boss_locations) {
                     // Sending all locations even if they don't exist
                     
@@ -2552,6 +2555,14 @@ public unsafe partial class ArchipelagoFFXModule {
                         ArchipelagoFFXModule.obtain_item(item.id);
                     }
                 }
+            }
+        } 
+
+        // Battle Escape
+        else if (Battle.btl->battle_end_type == 3 && Battle.btl->battle_state == 0x21) {
+            logger.Info($"Escape: type={Battle.btl->battle_end_type}, encounter={encounter_name}");
+            if (encounterEscapeActions.TryGetValue(encounter_name!, out Action? action)) {
+                action();
             }
         }
     }
