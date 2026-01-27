@@ -2526,8 +2526,10 @@ public unsafe partial class ArchipelagoFFXModule {
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
         string encounter_name = Marshal.PtrToStringAnsi((nint)(&Battle.btl->field_name));
+        byte battle_end_type = Battle.btl->battle_end_type;
+        byte battle_state = Battle.btl->battle_state;
 
-        if (Battle.btl->battle_end_type > 1 && Battle.btl->battle_state == 0x21) {
+        if (battle_end_type > 1 && battle_state == 0x21) {
             if (party_overridden) {
                 reset_party();
                 // Battle frontline gets copied after this so have to set here
@@ -2539,30 +2541,30 @@ public unsafe partial class ArchipelagoFFXModule {
                 }
                 party_overridden = false;
             }
-        }
-        
-        // Battle Victory
-        if (Battle.btl->battle_end_type == 2 && Battle.btl->battle_state == 0x21) {
-            logger.Info($"Victory: type={Battle.btl->battle_end_type}, encounter={encounter_name}");           
-            if (encounterVictoryActions.TryGetValue(encounter_name!, out Action? action)) {
-                action();
-            }
-            if (encounterToLocationDict.TryGetValue(encounter_name!, out int[]? boss_locations)) {
-                foreach (int location_id in boss_locations) {
-                    // Sending all locations even if they don't exist
-                    
-                    if (sendLocation(location_id, ArchipelagoLocationType.Boss) && item_locations.boss.TryGetValue(location_id, out var item)) {
-                        ArchipelagoFFXModule.obtain_item(item.id);
+            switch (battle_end_type) {
+                case 2: // Battle Victory
+                    logger.Info($"Victory: type={battle_end_type}, encounter={encounter_name}");
+                    if (encounterVictoryActions.TryGetValue(encounter_name!, out Action? victoryAction)) {
+                        victoryAction();
                     }
-                }
-            }
-        } 
-
-        // Battle Escape
-        else if (Battle.btl->battle_end_type == 3 && Battle.btl->battle_state == 0x21) {
-            logger.Info($"Escape: type={Battle.btl->battle_end_type}, encounter={encounter_name}");
-            if (encounterEscapeActions.TryGetValue(encounter_name!, out Action? action)) {
-                action();
+                    if (encounterToLocationDict.TryGetValue(encounter_name!, out int[]? boss_locations)) {
+                        foreach (int location_id in boss_locations) {
+                            // Sending all locations even if they don't exist
+                            if (sendLocation(location_id, ArchipelagoLocationType.Boss) && item_locations.boss.TryGetValue(location_id, out var item)) {
+                                ArchipelagoFFXModule.obtain_item(item.id);
+                            }
+                        }
+                    }
+                    break;
+                case 3: // Battle Escape
+                    logger.Info($"Escape: type={battle_end_type}, encounter={encounter_name}");
+                    if (encounterEscapeActions.TryGetValue(encounter_name!, out Action? escapeAction)) {
+                        escapeAction();
+                    }
+                    break;
+                default:
+                    logger.Info($"Battle End: type={battle_end_type}, encounter={encounter_name}");
+                    break;
             }
         }
     }
