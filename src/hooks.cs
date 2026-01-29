@@ -1127,7 +1127,7 @@ public unsafe partial class ArchipelagoFFXModule {
         {"lchb0500", [(0x35EC, 24)] }, // Zev Ronso
         {"lchb0900", [(0x1F58, 23)] }, // Zalitz
         {"lchb1800", [(0x4407, 15)] }, // Shaami
-        {"luca0100", [(0x6D89,  4)] }, // Jumal
+        {"luca0100", [(0x6DB9,  4)] }, // Jumal
         {"luca0400", [(0x4402, 16)] }, // Shuu
         {"mcyt0000", [(0x3B7D,  7)] }, // Linna
         {"mihn0300", [(0x8A4A, 14)] }, // Ropp
