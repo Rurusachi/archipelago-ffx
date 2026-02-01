@@ -11,9 +11,11 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using TerraFX.Interop.DirectX;
 using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoFFXModule;
+using static Fahrenheit.Modules.ArchipelagoFFX.delegates;
 using Color = Archipelago.MultiClient.Net.Models.Color;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX.GUI;
@@ -100,6 +102,7 @@ public unsafe static class ArchipelagoGUI {
         render_client();
 #if DEBUG
         render_experiments();
+        //render_clusters();
 #endif
         ImGui.PopFont();
         //render_pane(pane_width);
@@ -109,9 +112,66 @@ public unsafe static class ArchipelagoGUI {
         //ImGui.PopStyleColor();
     }
 
-    private static string cluster_file_name = "";
-    //private static PTexture2DBase* loaded_texture2d;
-    private static FhTexture? loaded_image;
+    private static string cluster_file_name = "/FFX_Data/GameData/PS3Data/map/hiku/hiku22/2d/tex/D3D11/0_11_132_16_12.dds.phyre";
+    private static PTexture2DBase* loaded_texture2d = null;
+    private static ImTextureRef? loaded_image;
+
+    private static void render_clusters() {
+        if (ImGui.Begin("Archipelago###Archipelago.Clusters.GUI")) {
+            ImGui.InputText("fileName", ref cluster_file_name, 256);
+            if (ImGui.Button("Load cluster by name")) {
+                PCluster* cluster = ArchipelagoFFXModule.loadCluster(cluster_file_name);
+                if (cluster != null) {
+                    loaded_texture2d = getTextureFromCluster(cluster);
+                    if (loaded_image != null) {
+                        ((ID3D11ShaderResourceView*)loaded_image.Value.TexID.Handle)->Release();
+                        loaded_image = null;
+                    }
+                }
+            }
+            if (ImGui.Button("Get cluster by name")) {
+                PCluster* cluster = ArchipelagoFFXModule.getCluster(cluster_file_name);
+                if (cluster != null) {
+                    loaded_texture2d = getTextureFromCluster(cluster);
+                    if (loaded_image != null) {
+                        ((ID3D11ShaderResourceView*)loaded_image.Value.TexID.Handle)->Release();
+                        loaded_image = null;
+                    }
+                }
+            }
+            if (ImGui.Button("Unload cluster by name")) {
+                PCluster* cluster = getCluster(cluster_file_name);
+                if (cluster != null) {
+                    loaded_clusters.Remove((nint)cluster);
+                    loaded_texture2d = null;
+                    if (loaded_image != null) {
+                        ((ID3D11ShaderResourceView*)loaded_image.Value.TexID.Handle)->Release();
+                        loaded_image = null;
+                    }
+                    releaseCluster(cluster);
+                }
+            }
+            if (ImGui.Button("Unload all clusters")) {
+                loaded_texture2d = null;
+                if (loaded_image != null) {
+                    ((ID3D11ShaderResourceView*)loaded_image.Value.TexID.Handle)->Release();
+                    loaded_image = null;
+                }
+                foreach (nint cluster in loaded_clusters) {
+                    releaseCluster((PCluster*)cluster);
+                }
+                loaded_clusters.Clear();
+            }
+
+            if (loaded_texture2d != null && loaded_image == null) {
+                FhApi.Resources.create_srv(loaded_texture2d->buffer, null, out loaded_image);
+            }
+            if (loaded_image.HasValue) {
+                ImGui.Image(loaded_image.Value, new(loaded_texture2d->width, loaded_texture2d->height), new(0, 1), new(1, 0));
+            }
+        }
+        ImGui.End();
+    }
 
     public static FileInfo?  shiori_file;
     private static FhTexture? shiori_image;
@@ -129,14 +189,10 @@ public unsafe static class ArchipelagoGUI {
 
 
         if (ImGui.Begin("Archipelago###Archipelago.Experiments.GUI")) {
-            //int requirement = (int)seed.GoalRequirement;
-            //ImGui.InputInt("Goal Requirement", ref requirement);
-            //seed.GoalRequirement = (GoalRequirement)requirement;
 
             float frameHeight = ImGui.GetFrameHeight();
             Vector2 windowPos = ImGui.GetWindowPos();
             float windowBorderSize = ImGui.GetStyle().WindowBorderSize;
-            ImGui.Text($"frameHeight: {frameHeight}, windowBorderSize: {windowBorderSize}");
             if (shiori_image != null) ImGui.GetForegroundDrawList().AddImage(shiori_image.TextureRef, windowPos + new Vector2(windowBorderSize), new(windowPos.X + frameHeight - windowBorderSize, windowPos.Y + frameHeight - windowBorderSize));
 
             //Span<byte> tidus_name = new Span<byte>(Globals.save_data->character_names[0].raw, 20);
@@ -150,6 +206,17 @@ public unsafe static class ArchipelagoGUI {
             //        FhEncoding.encode(Encoding.UTF8.GetBytes(final_string), tidus_name);
             //    }
             //}
+            if (ImGui.Checkbox($"Original soundtrack?", &save_data->soundtrack_type)) {
+                var soundtrack_callback = FhUtil.get_fptr<FUN_008cc120>(__addr_FUN_008cc120);
+                soundtrack_callback(save_data->soundtrack_type ? 1 : 0);
+            }
+
+            ImGui.InputScalarN("frontline? (0x1FC5)", ImGuiDataType.U8, Globals.Battle.btl->__0x1FC5,  7);
+            ImGui.InputScalarN("frontline? (0x1FCC)", ImGuiDataType.U8, Globals.Battle.btl->__0x1FCC,  7);
+            ImGui.InputScalarN("backline? (0x1FD3)" , ImGuiDataType.U8, Globals.Battle.btl->__0x1FD3, 17);
+
+
+
             Vector4* Vector4f_ARRAY_00c86010 = FhUtil.ptr_at<Vector4>(0x886010);
 
             ImGui.InputFloat4("Tidus ambient(?) color", &Vector4f_ARRAY_00c86010->X);
@@ -174,21 +241,6 @@ public unsafe static class ArchipelagoGUI {
             //    ImGui.EndCombo();
             //}
 
-            //ImGui.InputText("fileName", ref cluster_file_name, 256);
-            //if (ImGui.Button("Load cluster")) {
-            //    loaded_texture2d = ArchipelagoFFXModule.loadCluster(cluster_file_name);
-            //}
-            //if (ImGui.Button("Unload cluster") && loaded_clusters.Count > 0) {
-            //    releaseCluster(loaded_clusters[0]);
-            //    loaded_clusters.RemoveAt(0);
-            //}
-            //
-            //if (loaded_texture2d != null && loaded_image == null) {
-            //    loaded_image = loadTexture(loaded_texture2d);
-            //}
-            //if (loaded_image != null) {
-            //    ImGui.Image(loaded_image.imTextureRef, new(loaded_image.width, loaded_image.height), new(0, 1), new(1, 0));
-            //}
             //if (shiori_image == null || bevelle_image == null) {
             //    var resources = ArchipelagoFFXModule.mod_context.Paths.ResourcesDir.GetFiles();
             //    var shiori_file = Array.Find(resources, file => file.Name == "shiori.png");
@@ -201,8 +253,6 @@ public unsafe static class ArchipelagoGUI {
             //}
 
             ImGui.Text($"Tidus overdrive uses: {Globals.save_data->tidus_limit_uses}");
-
-            if (Globals.actors is not null) ImGui.Text($"Tidus position: {Globals.actors[0].chr_pos_vec}");
 
             //for (int i = 0; i < 18; i++) {
             //    string name = Globals.save_data->character_names[i].name;
@@ -218,29 +268,6 @@ public unsafe static class ArchipelagoGUI {
 
             int inMenu = FhUtil.get_at<int>(0x01efb4d4);
             ImGui.Text($"Is in menu?: {inMenu}");
-
-            //var tempString = ArchipelagoFFXModule.customStrings[0];
-            //
-            //
-            //byte[] decoded = new byte[FhEncoding.compute_decode_buffer_size(new ReadOnlySpan<byte>(tempString.encoded, 1000))];
-            //int decoded_length = FhEncoding.decode(new Span<byte>(tempString.encoded, tempString.encodedLength), decoded);
-            //string tempText = Encoding.UTF8.GetString(decoded, 0, decoded_length);
-            //ImGui.Text(tempText);
-
-
-            ReadOnlySpan<byte> testString = "{TIME:00}Ready to fight Sin?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8;
-            //ReadOnlySpan<byte> testString = "{TIME:00}いいですか？{LF}{CHOICE:00}はい{LF}{CHOICE:01}いいえ"u8;
-
-            byte[] encoded = new byte[FhEncoding.compute_encode_buffer_size(testString)];
-            FhEncoding.encode(testString, encoded);
-
-            byte[] decoded = new byte[100];
-            int expected_size = FhEncoding.compute_decode_buffer_size(encoded);
-            int actual_size = FhEncoding.decode(encoded, decoded);
-
-            string decodedString = Encoding.UTF8.GetString(decoded, 0, actual_size);
-
-            ImGui.Text(decodedString);
 
 
             BtlArea* pos_def_ptr = Globals.Battle.btl->ptr_pos_def;
@@ -765,13 +792,7 @@ public unsafe static class ArchipelagoGUI {
                             ArchipelagoFFXModule.region_states[region].story_progress = region_starting_state[region].story_progress;
                             ArchipelagoFFXModule.region_states[region].room_id        = region_starting_state[region].room_id;
                             ArchipelagoFFXModule.region_states[region].entrance       = region_starting_state[region].entrance;
-                            switch (region) {
-                                case RegionEnum.Kilika:
-                                    // Reset Ochu
-                                    nint* KilikaForestTreasureFlags = (nint*)((nint)save_data + 0x03AC);
-                                    KilikaForestTreasureFlags->set_bit(2, false);
-                                    break;
-                            }
+                            region_starting_state[region].savedata.CopyTo(ArchipelagoFFXModule.region_states[region].savedata);
 
                             List<(string, Color)> message = [(regionString, Color.Blue), (" has been reset", Color.White)];
                             add_log_message(message);
@@ -893,6 +914,11 @@ public unsafe static class ArchipelagoGUI {
         ImGui.Text($"Current room: {Globals.save_data->current_room_id} ({Marshal.PtrToStringAnsi((nint)ArchipelagoFFXModule.get_event_name(*(uint*)Globals.event_id))!})");
         ImGui.Text($"Current region: {ArchipelagoFFXModule.current_region}");
         ImGui.Text($"Current story progress: {Globals.save_data->story_progress}");
+        if (ArchipelagoFFXModule.current_region != RegionEnum.None) {
+            foreach (var data in ArchipelagoFFXModule.region_states[current_region].savedata) {
+                ImGui.Text($"{data.offset}: {string.Join(" ", data.bytes.Select(b => b.ToString()).ToArray())}");
+            }
+        }
 
         ImGui.SeparatorText("Region states");
         if (ImGui.BeginTable("Region states", 5)) {
