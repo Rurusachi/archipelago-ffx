@@ -1084,7 +1084,7 @@ public static class ArchipelagoData {
         {"ssbt01_00",  [22]}, // Airship: Sin Right Fin
         {"ssbt02_00",  [23]}, // Airship: Sinspawn Genais and Core
         {"ssbt03_00",  [24]}, // Airship: Overdrive Sin
-     // {"hiku15_70",  [25]}, // Airship: Penance
+        {"hiku15_70",  [25]}, // Airship: Penance
         {"bvyt09_12",  [26]}, // Bevelle: Isaaru (probably?)
         {"stbv00_10",  [27]}, // Bevelle: Evrae Altana
         {"stbv01_10",  [28]}, // Bevelle: Seymour Natus
