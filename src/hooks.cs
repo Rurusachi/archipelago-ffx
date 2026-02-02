@@ -3520,6 +3520,9 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.PUSHII  .build(0xFFFF),
             AtelOp.CALL    .build(0x0033),
             AtelOp.CALLPOPA.build(0x0078),
+            // call SgEvent.fadeinFromBlack? [4004h](frames=5 [5h]);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x4004),
             // Restore entry point
             AtelOp.PUSHII  .build(target_worker),
             AtelOp.PUSHII  .build(entry_point),
