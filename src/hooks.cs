@@ -693,9 +693,9 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.CALLPOPA.build(0x0084),
             // call Common.enablePlayerControl? [005Dh]();
             AtelOp.CALLPOPA.build(0x005d),
-            // call Common.obtainBrotherhood(choice, 1, 3) i.e. if !choice jump to customscripts[1]
-            AtelOp.PUSHII  .build(0x0103),
-            AtelOp.CALLPOPA.build(0x01B8),
+            // call Custom.JumpIfFalse(choice, 1) i.e. if !choice jump to customscripts[1]
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP_IF_FALSE),
 
             
             //// Jump to j01 (return)
@@ -718,10 +718,9 @@ public unsafe partial class ArchipelagoFFXModule {
 
         // Remove defeated Aeon
         ((AtelInst[])[ // 2
-            // call Common.obtainBrotherhood(privBA98, 9) = lock party member privBA98
+            // call Custom.LockPartyMember(privBA98)
             AtelOp.PUSHV   .build(0x000B),
-            AtelOp.PUSHII  .build(0x0009),
-            AtelOp.CALLPOPA.build(0x01B8),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.LOCK_PARTY_MEMBER),
 
             // switch privBA98
             AtelOp.PUSHV   .build(0x000B),
@@ -738,13 +737,12 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.PUSHII   .build(3250  ),
             AtelOp.LS       .build(      ),
             AtelOp.POPXNCJMP.build(0x0001),
-            // call Common.obtainBrotherhood(privBA98, A) = isGoalUnlocked
-            AtelOp.PUSHII   .build(0x000A),
-            AtelOp.CALLPOPA .build(0x01B8),
-            // call Common.obtainBrotherhood(isGoalUnlocked, 0x0404) i.e. if isGoalUnlocked jump to customScripts[4]
+            // call Custom.IsGoalUnlocked()
+            AtelOp.CALLPOPA .build((ushort)CustomCallTarget.IS_GOAL_UNLOCKED),
+            // call Common.JumpIfTrue(isGoalUnlocked, 4) i.e. if isGoalUnlocked jump to customScripts[4]
             AtelOp.PUSHA    .build(),
-            AtelOp.PUSHII   .build(0x0404),
-            AtelOp.CALLPOPA .build(0x01B8),
+            AtelOp.PUSHII   .build(0x0004),
+            AtelOp.CALLPOPA .build((ushort)CustomCallTarget.JUMP_IF_TRUE),
             
             // call Common.disablePlayerControl? [005Eh]();
             AtelOp.CALLPOPA.build(0x005e),
@@ -752,11 +750,11 @@ public unsafe partial class ArchipelagoFFXModule {
             .. atelDisplayFieldString(1, 0x8002, 256, 224, 4, 0, 0),
 
             // walk away
-            // call Common.obtainBrotherhood(w0, 6, 0x050b) i.e. workers[0].entry_points[6] = customScripts[5]
+            // call Common.ReplaceEntryPoint(w0, 6, 5) i.e. workers[0].entry_points[6] = customScripts[5]
             AtelOp.PUSHII  .build(0x0000),
             AtelOp.PUSHII  .build(0x0006),
-            AtelOp.PUSHII  .build(0x050B),
-            AtelOp.CALLPOPA.build(0x01B8),
+            AtelOp.PUSHII  .build(0x0005),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.REPLACE_ENTRY_POINT),
 
             // runAndAwaitEnd w00e06 (Level 1)
             AtelOp.PUSHII  .build(0x0001),
@@ -765,11 +763,10 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.REQEW   .build(      ),
             AtelOp.POPA    .build(      ),
 
-            // call Common.obtainBrotherhood(w0, 6, 0xb) i.e. workers[0].entry_points[6] = original value
+            // call Common.RestoreEntryPoint(w0, 6) i.e. workers[0].entry_points[6] = original value
             AtelOp.PUSHII  .build(0x0000),
             AtelOp.PUSHII  .build(0x0006),
-            AtelOp.PUSHII  .build(0x000C),
-            AtelOp.CALLPOPA.build(0x01B8),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.RESTORE_ENTRY_POINT),
 
             // call Common.waitForText [0084h](boxIndex=1 [01h], p2=1 [01h]);
             AtelOp.PUSHII  .build(0x0001),
@@ -806,11 +803,11 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.POPXNCJMP  .build(0x0000),
 
             // walk away
-            // call Common.obtainBrotherhood(w0, 6, 0x050b) i.e. workers[0].entry_points[6] = customScripts[5]
+            // call Common.RestoreEntryPoint(w0, 6, 5) i.e. workers[0].entry_points[6] = customScripts[5]
             AtelOp.PUSHII  .build(0x0000),
             AtelOp.PUSHII  .build(0x0006),
-            AtelOp.PUSHII  .build(0x050B),
-            AtelOp.CALLPOPA.build(0x01B8),
+            AtelOp.PUSHII  .build(0x0005),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.REPLACE_ENTRY_POINT),
 
             // runAndAwaitEnd w00e06 (Level 1)
             AtelOp.PUSHII  .build(0x0001),
@@ -819,11 +816,10 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.REQEW   .build(      ),
             AtelOp.POPA    .build(      ),
 
-            // call Common.obtainBrotherhood(w0, 6, 0xb) i.e. workers[0].entry_points[6] = original value
+            // call Common.RestoreEntryPoint(w0, 6) i.e. workers[0].entry_points[6] = original value
             AtelOp.PUSHII  .build(0x0000),
             AtelOp.PUSHII  .build(0x0006),
-            AtelOp.PUSHII  .build(0x000C),
-            AtelOp.CALLPOPA.build(0x01B8),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.RESTORE_ENTRY_POINT),
 
             // call Common.enablePlayerControl? [005Dh]();
             AtelOp.CALLPOPA.build(0x005d),
@@ -890,16 +886,16 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.PUSHY   .build( ),
             AtelOp.EQ      .build( ),
             //AtelOp.POPXCJMP.build(3),
-            // call Common.obtainBrotherhood(value, 7, 4) i.e. if value jump to customscripts[7]
-            AtelOp.PUSHII  .build(0x0704),
-            AtelOp.CALLPOPA.build(0x01B8),
+            // call Common.JumpIfTrue(value, 7) i.e. if value jump to customscripts[7]
+            AtelOp.PUSHII  .build(0x0007),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP_IF_TRUE),
             // (2 [00h] == case) -> j03 (5170)
             AtelOp.PUSHII  .build(2),
             AtelOp.PUSHY   .build( ),
             AtelOp.EQ      .build( ),
-            // call Common.obtainBrotherhood(value, 8, 4) i.e. if value jump to customscripts[8]
-            AtelOp.PUSHII  .build(0x0804),
-            AtelOp.CALLPOPA.build(0x01B8),
+            // call Common.JumpIfTrue(value, 8) i.e. if value jump to customscripts[8]
+            AtelOp.PUSHII  .build(0x0008),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP_IF_TRUE),
             // Jump to j02 (51A8)
             AtelOp.JMP     .build(2),
 
@@ -962,9 +958,9 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelOp.PUSHII   .build(0x0006),
             AtelOp.LS       .build(      ),
             //AtelOp.POPXNCJMP.build(0x0000),
-            // call Common.obtainBrotherhood(value, 7, 3) i.e. if value jump to customscripts[9]
-            AtelOp.PUSHII  .build(0x0903),
-            AtelOp.CALLPOPA.build(0x01B8),
+            // call Common.JumpIfFalse(value, 9) i.e. if !value jump to customscripts[9]
+            AtelOp.PUSHII  .build(0x0009),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP_IF_FALSE),
             // AE0200 AE0100 D88400                             call Common.waitForText [0084h](boxIndex=2 [02h], p2=1 [01h]);
             AtelOp.PUSHII  .build(0x0002),
             AtelOp.PUSHII  .build(0x0001),
@@ -1047,9 +1043,9 @@ public unsafe partial class ArchipelagoFFXModule {
             // call Common.enablePlayerControl? [005Dh]();
             AtelOp.CALLPOPA.build(0x005d),
             
-            // call Common.obtainBrotherhood(choice, 11, 3) i.e. if !choice jump to customscripts[B]
-            AtelOp.PUSHII  .build(0x0B03),
-            AtelOp.CALLPOPA.build(0x01B8),
+            // call Common.JumpIfFalse(choice, 11) i.e. if !choice jump to customscripts[B]
+            AtelOp.PUSHII  .build(0x000B),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP_IF_FALSE),
 
             
             // AE0000 D8BB00        call Common.00BB(p1=0 [00h]);
@@ -1277,8 +1273,8 @@ public unsafe partial class ArchipelagoFFXModule {
             case "hiku0801":
                 logger.Debug($"atel_event_setup: Inject Cid talk hook");
                 set(code_ptr, 0x4DC5, [
-                    AtelOp.PUSHII  .build(0x0002),
-                    AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0002) = jump to customScripts[0]
+                    AtelOp.PUSHII  .build(0x0000),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP), // Common.Jump(0002) = jump to customScripts[0]
                 ]);
                 break;
             case "hiku0500":
@@ -1292,14 +1288,14 @@ public unsafe partial class ArchipelagoFFXModule {
             case "sins0700":
                 logger.Debug($"atel_event_setup: Handle removing Aeons");
                 set(code_ptr, 0x5972, [
-                    AtelOp.PUSHII  .build(0x0202),
-                    AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0202) = jump to customScripts[2]
+                    AtelOp.PUSHII  .build(0x0002),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP), // Common.Jump(2) = jump to customScripts[2]
                     ]);
 
                 // Ending skip choice
                 set(code_ptr, 0x7391, [
-                    AtelOp.PUSHII  .build(0x0A02),
-                    AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0A02) = jump to customScripts[A]
+                    AtelOp.PUSHII  .build(0x000A),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP), // Common.Jump(A) = jump to customScripts[A]
                     ]);
                 break;
 
@@ -1320,8 +1316,8 @@ public unsafe partial class ArchipelagoFFXModule {
                 Globals.Atel.current_controller->worker(0xD)->table_jump[0] = 0x1951;
                 AtelBasicWorker* _0xd = Globals.Atel.current_controller->worker(0xD);
                 set(code_ptr, 0x1947, [
-                    AtelOp.PUSHII.build(0x0302),
-                    AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(0302) = jump to customScripts[3]
+                    AtelOp.PUSHII  .build(0x0003),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.JUMP), // Common.Jump(3) = jump to customScripts[3]
                     ]);
 
                 // Look up at tower
@@ -1632,9 +1628,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
             // Update region state. Also skips save sphere tutorial
             set(code_ptr, save_sphere_offset + 0x59B, [
-                AtelOp.PUSHII  .build(0x0008),
-                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-
+                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
                 AtelOp.JMP     .build(0x0023),
                 ]);
 
@@ -1660,9 +1654,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
             // Update region state. Also skips save sphere tutorial
             set(code_ptr, save_sphere_offset + 0x542, [
-                AtelOp.PUSHII  .build(0x0008),
-                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-
+                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
                 AtelOp.JMP     .build(0x001D),
                 ]);
 
@@ -1688,9 +1680,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
             // Update region state. Also skips save sphere tutorial
             set(code_ptr, save_sphere_offset + 0x542, [
-                AtelOp.PUSHII  .build(0x0008),
-                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-
+                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
                 AtelOp.JMP     .build(0x001D),
                 ]);
 
@@ -1715,9 +1705,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
             // Update region state. Also skips save sphere tutorial
             set(code_ptr, 0x3746, [
-                AtelOp.PUSHII  .build(0x0008),
-                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-
+                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
                 AtelOp.JMP     .build(0x001E),
                 ]);
 
@@ -1742,25 +1730,23 @@ public unsafe partial class ArchipelagoFFXModule {
 
             // Update region state. Also skips save sphere tutorial
             set(code_ptr, save_sphere_offset + 0x571, [
-                AtelOp.PUSHII  .build(0x0008),
-                        AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-
-                        AtelOp.JMP     .build(0x0023),
-                        ]);
+                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
+                AtelOp.JMP     .build(0x0023),
+                ]);
 
             // Board Airship option
             set(code_ptr, save_sphere_offset + 0x657, [
                 // call Common.00BB(0);
                 AtelOp.PUSHII  .build(0x0000),
-                        AtelOp.CALLPOPA.build(0x00BB),
-                        // call Common.00BC(0);
-                        AtelOp.PUSHII  .build(0x0000),
-                        AtelOp.CALLPOPA.build(0x00BC),
-                        // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
-                        AtelOp.PUSHII  .build(   382),
-                        AtelOp.PUSHII  .build(     0),
-                        AtelOp.CALLPOPA.build(0x010B),
-                        ]);
+                AtelOp.CALLPOPA.build(0x00BB),
+                // call Common.00BC(0);
+                AtelOp.PUSHII  .build(0x0000),
+                AtelOp.CALLPOPA.build(0x00BC),
+                // call Common.warpToMap?[010Bh](382, 0); (Airship Menu)
+                AtelOp.PUSHII  .build(   382),
+                AtelOp.PUSHII  .build(     0),
+                AtelOp.CALLPOPA.build(0x010B),
+                ]);
 
 
             save_sphere_offset = 0xFCF1;
@@ -1769,9 +1755,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
             // Update region state. Also skips save sphere tutorial
             set(code_ptr, 0x10278, [
-                AtelOp.PUSHII  .build(0x0008),
-                AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-
+                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
                 AtelOp.JMP     .build(0x0025),
                 ]);
 
@@ -1797,10 +1781,9 @@ public unsafe partial class ArchipelagoFFXModule {
             uint menu_string_offset = 0xD8;
             foreach (uint save_sphere_offset in (uint[])[0x507B, 0x5253]) {
                 set(code_ptr, save_sphere_offset + tutorial_offset, [
-                    AtelOp.PUSHII  .build(0x0008),
-                            AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-                            AtelOp.JMP     .build(0x0000),
-                            ]);
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
+                    AtelOp.JMP     .build(0x0000),
+                    ]);
 
                 set(code_ptr, save_sphere_offset + menu_string_offset + 3, AtelOp.PUSHII.build(0x8003)); // Set to customString[3]
             }
@@ -1868,9 +1851,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     }
                     // Update region state. Also skips save sphere tutorial
                     set(code_ptr, save_sphere_offset + tutorial_offset, [
-                        AtelOp.PUSHII  .build(0x0008),
-                        AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
-
+                        AtelOp.CALLPOPA.build((ushort)CustomCallTarget.UPDATE_REGION_STATE),
                         AtelOp.JMP     .build(tutorial_jump),
                         ]);
 
@@ -2070,146 +2051,7 @@ public unsafe partial class ArchipelagoFFXModule {
     private static int h_Common_obtainBrotherhoodRetInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         logger.Debug($"obtain_brotherhoodRetInt");
         if (atelStack->size > 0) {
-            int param = atelStack->pop_int();
-            int call_type = param & 0xff;
-            if (call_type == 1) {
-                logger.Info($"obtain_brotherhood: Set Airship Destinations");
-                set_airship_destinations();
-            }
-            else if (call_type == 2) { // Jump
-                int jump_index = param >> 8;
-                work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
-            }
-            else if (call_type == 3) { // Jump if false
-                int jump_index = param >> 8;
-                int val = atelStack->pop_int();
-                if (val == 0) {
-                    work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
-                }
-            }
-            else if (call_type == 4) { // Jump if true
-                int jump_index = param >> 8;
-                int val = atelStack->pop_int();
-                if (val == 1) {
-                    work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
-                }
-            }
-            else if (call_type == 5) { // Offset
-                int offset = atelStack->pop_int();
-                work->current_thread.pc += offset - 3;
-            }
-            else if (call_type == 6) { // Offset if false
-                int offset = atelStack->pop_int();
-                int val = atelStack->pop_int();
-                if (val == 0) {
-                    work->current_thread.pc += offset - 3;
-                }
-            }
-            else if (call_type == 7) { // Offset if true
-                int offset = atelStack->pop_int();
-                int val = atelStack->pop_int();
-                if (val == 1) {
-                    work->current_thread.pc += offset - 3;
-                }
-            }
-            else if (call_type == 8) { // Update region state
-                Vector3 playerPos = Globals.actors->chr_pos_vec.AsVector3();
-                var closestEntrance = Atel.controllers[0].worker(0)->script_chunk->map_entrances.ToArray()
-                    .Select((entrance, index) => new {Index=index, Entrance=entrance, Distance=(playerPos - entrance.pos).Length()})
-                    .MinBy(tuple => tuple.Distance);
-                if (closestEntrance?.Distance < 100) {
-                    last_entrance_id = (ushort)closestEntrance.Index;
-                    logger.Debug($"Entrance within 100: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
-                }
-
-                update_region_state(save_data->current_room_id, save_data->current_spawnpoint);
-                refill_inventory();
-            }
-            else if (call_type == 9) { // Lock party member
-                int party_member = atelStack->pop_int();
-                locked_characters[party_member] = true;
-                if (party_member == PlySaveId.PC_MAGUS1) {
-                    locked_characters[PlySaveId.PC_MAGUS2] = true;
-                    locked_characters[PlySaveId.PC_MAGUS3] = true;
-                }
-            }
-            else if (call_type == 0xA) { // Check if final battle is unlocked
-                bool goal_requirement = false;
-                bool primer_requirement = false;
-
-                switch (seed.GoalRequirement) {
-                    case GoalRequirement.None:
-                        goal_requirement = true;
-                        break;
-                    case GoalRequirement.PartyMembers:
-                        if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8))
-                            goal_requirement = true;
-                        //if (unlocked_characters.All(c => c.Value)) {
-                        //    return 1;
-                        //}
-                        break;
-                    case GoalRequirement.PartyMembersAndAeons:
-                        if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers)
-                            goal_requirement = true;
-                        break;
-                    case GoalRequirement.Pilgrimage:
-                        if (local_checked_locations.Contains( 8 | (long)ArchipelagoLocationType.PartyMember) &&
-                            local_checked_locations.Contains( 9 | (long)ArchipelagoLocationType.PartyMember) &&
-                            local_checked_locations.Contains(10 | (long)ArchipelagoLocationType.PartyMember) &&
-                            local_checked_locations.Contains(11 | (long)ArchipelagoLocationType.PartyMember) &&
-                            local_checked_locations.Contains(12 | (long)ArchipelagoLocationType.PartyMember) &&
-                            local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss       )) {
-                            goal_requirement = true;
-                        }
-                        break;
-                    case GoalRequirement.Nemesis:
-                        if (local_checked_locations.Contains(83 | (long)ArchipelagoLocationType.Boss)) {
-                            goal_requirement = true;
-                        }
-                        break;
-                }
-
-                if (seed.RequiredPrimers > 0) {
-                    int collected_primers = 0;
-                    for (int i = 0; i < 26; i++) {
-                        collected_primers += Globals.save_data->unlocked_primers.get_bit(i) ? 1 : 0;
-                    }
-
-                    if (collected_primers >= seed.RequiredPrimers)
-                        primer_requirement = true;
-                }
-                else
-                    primer_requirement = true;
-
-
-                return goal_requirement && primer_requirement ? 1 : 0;
-            }
-            else if (call_type == 0xB) { // Replace worker entry point
-                int jump_index = param >> 8;
-                int entryPoint = atelStack->pop_int();
-                int workerIndex = atelStack->pop_int();
-
-                AtelBasicWorker* targetWorker = Atel.controllers[0].worker(workerIndex);
-
-                if (!originalEntryPoints.ContainsKey((workerIndex, entryPoint))) {
-                    originalEntryPoints[(workerIndex, entryPoint)] = targetWorker->table_entry_points[entryPoint];
-                }
-
-                int targetAddress = (int)customScriptHandles[jump_index].AddrOfPinnedObject();
-
-                int addressOffset = targetAddress - (int)targetWorker->code_ptr;
-
-                targetWorker->table_entry_points[entryPoint] = (uint)addressOffset;
-            }
-            else if (call_type == 0xC) { // Restore worker entry point
-                int entryPoint = atelStack->pop_int();
-                int workerIndex = atelStack->pop_int();
-                if (originalEntryPoints.TryGetValue((workerIndex, entryPoint), out uint value)) {
-                    Atel.controllers[0].worker(workerIndex)->table_entry_points[entryPoint] = value;
-                }
-            }
-
-            return 1;
+            throw new Exception($"Too many parameters ({atelStack->size}) passed to obtainBrotherhood!");
         }
         if (item_locations.other.TryGetValue(0, out var item)) {
             obtain_item(item.id);
@@ -3475,6 +3317,17 @@ public unsafe partial class ArchipelagoFFXModule {
         SHOW_CURRENT_AIRSHIP_LOCATION,
         HIDE_CURRENT_AIRSHIP_LOCATION,
         TRANSITION_TO_REGION,
+        JUMP,
+        JUMP_IF_FALSE,
+        JUMP_IF_TRUE,
+        OFFSET,
+        OFFSET_IF_FALSE,
+        OFFSET_IF_TRUE,
+        UPDATE_REGION_STATE,
+        LOCK_PARTY_MEMBER,
+        IS_GOAL_UNLOCKED,
+        REPLACE_ENTRY_POINT,
+        RESTORE_ENTRY_POINT,
     }
 
     static AtelCallTarget[] customNameSpace = {
@@ -3495,8 +3348,17 @@ public unsafe partial class ArchipelagoFFXModule {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_ShowCurrentAirshipLocation)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_HideCurrentAirshipLocation)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_TransitionToRegion)},
-        
-
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_Jump)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_JumpIfFalse)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_JumpIfTrue)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_Offset)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_OffsetIfFalse)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_OffsetIfTrue)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_UpdateRegionState)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_LockPartyMember)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsGoalUnlocked)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_ReplaceEntryPoint)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_RestoreEntryPoint)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
@@ -3648,8 +3510,7 @@ public unsafe partial class ArchipelagoFFXModule {
             // Restore entry point
             AtelOp.PUSHII  .build(target_worker),
             AtelOp.PUSHII  .build(entry_point),
-            AtelOp.PUSHII  .build(0x000C),
-            AtelOp.CALLPOPA.build(0x01B8),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.RESTORE_ENTRY_POINT),
             // Restore cross
             AtelOp.PUSHII  .build(current_worker),
             AtelOp.CALLPOPA.build((ushort)CustomCallTarget.RESTORE_INTERACTION),
@@ -3788,6 +3649,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     public static int CT_RetInt_ShowCurrentAirshipLocation(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug("ShowCurrentAirshipLocation");
         customStringDrawInfos[$"current destination"] = new CustomStringDrawInfo(airship_destination_names[save_data->current_airship_location - 1], new(52f, 73f), 1f);
 
         // AE0300 D80F80 call Map.?show2DLayer [800Fh](layerIndex=3 [03h]);
@@ -3798,6 +3660,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     public static int CT_RetInt_HideCurrentAirshipLocation(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        logger.Debug("HideCurrentAirshipLocation");
         customStringDrawInfos.Remove($"current destination");
 
         // AE0300 D81080 call Map.?hide2DLayer [8010h](layerIndex=3 [03h]);
@@ -3832,6 +3695,160 @@ public unsafe partial class ArchipelagoFFXModule {
         atelStack->push_int(entrance);
         h_Common_transitionToMap(work, storage, atelStack);
 
+        return 1;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_Jump(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int jump_index = atelStack->pop_int();
+        work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_JumpIfFalse(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int jump_index = atelStack->pop_int();
+        int val = atelStack->pop_int();
+        if (val == 0) {
+            work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
+        }
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_JumpIfTrue(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int jump_index = atelStack->pop_int();
+        int val = atelStack->pop_int();
+        if (val == 1) {
+            work->current_thread.pc = (byte*)customScriptHandles[jump_index].AddrOfPinnedObject() - 3;
+        }
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_Offset(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int offset = atelStack->pop_int();
+        work->current_thread.pc += offset - 3;
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_OffsetIfFalse(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int offset = atelStack->pop_int();
+        int val = atelStack->pop_int();
+        if (val == 0) {
+            work->current_thread.pc += offset - 3;
+        }
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_OffsetIfTrue(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int offset = atelStack->pop_int();
+        int val = atelStack->pop_int();
+        if (val == 1) {
+            work->current_thread.pc += offset - 3;
+        }
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_UpdateRegionState(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        Vector3 playerPos = Globals.actors->chr_pos_vec.AsVector3();
+        var closestEntrance = Atel.controllers[0].worker(0)->script_chunk->map_entrances.ToArray()
+                    .Select((entrance, index) => new {Index=index, Entrance=entrance, Distance=(playerPos - entrance.pos).Length()})
+                    .MinBy(tuple => tuple.Distance);
+        if (closestEntrance?.Distance < 100) {
+            last_entrance_id = (ushort)closestEntrance.Index;
+            logger.Debug($"Entrance within 100: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
+        }
+
+        update_region_state(save_data->current_room_id, save_data->current_spawnpoint);
+        refill_inventory();
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_LockPartyMember(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int party_member = atelStack->pop_int();
+        locked_characters[party_member] = true;
+        if (party_member == PlySaveId.PC_MAGUS1) {
+            locked_characters[PlySaveId.PC_MAGUS2] = true;
+            locked_characters[PlySaveId.PC_MAGUS3] = true;
+        }
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_IsGoalUnlocked(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        bool goal_requirement = false;
+        bool primer_requirement = false;
+
+        switch (seed.GoalRequirement) {
+            case GoalRequirement.None:
+                goal_requirement = true;
+                break;
+            case GoalRequirement.PartyMembers:
+                if (unlocked_characters.Where(x => x.Key < 8 && x.Value).Count() >= Math.Min(seed.RequiredPartyMembers, 8))
+                    goal_requirement = true;
+                //if (unlocked_characters.All(c => c.Value)) {
+                //    return 1;
+                //}
+                break;
+            case GoalRequirement.PartyMembersAndAeons:
+                if (unlocked_characters.Where(x => x.Key < 16 && x.Value).Count() >= seed.RequiredPartyMembers)
+                    goal_requirement = true;
+                break;
+            case GoalRequirement.Pilgrimage:
+                if (local_checked_locations.Contains(8 | (long)ArchipelagoLocationType.PartyMember) &&
+                    local_checked_locations.Contains(9 | (long)ArchipelagoLocationType.PartyMember) &&
+                    local_checked_locations.Contains(10 | (long)ArchipelagoLocationType.PartyMember) &&
+                    local_checked_locations.Contains(11 | (long)ArchipelagoLocationType.PartyMember) &&
+                    local_checked_locations.Contains(12 | (long)ArchipelagoLocationType.PartyMember) &&
+                    local_checked_locations.Contains(37 | (long)ArchipelagoLocationType.Boss)) {
+                    goal_requirement = true;
+                }
+                break;
+            case GoalRequirement.Nemesis:
+                if (local_checked_locations.Contains(83 | (long)ArchipelagoLocationType.Boss)) {
+                    goal_requirement = true;
+                }
+                break;
+        }
+
+        if (seed.RequiredPrimers > 0) {
+            int collected_primers = 0;
+            for (int i = 0; i < 26; i++) {
+                collected_primers += Globals.save_data->unlocked_primers.get_bit(i) ? 1 : 0;
+            }
+
+            if (collected_primers >= seed.RequiredPrimers)
+                primer_requirement = true;
+        }
+        else
+            primer_requirement = true;
+
+
+        return goal_requirement && primer_requirement ? 1 : 0;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_ReplaceEntryPoint(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int script_index = atelStack->pop_int();
+        int entryPoint   = atelStack->pop_int();
+        int workerIndex  = atelStack->pop_int();
+
+        AtelBasicWorker* targetWorker = Atel.controllers[0].worker(workerIndex);
+
+        if (!originalEntryPoints.ContainsKey((workerIndex, entryPoint))) {
+            originalEntryPoints[(workerIndex, entryPoint)] = targetWorker->table_entry_points[entryPoint];
+        }
+
+        int targetAddress = (int)customScriptHandles[script_index].AddrOfPinnedObject();
+
+        int addressOffset = targetAddress - (int)targetWorker->code_ptr;
+
+        targetWorker->table_entry_points[entryPoint] = (uint)addressOffset;
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_RestoreEntryPoint(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int entryPoint = atelStack->pop_int();
+        int workerIndex = atelStack->pop_int();
+        if (originalEntryPoints.TryGetValue((workerIndex, entryPoint), out uint value)) {
+            Atel.controllers[0].worker(workerIndex)->table_entry_points[entryPoint] = value;
+        }
         return 1;
     }
 }
