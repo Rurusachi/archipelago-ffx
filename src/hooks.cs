@@ -3638,7 +3638,7 @@ public unsafe partial class ArchipelagoFFXModule {
         for (uint i = 0; i < 15; i++) {
             uint destination_index = airshipDestinations[i+airshipDestinationsOffset];
             if (destination_index != 0) {
-                customStringDrawInfos[$"destination {i}"] = new CustomStringDrawInfo(airship_destination_names[destination_index - 1], new(57f, 108f + 16.857f * i), 1f);
+                customStringDrawInfos[$"destination {i}"] = new CustomStringDrawInfo(airship_destination_names[destination_index], new(57f, 108f + 16.857f * i), 1f);
             }
             else {
                 customStringDrawInfos.Remove($"destination {i}");
@@ -3661,7 +3661,7 @@ public unsafe partial class ArchipelagoFFXModule {
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     public static int CT_RetInt_ShowCurrentAirshipLocation(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         logger.Debug("ShowCurrentAirshipLocation");
-        customStringDrawInfos[$"current destination"] = new CustomStringDrawInfo(airship_destination_names[save_data->current_airship_location - 1], new(52f, 73f), 1f);
+        customStringDrawInfos[$"current destination"] = new CustomStringDrawInfo(airship_destination_names[save_data->current_airship_location], new(52f, 73f), 1f);
 
         // AE0300 D80F80 call Map.?show2DLayer [800Fh](layerIndex=3 [03h]);
         atelStack->push_int(3);
