@@ -1175,7 +1175,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 // Send Anima
                 set(code_ptr, 0x1FB4, [
                     AtelOp.PUSHII   .build(13),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
+                    AtelOp.CALLPOPA .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
                     ]);
                 break;
             case "slik0000":
@@ -1522,8 +1522,8 @@ public unsafe partial class ArchipelagoFFXModule {
 
                 // Send Magus Sisters
                 set(code_ptr, 0x5B9C, [
-                    AtelOp.PUSHII   .build(15), // stack [15]
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
+                    AtelOp.PUSHII  .build(15), // stack [15]
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
                     ]);
                 break;
             case "bltz0200":
@@ -1555,8 +1555,8 @@ public unsafe partial class ArchipelagoFFXModule {
             case "nagi0600":
                 // Send Yojimbo
                 set(code_ptr, [0x261A, 0x2686, 0x28FB, 0x2B20, 0x2D45, 0x2F39], [
-                    AtelOp.PUSHII   .build(14),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
+                    AtelOp.PUSHII  .build(14),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
                     ]);
                 break;
             case "nagi0700":
