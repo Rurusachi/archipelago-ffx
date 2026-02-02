@@ -1177,9 +1177,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.PUSHII   .build(13),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
                     ]);
-                
                 break;
-
             case "slik0000":
                 // Set destination to Besaid
                 ((byte*)((int)save_data + 0x0C7A))->set_bits<byte>(0, 2, 2);
@@ -1237,6 +1235,10 @@ public unsafe partial class ArchipelagoFFXModule {
                 // Hide current airship position
                 set(code_ptr, 0x3C07, [
                     .. atelNOPArray(3),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_CURRENT_AIRSHIP_LOCATION),
+                    ]);
+                set(code_ptr, 0x47FB, [
+                    .. atelNOPArray(7),
                     AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_CURRENT_AIRSHIP_LOCATION),
                     ]);
 
