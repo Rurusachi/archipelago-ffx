@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
+using Archipelago.MultiClient.Net.Enums;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 
@@ -64,6 +65,7 @@ public static class ArchipelagoData {
         PartyMembers,
         Pilgrimage,
         PartyMembersAndAeons,
+        Nemesis
     }
 
     public static RegionEnum[] pilgrimageRegions = [
@@ -448,7 +450,7 @@ public static class ArchipelagoData {
             ] },
         { RegionEnum.MonsterArena, [
             307,
-            ] }
+            ] },
     };
 
     public static readonly Lookup<int, RegionEnum> id_to_regions = (Lookup<int, RegionEnum>)region_to_ids.SelectMany(region => region.Value, (region, id) => new{region.Key, id}).ToLookup(pair => pair.id, pair => pair.Key);
@@ -916,6 +918,14 @@ public static class ArchipelagoData {
         //
         //    }
         //}
+
+        // Bikanel forced Zu fight
+        {"bika00_10", () =>  FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_LOGIC_ZU"] = true },
+    };
+
+    public static Dictionary<string, Action> encounterEscapeActions => new() {
+        // Bikanel forced Zu fight
+        {"bika00_10", () =>  FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_LOGIC_ZU"] = true },
     };
 
     public static Dictionary<string, Action> encounterToActionDict => new(){
@@ -926,9 +936,6 @@ public static class ArchipelagoData {
         {"lchb07_00", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_AURON], true, false) },
         // Yenke and Biran. Can only target Kimahri and scale on his stats.
         {"mtgz01_10", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_KIMAHRI], true, false) },
-
-        // Bikanel forced Zu fight. Maybe not needed?
-        //{"bika00_10", () => ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_LULU, PlySaveId.PC_AURON], true, false) },
 
         // Tutorials
         // Will softlock without Lulu
@@ -1053,59 +1060,92 @@ public static class ArchipelagoData {
 
 
     public static Dictionary<string, int[]> encounterToLocationDict = new(){
-        {"bjyt04_01",  [0]}, // Baaj Temple: Klikk Defeated
-        {"cdsp07_00",  [1]}, // Al Bhed Ship: Tros Defeated
-        {"bsil07_70",  [2]}, // Besaid: Dark Valefor
-        {"slik02_00",  [3]}, // S.S. Liki: Sin Fin
-        {"slik02_01",  [4]}, // S.S. Liki: Sinspawn Echuilles
-        {"klyt00_00",  [5]}, // Kilika: Lord Ochu
-        {"klyt01_00",  [6]}, // Kilika: Sinspawn Geneaux
-        {"cdsp02_00",  [7]}, // Luca: Oblitzerator defeated
-        {"mihn02_00",  [8]}, // Mi'Hen Highroad: Chocobo Eater
-        {"kino02_00",  [9]}, // Mushroom Rock Road: Sinspawn Gui 2
-        {"kino03_10", [10]}, // Mushroom Rock Road: Sinspawn Gui
-        {"genk09_00", [12]}, // Moonflow: Extractor
-        {"kami03_71", [13]}, // Thunder Plains: Dark Ixion
-        {"mcfr03_00", [14]}, // Macalania Woods: Spherimorph
-        {"maca02_00", [15]}, // Lake Macalania: Crawler
-        {"mcyt06_00", [16]}, // Lake Macalania: Seymour/Anima
-        {"maca02_01", [17]}, // Lake Macalania: Wendigo
-        {"mcyt00_70", [18]}, // Lake Macalania: Dark Shiva
-        {"bika03_70", [19]}, // Bikanel: Dark Ifrit
-        {"hiku15_00", [20]}, // Airship: Evrae
-        {"ssbt00_00", [21]}, // Airship: Sin Left Fin
-        {"ssbt01_00", [22]}, // Airship: Sin Right Fin
-        {"ssbt02_00", [23]}, // Airship: Sinspawn Genais and Core
-        {"ssbt03_00", [24]}, // Airship: Overdrive Sin
-        {"hiku15_70", [25]}, // Airship: Penance
-        {"bvyt09_12", [26]}, // Bevelle: Isaaru (probably?)
-        {"stbv00_10", [27]}, // Bevelle: Evrae Altana
-        {"stbv01_10", [28]}, // Bevelle: Seymour Natus
-        {"nagi01_00", [29]}, // Calm Lands: Defender X
-        {"zzzz02_76", [30]}, // Monster Arena: Nemesis
-        {"nagi05_74", [31]}, // Cavern of the Stolen Fayth: Dark Yojimbo
-        {"mtgz01_10", [32]}, // Gagazet (Outside): Biran and Yenke
-        {"mtgz02_00", [33]}, // Gagazet (Outside): Seymour Flux
-        {"mtgz01_70", [34]}, // Gagazet (Outside): Dark Anima
-        {"mtgz08_00", [35]}, // Gagazet: Sanctuary Keeper
-        {"dome02_00", [36]}, // Zanarkand: Spectral Keeper
-        {"dome06_00", [37]}, // Zanarkand: Yunalesca
-        {"dome06_70", [38]}, // Zanarkand: Dark Bahamut
-        {"sins03_00", [39]}, // Sin: Seymour Omnis
-        {"sins06_00", [40]}, // Sin: Braska's Final Aeon
-        {"sins07_0x", [41]}, // Sin: Contest of Aeons
-        {"sins07_10", [42]}, // Sin: Yu Yevon
-        {"omeg00_10", [43]}, // Omega Ruins: Ultima Weapon
-        {"omeg01_10", [44]}, // Omega Ruins: Omega Weapon
-        {"kino00_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
-        {"kino01_70", [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
-        {"kino01_72", [45, 46]}, // Dark Mindy, Dark Sandy
-        {"kino05_71", [45]}, // Dark Mindy
-        {"kino05_70", [46]}, // Dark Sandy
-        {"kino01_71", [47]}, // Dark Cindy
-        {"bjyt02_02", [48]}, // Geosgaeno
-        {"bika00_10", [84]}, // Bikanel: Zu
-        
+        {"bjyt04_01",   [0]}, // Baaj Temple: Klikk Defeated
+        {"cdsp07_00",   [1]}, // Al Bhed Ship: Tros Defeated
+        {"bsil07_70",   [2]}, // Besaid: Dark Valefor
+        {"slik02_00",   [3]}, // S.S. Liki: Sin Fin
+        {"slik02_01",   [4]}, // S.S. Liki: Sinspawn Echuilles
+        {"klyt00_00",   [5]}, // Kilika: Lord Ochu
+        {"klyt01_00",   [6]}, // Kilika: Sinspawn Geneaux
+        {"cdsp02_00",   [7]}, // Luca: Oblitzerator defeated
+        {"mihn02_00",   [8]}, // Mi'Hen Highroad: Chocobo Eater
+        {"kino02_00",   [9]}, // Mushroom Rock Road: Sinspawn Gui 2
+        {"kino03_10",  [10]}, // Mushroom Rock Road: Sinspawn Gui
+        {"genk09_00",  [12]}, // Moonflow: Extractor
+        {"kami03_71",  [13]}, // Thunder Plains: Dark Ixion
+        {"mcfr03_00",  [14]}, // Macalania Woods: Spherimorph
+        {"maca02_00",  [15]}, // Lake Macalania: Crawler
+        {"mcyt06_00",  [16]}, // Lake Macalania: Seymour/Anima
+        {"maca02_01",  [17]}, // Lake Macalania: Wendigo
+        {"mcyt00_70",  [18]}, // Lake Macalania: Dark Shiva
+        {"bika03_70",  [19]}, // Bikanel: Dark Ifrit
+        {"hiku15_00",  [20]}, // Airship: Evrae
+        {"ssbt00_00",  [21]}, // Airship: Sin Left Fin
+        {"ssbt01_00",  [22]}, // Airship: Sin Right Fin
+        {"ssbt02_00",  [23]}, // Airship: Sinspawn Genais and Core
+        {"ssbt03_00",  [24]}, // Airship: Overdrive Sin
+        {"hiku15_70",  [25]}, // Airship: Penance
+        {"bvyt09_12",  [26]}, // Bevelle: Isaaru (probably?)
+        {"stbv00_10",  [27]}, // Bevelle: Evrae Altana
+        {"stbv01_10",  [28]}, // Bevelle: Seymour Natus
+        {"nagi01_00",  [29]}, // Calm Lands: Defender X
+        {"nagi05_74",  [31]}, // Cavern of the Stolen Fayth: Dark Yojimbo
+        {"mtgz01_10",  [32]}, // Gagazet (Outside): Biran and Yenke
+        {"mtgz02_00",  [33]}, // Gagazet (Outside): Seymour Flux
+        {"mtgz01_70",  [34]}, // Gagazet (Outside): Dark Anima
+        {"mtgz08_00",  [35]}, // Gagazet: Sanctuary Keeper
+        {"dome02_00",  [36]}, // Zanarkand: Spectral Keeper
+        {"dome06_00",  [37]}, // Zanarkand: Yunalesca
+        {"dome06_70",  [38]}, // Zanarkand: Dark Bahamut
+        {"sins03_00",  [39]}, // Sin: Seymour Omnis
+        {"sins06_00",  [40]}, // Sin: Braska's Final Aeon
+        {"sins07_0x",  [41]}, // Sin: Contest of Aeons
+        {"sins07_10",  [42]}, // Sin: Yu Yevon
+        {"omeg00_10",  [43]}, // Omega Ruins: Ultima Weapon
+        {"omeg01_10",  [44]}, // Omega Ruins: Omega Weapon
+        {"kino00_70",  [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
+        {"kino01_70",  [45, 46, 47]}, // Dark Mindy, Dark Sandy, Dark Cindy
+        {"kino01_72",  [45, 46]}, // Dark Mindy, Dark Sandy
+        {"kino05_71",  [45]}, // Dark Mindy
+        {"kino05_70",  [46]}, // Dark Sandy
+        {"kino01_71",  [47]}, // Dark Cindy
+        {"bjyt02_02",  [48]}, // Geosgaeno
+        {"zzzz03_00",  [49]}, // Stratoavis
+        {"zzzz03_04",  [50]}, // Malboro Menace
+        {"zzzz03_05",  [51]}, // Kottos
+        {"zzzz03_09",  [52]}, // Coeurlregina
+        {"zzzz03_11",  [53]}, // Jormungand
+        {"zzzz03_14",  [54]}, // Cactuar King
+        {"zzzz03_18",  [55]}, // Espada
+        {"zzzz03_01",  [56]}, // Abyss Worm
+        {"zzzz03_08",  [57]}, // Chimerageist
+        {"zzzz03_17",  [58]}, // Don Tonberry
+        {"zzzz03_07",  [59]}, // Catoblepas
+        {"zzzz03_12",  [60]}, // Abaddon
+        {"zzzz03_15",  [61]}, // Vorban
+        {"zzzz02_94",  [62]}, // Fenrir
+        {"zzzz02_96",  [63]}, // Ornitholestes
+        {"zzzz02_97",  [64]}, // Pteryx
+        {"zzzz02_98",  [65]}, // Hornet
+        {"zzzz02_93",  [66]}, // Vidatu
+        {"zzzz02_99",  [67]}, // One-Eye
+        {"zzzz02_95",  [68]}, // Jumbo Flan
+        {"zzzz03_06",  [69]}, // Nega Elemental
+        {"zzzz02_92",  [70]}, // Tanket
+        {"zzzz03_03",  [71]}, // Fafnir
+        {"zzzz03_16",  [72]}, // Sleep Sprout
+        {"zzzz03_13",  [73]}, // Bomb King
+        {"zzzz03_02",  [74]}, // Juggernaut
+        {"zzzz03_10",  [75]}, // Ironclad
+        {"zzzz02_79",  [76]}, // Earth Eater
+        {"zzzz02_81",  [77]}, // Greater Sphere
+        {"zzzz02_77",  [78]}, // Catastrophe
+        {"zzzz02_82",  [79]}, // Th'uban
+        {"zzzz00_105", [80]}, // Neslug
+        {"zzzz02_80",  [81]}, // Ultima Buster
+        {"zzzz02_83",  [82]}, // Shinryu
+        {"zzzz02_76",  [83]}, // Monster Arena: Nemesis
+
 
         //{"kino00_70", 45}, {"kino01_70", 45}, {"kino01_72", 45}, {"kino05_71", 45}, // Dark Mindy
         //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy

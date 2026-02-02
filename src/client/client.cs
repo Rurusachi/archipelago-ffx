@@ -243,6 +243,7 @@ public unsafe static void connectHandlers() {
         Other         = 0x6000,
         Recruit       = 0x7000,
         SphereGrid    = 0x8000,
+        Capture       = 0x9000,
     }
 
     public static bool sendLocation(long locationId, ArchipelagoLocationType locationType) {
