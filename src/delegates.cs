@@ -2,9 +2,9 @@
 using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.Atel;
 using Fahrenheit.Core.FFX.Battle;
-using Hexa.NET.DirectXTex;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using TerraFX.Interop.DirectX;
 
 namespace Fahrenheit.Modules.ArchipelagoFFX;
 public static unsafe class delegates {
@@ -103,7 +103,15 @@ public static unsafe class delegates {
     public delegate int Common_00D6ResultInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
     public const nint __addr_Common_00D6ResultInt = 0x0045dcf0;
 
+    // Map.show2DLayer
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int Map_show2DLayerResultInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Map_show2DLayerResultInt = 0x0051b1a0;
 
+    // Map.hide2DLayer
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int Map_hide2DLayerResultInt(AtelBasicWorker* work, int* storage, AtelStack* atelStack);
+    public const nint __addr_Map_hide2DLayerResultInt = 0x0051b1e0;
 
     // Common.01D1Init
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -286,21 +294,29 @@ public static unsafe class delegates {
     public const    nint __addr_ClusterManager_FUN_0065ee30 = 0x0025ee30;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate int Phyre_PFramework_PApplication_FixupClusters(nint cluster, int param_1);
+    public delegate int Phyre_PFramework_PApplication_FixupClusters(PCluster* cluster, int param_1);
     public const    nint __addr_Phyre_PFramework_PApplication_FixupClusters = 0x00223740;
 
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-    public delegate nint ClusterManager_loadPCluster(nint _this, nint filePath);
+    public delegate PCluster* ClusterManager_loadPCluster(nint _this, nint filePath);
     public const    nint __addr_ClusterManager_loadPCluster = 0x0029ba80;
 
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-    public delegate void ClusterManager_releasePCluster(nint _this, nint cluster);
+    public delegate void ClusterManager_releasePCluster(nint _this, PCluster* cluster);
     public const    nint __addr_ClusterManager_releasePCluster = 0x0029bef0;
 
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-    public delegate nint ClusterManager_getPClusterByName(nint _this, nint filePath);
+    public delegate PCluster* ClusterManager_getPClusterByName(nint _this, nint filePath);
+    public const    nint __addr_ClusterManager_getPClusterByName = 0x0029b5f0;
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void fiosUnifyFilename(nint in_string, nint out_buffer, int buffer_size);
+    public const    nint __addr_fiosUnifyFilename = 0x002799d0;
+    
 
+    [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 0x20)]
+    public struct PCluster {
+    }
 
 
 
@@ -381,6 +397,11 @@ public static unsafe class delegates {
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
     public unsafe delegate void FmodVoice_initList(nint fmodVoice);
     public const nint __addr_FmodVoice_initList = 0x0030ac80;
+
+    // Set soundtrack type (0 = arranged, 1 = original)
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void FUN_008cc120(int param_1);
+    public const nint __addr_FUN_008cc120 = 0x004cc120;
 
 
 
@@ -490,5 +511,28 @@ public static unsafe class delegates {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int UpgradeBrotherhood(int level);
     public static int __addr_UpgradeBrotherhood = 0x004596a0;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate int FUN_00867370(byte opcode, AtelBasicWorker* work, AtelWorkThread* thread, AtelStack* stack, uint param_5);
+    public static int __addr_FUN_00867370 = 0x00467370;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_008671d0(byte opcode, AtelWorkThread* thread, AtelBasicWorker* work, AtelStack* stack);
+    public static int __addr_FUN_008671d0 = 0x004671d0;
+
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void TOMkpCrossExtMesFontLClutTypeRGBA(
+        uint p1,
+        byte* text,
+        float x,
+        float y,
+        byte color,
+        byte p6,
+        byte tint_r, byte tint_g, byte tint_b, byte tint_a,
+        float scale,
+        float _);
+    public static int __addr_TOMkpCrossExtMesFontLClutTypeRGBA = 0x501700;
 }
 

@@ -148,6 +148,8 @@ public unsafe partial class ArchipelagoFFXModule {
     private static ClusterManager_loadPCluster _ClusterManager_loadPCluster;
     private static Phyre_PFramework_PApplication_FixupClusters _Phyre_PFramework_PApplication_FixupClusters;
     private static ClusterManager_releasePCluster _ClusterManager_releasePCluster;
+    private static ClusterManager_getPClusterByName _ClusterManager_getPClusterByName;
+    private static fiosUnifyFilename _fiosUnifyFilename;
 
 
     // ObtainTreasure related
@@ -185,6 +187,13 @@ public unsafe partial class ArchipelagoFFXModule {
     // Custom namespace
     private static FhMethodHandle<AtelInitTotal> _AtelInitTotal;
     public static void AtelSetUpCallFunc(int id, nint nameSpacePtr) => FhUtil.get_fptr<AtelSetUpCallFunc>(__addr_AtelSetUpCallFunc)(id, nameSpacePtr);
+
+    // Airship menu related
+    public static FUN_00867370 _FUN_00867370;
+    public static FUN_008671d0 _FUN_008671d0;
+    public static TOMkpCrossExtMesFontLClutTypeRGBA _TOMkpCrossExtMesFontLClutTypeRGBA;
+    public static Map_show2DLayerResultInt _Map_show2DLayerResultInt;
+    public static Map_hide2DLayerResultInt _Map_hide2DLayerResultInt;
 
 
     public void init_hooks() {
@@ -351,6 +360,8 @@ public unsafe partial class ArchipelagoFFXModule {
         _ClusterManager_loadPCluster = FhUtil.get_fptr<ClusterManager_loadPCluster>(__addr_ClusterManager_loadPCluster);
         _Phyre_PFramework_PApplication_FixupClusters = FhUtil.get_fptr<Phyre_PFramework_PApplication_FixupClusters>(__addr_Phyre_PFramework_PApplication_FixupClusters);
         _ClusterManager_releasePCluster = FhUtil.get_fptr<ClusterManager_releasePCluster>(__addr_ClusterManager_releasePCluster);
+        _ClusterManager_getPClusterByName = FhUtil.get_fptr<ClusterManager_getPClusterByName>(__addr_ClusterManager_getPClusterByName);
+        _fiosUnifyFilename = FhUtil.get_fptr<fiosUnifyFilename>(__addr_fiosUnifyFilename);
 
         // Non-loading FMV
         _graphicInitFMVPlayer = new FhMethodHandle<graphicInitFMVPlayer>(this, game, __addr_graphicInitFMVPlayer, h_graphicInitFMVPlayer);
@@ -380,6 +391,11 @@ public unsafe partial class ArchipelagoFFXModule {
         // Custom namespace
         _AtelInitTotal = new FhMethodHandle<AtelInitTotal>(this, game, __addr_AtelInitTotal, h_AtelInitTotal);
 
+        _FUN_00867370 = FhUtil.get_fptr<FUN_00867370>(__addr_FUN_00867370);
+        _FUN_008671d0 = FhUtil.get_fptr<FUN_008671d0>(__addr_FUN_008671d0);
+        _TOMkpCrossExtMesFontLClutTypeRGBA = FhUtil.get_fptr<TOMkpCrossExtMesFontLClutTypeRGBA>(__addr_TOMkpCrossExtMesFontLClutTypeRGBA);
+        _Map_show2DLayerResultInt = FhUtil.get_fptr<Map_show2DLayerResultInt>(__addr_Map_show2DLayerResultInt);
+        _Map_hide2DLayerResultInt = FhUtil.get_fptr<Map_hide2DLayerResultInt>(__addr_Map_hide2DLayerResultInt);
     }
 
     public static int ignore_this = 11;
@@ -426,20 +442,20 @@ public unsafe partial class ArchipelagoFFXModule {
 
     }
 
-    private static void set(byte* code_ptr, int offset, AtelInst opcode) {
+    private static void set(byte* code_ptr, uint offset, AtelInst opcode) {
         byte* ptr = code_ptr + offset;
         foreach (byte b in opcode.to_bytes()) {
             *ptr = b;
             ptr++;
         }
     }
-    private static void set(byte* code_ptr, int[] offsets, AtelInst opcode) {
-        foreach (int offset in offsets) {
+    private static void set(byte* code_ptr, uint[] offsets, AtelInst opcode) {
+        foreach (uint offset in offsets) {
             set(code_ptr, offset, opcode);
         }
     }
 
-    private static void set(byte* code_ptr, int offset, AtelInst[] opcodes) {
+    private static void set(byte* code_ptr, uint offset, AtelInst[] opcodes) {
         byte* ptr = code_ptr + offset;
         foreach (AtelInst op in opcodes) {
             foreach (byte b in op.to_bytes()) {
@@ -448,8 +464,8 @@ public unsafe partial class ArchipelagoFFXModule {
             }
         }
     }
-    private static void set(byte* code_ptr, int[] offsets, AtelInst[] opcodes) {
-        foreach (int offset in offsets) {
+    private static void set(byte* code_ptr, uint[] offsets, AtelInst[] opcodes) {
+        foreach (uint offset in offsets) {
             set(code_ptr, offset, opcodes);
         }
     }
@@ -554,6 +570,7 @@ public unsafe partial class ArchipelagoFFXModule {
         new CustomString("{TIME:00}{CHOICE:00}Save{LF}{CHOICE:01}Board airship{LF}{CHOICE:02}Play blitzball{LF}{CHOICE:03}Cancel"u8, 4, 0),
         new CustomString("{TIME:00}The {MACRO:06:42} are not at full{LF}strength. You need more members{LF}to participate in blitzball."u8, 0, 0),
         new CustomString("{TIME:00}Skip ending?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
+        new CustomString("{TIME:00}Other regions must be accessed from the Airship Menu"u8, 0, 0),
     ];
     //public static readonly byte[][] rawCustomStrings = [
     //    "{TIME:0}Ready to fight {COLOR:BLUE}Sin{COLOR:WHITE}?\n{CHOICE:0}Yes\n{CHOICE:1}No"u8.ToArray()
@@ -1072,7 +1089,7 @@ public unsafe partial class ArchipelagoFFXModule {
         AtelOp.CALLPOPA.build(0x0001),
     ];
 
-    private static readonly Dictionary<string, (int hasCelestial, int hasCloudy, int celestialObtained)> event_to_celestial_offsets = new(){
+    private static readonly Dictionary<string, (uint hasCelestial, uint hasCloudy, uint celestialObtained)> event_to_celestial_offsets = new(){
         {"bjyt0200", (0x02EA9, 0x02F3F, 0x02FE8)},
         {"kami0000", (0x0459F, 0x04632, 0x046D8)},
         {"kino0000", (0x10AF4, 0x10B87, 0x10C2D)},
@@ -1082,7 +1099,7 @@ public unsafe partial class ArchipelagoFFXModule {
         {"nagi0700", (0x0E357, 0x0E3EA, 0x0E490)},
     };
 
-    private static readonly Dictionary<string, (int, int)[]> event_to_primer_offsets = new(){
+    private static readonly Dictionary<string, (uint, int)[]> event_to_primer_offsets = new(){
         {"azit0300", [(0x03236, 20)] },
         {"azit0600", [(0x00EC7, 19)] },
         {"bika0000", [(0x011AD,  0), (0x01688,  2)] }, // Also a !check at 0x15FC
@@ -1114,7 +1131,7 @@ public unsafe partial class ArchipelagoFFXModule {
     };
 
     //TODO: Figure out how to split & handle the multiple NPC's in one room.
-    private static readonly Dictionary<string, (int offset, ushort recruit_id)[]> event_to_recruit_offsets = new(){
+    private static readonly Dictionary<string, (uint offset, ushort recruit_id)[]> event_to_recruit_offsets = new(){
         {"bsvr0400", [(0x25EC, 19)] }, // Vilucha
         {"djyt0000", [(0x400B,  6)] }, // Kyou
         {"genk1100", [(0x13D0, 10)] }, // Miyu
@@ -1158,19 +1175,103 @@ public unsafe partial class ArchipelagoFFXModule {
         logger.Debug($"atel_event_setup: {event_name}");
         byte* code_ptr = Atel.controllers[0].worker(0)->code_ptr;
         switch (event_name) {
+            case "bjyt1200":
+                // Send Anima
+                set(code_ptr, 0x1FB4, [
+                    AtelOp.PUSHII   .build(13),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
+                    ]);
+                
+                break;
             case "hiku2100":
                 logger.Debug($"atel_event_setup: Inject set_airship_destinations call");
                 set(code_ptr, 0x26D1, [
-                    AtelOp.PUSHII  .build(0x0001),
-                    AtelOp.CALLPOPA.build(0x01B8) // Common.obtainBrotherhood(1) = set_airship_destinations
+                    .. atelNOPArray(3),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.SET_AIRSHIP_DESTINATIONS),
                     ]);
 
                 set(code_ptr, 0x4028, AtelOp.JMP.build(0x013A));
 
 
-                // Fix Bevelle destination
-                set(code_ptr, 0x4326, AtelOp.PUSHII.build(0x000C)); // Point destination 12 (Bevelle Temple) to destination 18's warp (Highbridge) 
-                set(code_ptr, 0x4118, AtelOp.JMP.build(0x0141)); // Skip setting GameMoment when choosing destination 18
+                // Disable showtexture calls
+                set(code_ptr, 0x2976, atelNOPArray(10));
+                set(code_ptr, 0x34CF, atelNOPArray(10));
+
+
+                // Show airship destinations
+                set(code_ptr, 0x2AC4, [
+                    .. atelNOPArray(15),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.SHOW_AIRSHIP_DESTINATIONS),
+                    ]);
+                
+
+                // Hide airship destinations
+                set(code_ptr, 0x3765, [
+                    .. atelNOPArray(7),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_AIRSHIP_DESTINATIONS),
+                    ]);
+                set(code_ptr, 0x3AFA, [
+                    .. atelNOPArray(7),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_AIRSHIP_DESTINATIONS),
+                    ]);
+                set(code_ptr, 0x47FB, [
+                    .. atelNOPArray(7),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_AIRSHIP_DESTINATIONS),
+                    ]);
+                set(code_ptr, 0x3C37, [
+                    .. atelNOPArray(3),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_AIRSHIP_DESTINATIONS),
+                    ]);
+
+
+                // Show current airship position
+                set(code_ptr, 0x193F, [
+                    .. atelNOPArray(3),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.SHOW_CURRENT_AIRSHIP_LOCATION),
+                    ]);
+                // Hide current airship position
+                set(code_ptr, 0x3C07, [
+                    .. atelNOPArray(3),
+                    AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_CURRENT_AIRSHIP_LOCATION),
+                    ]);
+
+                set(code_ptr, 
+                    [
+                        0x1CB8 + 3, 0x1CDF + 3, 0x1D06 + 3, 0x1D2D + 3,
+                        0x1D54 + 3, 0x1D7B + 3, 0x1DA2 + 3, 0x1DC9 + 3,
+                        0x1DF0 + 3, 0x1E17 + 3, 0x1E3E + 3, 0x1E65 + 3,
+                        0x1E8C + 3, 0x1EB3 + 3, 0x1EDA + 3, 0x1F01 + 3,
+                        0x1F28 + 3, 0x1F4F + 3, 0x1F76 + 3, 0x1F9D + 3,
+                        0x1FC4 + 3, 0x1FEB + 3, 0x2012 + 3, 0x2039 + 3,
+                    ],
+                    AtelOp.PUSHII.build(0)
+                    );
+
+                set(code_ptr, 0x434E, AtelOp.PUSHII.build(12)); // Change destination 26 switch case to 12
+                
+                set(code_ptr, 0x4028, atelNOPArray(13));         // Skip setting GameMoment for destination 16
+                set(code_ptr, 0x4118, AtelOp.JMP.build(0x0141)); // Skip setting GameMoment for destination 18
+
+                // Replace Penance destination with Monster Arena
+                //set(code_ptr, 0x434E, AtelOp.PUSHII.build(18)); // Replace switch check
+                //set(code_ptr, 0x426F, AtelOp.PUSHII.build(307)); // Replace destination map
+
+                set(code_ptr, [0x4041, 0x4903, 0x491B, 0x4933], [
+                                .. atelNOPArray(3),
+                                AtelOp.PUSHII  .build((ushort)RegionEnum.Airship),
+                                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.TRANSITION_TO_REGION),
+                            ]);
+
+                foreach ((RegionEnum region, ArchipelagoRegion state) in region_states) {
+                    if (state.airship_destination_index != 99) {
+                        uint address = airship_destination_addresses[state.airship_destination_index - 1];
+                        set(code_ptr, address, [
+                                .. atelNOPArray(3),
+                                AtelOp.PUSHII  .build((ushort)region),
+                                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.TRANSITION_TO_REGION),
+                            ]);
+                    }
+                }
 
                 break;
             case "hiku0801":
@@ -1209,7 +1310,11 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALLPOPA.build( 0),
                     ]);
                 break;
-
+            case "kino0000":
+                set(code_ptr, 0xAE24 + 10, [
+                    AtelOp.PUSHII  .build(382),
+                    ]);
+                break;
             case "sins0900":
                 // Tower falling down
                 Globals.Atel.current_controller->worker(0xD)->table_jump[0] = 0x1951;
@@ -1408,8 +1513,9 @@ public unsafe partial class ArchipelagoFFXModule {
                     .. atelNOPArray(22),
                     ]);
 
-                set(code_ptr, 0x5BC6, [
-                    AtelOp.PUSHII   .build(15),
+                // Send Magus Sisters
+                set(code_ptr, 0x5B9C, [
+                    AtelOp.PUSHII   .build(15), // stack [15]
                     AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
                     ]);
                 break;
@@ -1418,13 +1524,6 @@ public unsafe partial class ArchipelagoFFXModule {
                 set(code_ptr, 0xCCDB, atelNOPArray(10));
                 set(code_ptr, 0xE686, atelNOPArray(10));
                 break;
-            case "nagi0000":
-                // Check Sun Sigil location instead of inventory
-                set(code_ptr, 0x21701, [
-                    AtelOp.PUSHII   .build(274),
-                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_TREASURE_LOCATION_CHECKED),
-                    ]);
-                break;
             case "mcfr0200":
                 // Check Saturn Sigil location instead of inventory
                 set(code_ptr, [0x2647, 0x283A, 0x298A], [
@@ -1432,11 +1531,56 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALL     .build((ushort)CustomCallTarget.IS_TREASURE_LOCATION_CHECKED),
                     ]);
                 break;
+            case "nagi0000":
+                // Check Sun Sigil location instead of inventory
+                set(code_ptr, [0x21701, 0x227D8, 0x238AF, 0x24986], [
+                    AtelOp.PUSHII   .build(274),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.IS_TREASURE_LOCATION_CHECKED),
+                    ]);
+
+                // Turn around if locked
+                //set(code_ptr, 0x346BE + 6, [
+                //    AtelOp.CALLPOPA     .build((ushort)CustomCallTarget.BLOCK_WARP),
+                //    ]);
+                //set(code_ptr, 0x346A1, atelNOPArray(17));
+
+                break;
+            case "nagi0600":
+                // Send Yojimbo
+                set(code_ptr, [0x261A, 0x2686, 0x28FB, 0x2B20, 0x2D45, 0x2F39], [
+                    AtelOp.PUSHII   .build(14),
+                    AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_PARTY_MEMBER_LOCATION),
+                    ]);
+                break;
+            case "nagi0700":
+                // Turn around if locked
+                //set(code_ptr, 0x13AAF + 6, [
+                //    AtelOp.CALLPOPA     .build((ushort)CustomCallTarget.BLOCK_WARP),
+                //    ]);
+                //set(code_ptr, 0x13A92, atelNOPArray(17));
+
+                // Always show Nirvana chest
+                set(code_ptr, 0xE25D, AtelOp.JMP.build(0));
+
+                // Continue even if Calm Lands conquest not complete
+                set(code_ptr, 0xE07B, AtelOp.JMP.build(2));
+
+                // Skip introduction and explanation
+                set(code_ptr, 0xDCF3, AtelOp.JMP.build(0xB29));
+
+                // Unlock Monster Arena
+                save_data->event_flags[0].set_bit(0, true);
+
+                save_data->monsters_captured[43] = 99;
+                save_data->monsters_captured[59] = 99;
+
+
+                break;
         }
 
         // Blitz Recruit locations (RecruitSanity)
         if (event_to_recruit_offsets.TryGetValue(event_name, out var recruit_offsets)) {
-            foreach ((int offset, ushort recruit_id) in recruit_offsets) {
+            foreach ((uint offset, ushort recruit_id) in recruit_offsets) {
                 set(code_ptr, offset, [
                     AtelOp.PUSHII   .build(recruit_id),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.SEND_RECRUIT_LOCATION),
@@ -1458,15 +1602,15 @@ public unsafe partial class ArchipelagoFFXModule {
         }
 
         if (event_to_primer_offsets.TryGetValue(event_name, out var primer_offsets)) {
-            foreach ((int offset, int primer) in primer_offsets) {
+            foreach ((uint offset, int primer) in primer_offsets) {
                 set(code_ptr, offset, [
                     AtelOp.PUSHII   .build((ushort)(primer+1)),
                     AtelOp.CALL     .build((ushort)CustomCallTarget.IS_OTHER_LOCATION_CHECKED),
                     AtelOp.NOP      .build(),
                     ]);
             }
-            {
-                int? offset = null;
+            {  
+                uint? offset = null;
                 if (event_name == "bika0000") offset = 0x15FC;
                 if (event_name == "cdsp0000") offset = 0xC62F;
                 if (offset.HasValue) {
@@ -1482,7 +1626,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         // Inject save sphere hook
         if (event_name == "nagi0000") {
-            int save_sphere_offset = 0x1BB69;
+            uint save_sphere_offset = 0x1BB69;
             logger.Info($"Save sphere init at {save_sphere_offset}");
             set(code_ptr, save_sphere_offset + 0x48, AtelOp.JMP.build(0x0007)); // Always all options
 
@@ -1510,7 +1654,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         }
         else if (event_name == "cdsp0700") {
-            int save_sphere_offset = 0x2AA3;
+            uint save_sphere_offset = 0x2AA3;
             logger.Info($"Underwater save sphere init at {save_sphere_offset}");
             set(code_ptr, save_sphere_offset + 0x5A, AtelOp.JMP.build(0x0002)); // Always all options
 
@@ -1538,7 +1682,7 @@ public unsafe partial class ArchipelagoFFXModule {
 
         }
         else if (event_name == "stbv0000") {
-            int save_sphere_offset = 0x2982;
+            uint save_sphere_offset = 0x2982;
             logger.Info($"Underwater save sphere init at {save_sphere_offset}");
             set(code_ptr, save_sphere_offset + 0x5A, AtelOp.JMP.build(0x0002)); // Always all options
 
@@ -1592,7 +1736,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 ]);
         }
         else if (false && event_name == "stbv0100") {
-            int save_sphere_offset = 0xF07F;
+            uint save_sphere_offset = 0xF07F;
             logger.Info($"Save sphere init at {save_sphere_offset}");
             set(code_ptr, save_sphere_offset + 0x48, AtelOp.JMP.build(0x0007)); // Always all options
 
@@ -1649,9 +1793,9 @@ public unsafe partial class ArchipelagoFFXModule {
         else if (event_name == "bvyt0900") {
 
             //int save_sphere_offset = 0x507B;
-            int tutorial_offset    = 0x7E;
-            int menu_string_offset = 0xD8;
-            foreach (int save_sphere_offset in (int[])[0x507B, 0x5253]) {
+            uint tutorial_offset    = 0x7E;
+            uint menu_string_offset = 0xD8;
+            foreach (uint save_sphere_offset in (uint[])[0x507B, 0x5253]) {
                 set(code_ptr, save_sphere_offset + tutorial_offset, [
                     AtelOp.PUSHII  .build(0x0008),
                             AtelOp.CALLPOPA.build(0x01B8), // Common.obtainBrotherhood(8) = update_region_state
@@ -1675,12 +1819,12 @@ public unsafe partial class ArchipelagoFFXModule {
             AtelInst? previous_op = null;
             AtelInst? current_op = null;
             uint code_length = Atel.controllers[0].worker(0)->script_chunk->code_length;
-            int i = 0;
-            int save_spheres_detected = 0;
-            int sphere_level_offset = 0x48;
-            int tutorial_offset = 0x571;
+            uint i = 0;
+            uint save_spheres_detected = 0;
+            uint sphere_level_offset = 0x48;
+            uint tutorial_offset = 0x571;
             ushort tutorial_jump = 0x23;
-            int airship_warp_offset = 0x657;
+            uint airship_warp_offset = 0x657;
             if (event_name == "mihn0000" || event_name == "mihn0200" || event_name == "mihn0300" || event_name == "mihn0400" || event_name == "mihn0600") {
                 tutorial_offset = 0x59B;
                 airship_warp_offset = 0x695;
@@ -1708,7 +1852,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     }
                     save_spheres_detected++;
                     logger.Info($"Detected save sphere init at {i - 6}");
-                    int save_sphere_offset = i - 6;
+                    uint save_sphere_offset = i - 6;
 
                     AtelOp someInst = (AtelOp)code_ptr[save_sphere_offset + sphere_level_offset];
                     if (!someInst.has_operand() || someInst.build(*(ushort*)(code_ptr + save_sphere_offset + sphere_level_offset + 1)) != AtelOp.PUSHV.build(0x0000)) {
@@ -1750,7 +1894,7 @@ public unsafe partial class ArchipelagoFFXModule {
                         ]);
                 }
 
-                i += inst.has_operand() ? 3 : 1;
+                i += (uint)(inst.has_operand() ? 3 : 1);
             }
         }
 
@@ -1978,12 +2122,16 @@ public unsafe partial class ArchipelagoFFXModule {
                     logger.Debug($"Entrance within 100: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
                 }
 
-                update_region_state(false);
+                update_region_state(save_data->current_room_id, save_data->current_spawnpoint);
                 refill_inventory();
             }
             else if (call_type == 9) { // Lock party member
                 int party_member = atelStack->pop_int();
                 locked_characters[party_member] = true;
+                if (party_member == PlySaveId.PC_MAGUS1) {
+                    locked_characters[PlySaveId.PC_MAGUS2] = true;
+                    locked_characters[PlySaveId.PC_MAGUS3] = true;
+                }
             }
             else if (call_type == 0xA) { // Check if final battle is unlocked
                 bool goal_requirement = false;
@@ -2129,7 +2277,10 @@ public unsafe partial class ArchipelagoFFXModule {
         return _Common_setPrimerCollected.orig_fptr(work, storage, atelStack);
     }
 
-    private static void update_region_state(bool map_changed) {
+    private static void update_region_state() {
+        update_region_state(save_data->current_room_id, save_data->current_spawnpoint);
+    }
+    private static void update_region_state(int map, int entrance) {
         logger.Info($"Update region state");
         if (skip_state_updates) {
             return;
@@ -2138,116 +2289,112 @@ public unsafe partial class ArchipelagoFFXModule {
         // Update region state
         if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out ArchipelagoData.ArchipelagoRegion? current_state)) {
             current_state = region_states[current_region];
-            current_state.room_id = map_changed ? last_room_id : save_data->current_room_id;
-            current_state.entrance = map_changed ? last_entrance_id : save_data->current_spawnpoint;
+            current_state.room_id = (ushort)map;
+            current_state.entrance = (ushort)entrance;
             current_state.story_progress = save_data->story_progress;
+
+            for (int i = 0; i < current_state.savedata.Length; i++) {
+                ref var data = ref current_state.savedata[i];
+                new Span<byte>((byte*)((int)save_data + data.offset), data.size).CopyTo(data.bytes);
+            }
+        }
+    }
+
+    private static void restore_region_state(ref int map, ref int entrance) {
+        ArchipelagoRegion current_state = region_states[current_region];
+        save_data->story_progress = current_state.story_progress;
+        map      = current_state.room_id;
+        entrance = (byte)current_state.entrance;
+
+        foreach (var data in current_state.savedata) {
+            data.bytes.CopyTo(new Span<byte>((byte*)((int)save_data + data.offset), data.size));
         }
     }
 
     private static void on_map_change() {
-        if (id_to_regions.Contains(save_data->current_room_id)) {
+        int map      = save_data->current_room_id;
+        int entrance = save_data->current_spawnpoint;
+        handle_warp_transition(ref map, ref entrance); // We can ignore return value?
+        if (map == 382) update_region_state(save_data->last_room_id, save_data->last_spawnpoint);
+        if (save_data->current_room_id != map) {
+            save_data->current_room_id    = (ushort)map;
+            save_data->current_spawnpoint = (byte)entrance;
+        }
+    }
+    private static bool handle_warp_transition(ref int map, ref int entrance) {
+        if (map == -1) {
+            // Loading a save
+            map = save_data->saved_current_room_id;
+            entrance = save_data->saved_current_spawnpoint;
+            save_data->last_room_id = save_data->saved_last_room_id;
+            save_data->last_spawnpoint = save_data->saved_last_spawnpoint;
+            save_data->saved_current_spawnpoint = 0;
+            if (id_to_regions.Contains(map)) {
+                var regions = id_to_regions[map];
+                RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();
+                current_region = region;
+
+                restore_region_state(ref map, ref entrance);
+            }
+        }
+        if (id_to_regions.Contains(map)) {
 
             // New Game
-            if (save_data->last_room_id == 0 && save_data->current_room_id == 132) {
+            if (save_data->current_room_id == 0 && map == 132) {
                 current_region = RegionEnum.DreamZanarkand;
                 FFXArchipelagoClient.local_checked_locations.Clear();
                 FFXArchipelagoClient.received_items = 0;
                 FFXArchipelagoClient.remote_locations_updated = true;
                 // Load seed here?
                 if (!loadSeed()) {
-                    save_data->current_room_id = 23;
-                    on_map_change();
-                    return;
+                    map = 23;
+                    entrance = 0;
+                    return handle_warp_transition(ref map, ref entrance);
+                    //return true;
                 }
                 foreach (uint item in seed.StartingItems) obtain_item(item);
             }
             if (seed.SeedId is null) {
                 // In-game with no seed
-                save_data->current_room_id = 23;
-                on_map_change();
-                return;
+                map = 23;
+                entrance = 0;
+                return handle_warp_transition(ref map, ref entrance);
+                //return true;
             }
 
-            var regions = id_to_regions[save_data->current_room_id];
+            var regions = id_to_regions[map];
             RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();
 
-            if (save_data->current_room_id == 205 && save_data->story_progress != 2000) region = RegionEnum.Airship;
+            if (map == 205 && save_data->story_progress != 2000) region = RegionEnum.Airship;
 
-            if (!region_is_unlocked[region]) {
-                // Reroute to current room
-                logger.Info($"{region} is locked!");
-                //call_warp_to_map(save_data->last_room_id, save_data->last_spawnpoint);
-                save_data->current_room_id = save_data->last_room_id;
-                save_data->current_spawnpoint = save_data->last_spawnpoint;
+            if (current_region != region) {
+                map = 382;
+                entrance = 0;
+                return false;
             }
             else {
-                if (current_region != region) {
-                    update_region_state(true);
-                    if (current_region != RegionEnum.None) skip_state_updates = false;
-                    current_region = region;
-                    ArchipelagoRegion current_state = region_states[region];
-                    save_data->story_progress = current_state.story_progress;
-
-                    //call_warp_to_map(current_state.room_id, current_state.entrance);
-                    save_data->current_room_id = current_state.room_id;
-                    save_data->current_spawnpoint = (byte)current_state.entrance;
-                    logger.Debug($"transition_to_map: Rerouted to map={current_state.room_id}, entrance={current_state.entrance}");
-
-                    // Unlock locked characters. May not be necessary
-                    foreach (var character in ArchipelagoFFXModule.locked_characters) {
-                        ArchipelagoFFXModule.locked_characters[character.Key] = false;
-                    }
-
-                    /*
-                    // No party members in early Baaj
-                    if (current_region == RegionEnum.BaajTemple && current_state.Story_progress < 3000) {
-                        party_overridden = true;
-
-                        save_party();
-                        
-                        for (int i = current_state.Story_progress < 60 ? 1 : 2; i < 7; i++) {
-                            call_remove_party_member((PlySaveId)i);
-                        }
-                        call_add_party_member(PlySaveId.PC_TIDUS);
-                        call_put_party_member_in_slot(0, PlySaveId.PC_TIDUS);
-                        call_put_party_member_in_slot(1, current_state.Story_progress < 60 ? (PlySaveId)0xff : PlySaveId.PC_RIKKU);
-                        call_put_party_member_in_slot(2, (PlySaveId)0xff);
-                    } else {
-                        party_overridden = false;
-                        reset_party();
-                    }
-                     */
-                    save_party();
-                    reset_party();
-
-                    /*
-                    if (save_data->last_room_id == 382) {
-                    }
-                     */
-                } else {
-                    // Skip crystal collecting
-                    if (save_data->current_room_id == 324 && save_data->story_progress == 3250) {
-                        logger.Info($"Skipping crystal collecting");
-                        save_data->current_room_id = 325;
-                        save_data->current_spawnpoint = 0;
-                        save_data->story_progress = 3260;
-                        on_map_change();
-                    }
+                // Skip crystal collecting
+                if (map == 324 && save_data->story_progress == 3250) {
+                    logger.Info($"Skipping crystal collecting");
+                    map = 325;
+                    entrance = 0;
+                    save_data->story_progress = 3260;
+                    return handle_warp_transition(ref map, ref entrance);
                 }
-
             }
         }
         else {
-            if (save_data->current_room_id == 23) {
+            if (map == 23) {
                 logger.Debug("Enter main menu");
                 // Main Menu
                 initalize_states();
                 seed = default;
             }
-            if (save_data->current_room_id == 382) update_region_state(true); // Airship Menu
+            //if (map == 382) update_region_state(); // Airship Menu
             current_region = RegionEnum.None;
             skip_state_updates = false;
         }
+        return true;
     }
 
     private static void refill_spheres() {
@@ -2280,44 +2427,33 @@ public unsafe partial class ArchipelagoFFXModule {
     }
 
     private static int h_Common_transitionToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        int map = atelStack->values.as_int()[0];
-        int entrance = atelStack->values.as_int()[1];
+        ref int map      = ref atelStack->values.as_int()[0];
+        ref int entrance = ref atelStack->values.as_int()[1];
         logger.Debug($"transition_to_map: map={map}, entrance={entrance}");
 
-        //update_region_state(atelStack);
-
-        return _Common_transitionToMap.orig_fptr(work, storage, atelStack);
+        if (handle_warp_transition(ref map, ref entrance)) {
+            return _Common_transitionToMap.orig_fptr(work, storage, atelStack);
+        }
+        else {
+            return blockWarp(work, storage, atelStack);
+        }
     }
     private static int h_Common_warpToMap(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        int map = atelStack->values.as_int()[0];
-        int entrance = atelStack->values.as_int()[1];
+        ref int map      = ref atelStack->values.as_int()[0];
+        ref int entrance = ref atelStack->values.as_int()[1];
         logger.Debug($"warp_to_map: map={map}, entrance={entrance}");
-
-        // New Game
-        //if (save_data->current_room_id == 0 && map == 132) current_region = RegionEnum.DreamZanarkand;
-
-        // Skip most of Dream Zanarkand
-        /*
-        if (save_data->current_room_id == 376 && map == 371) {
-            atelStack->values.as_int()[0] = 382;
-            map = atelStack->values.as_int()[0];
-            AtelStack tempStack = new();
-            tempStack.push_int(1);
-            remove_party_member(param_1, param_2, &tempStack);
-            tempStack.push_int(4);
-            remove_party_member(param_1, param_2, &tempStack);
-        }
-         */
-
-        //update_region_state(atelStack);
 
         // Skip intro
         if (map == 348) {
             logger.Debug("Skip intro");
-            atelStack->values.as_int()[0] = 23;
+            map = 23;
         }
 
-        return _Common_warpToMap.orig_fptr(work, storage, atelStack);
+        if (handle_warp_transition(ref map, ref entrance)) {
+            return _Common_warpToMap.orig_fptr(work, storage, atelStack);
+        } else {
+            return blockWarp(work, storage, atelStack);
+        }
     }
 
     private static void h_SgEvent_showModularMenuInit(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
@@ -2349,26 +2485,6 @@ public unsafe partial class ArchipelagoFFXModule {
             FhUtil.set_at(0x01efb4d4, 0); // Don't wait for menu
             return;
         }
-        else if (menu == 0x4008000D) {
-            int partyMember_id = 13; // Anima
-            if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
-                    if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        ArchipelagoFFXModule.obtain_item(item.id);
-                    }
-                }
-            }
-        }
-        else if (menu == 0x4008000E) {
-            int partyMember_id = 14; // Yojimbo
-            if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
-                    if (FFXArchipelagoClient.sendLocation(partyMember_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
-                        ArchipelagoFFXModule.obtain_item(item.id);
-                    }
-                }
-            }
-        }
 
         if (menuType == 0x80) {
             logger.Info($"Unknown tutorial?");
@@ -2389,7 +2505,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 return 1;
             }
         }
-        logger.Debug($"add_party_member: character={id_to_character[character]}");
+        //logger.Debug($"add_party_member: character={id_to_character[character]}");
 
         return _Common_addPartyMember.orig_fptr(work, storage, atelStack);
     }
@@ -2403,7 +2519,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 return 1;
             }
         }
-        logger.Debug($"remove_party_member: character={id_to_character[character]}");
+        //logger.Debug($"remove_party_member: character={id_to_character[character]}");
 
         return _Common_removePartyMember.orig_fptr(work, storage, atelStack);
     }
@@ -2417,7 +2533,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 return 1;
             }
         }
-        logger.Debug($"remove_party_member_long_term: character={id_to_character[character]}");
+        //logger.Debug($"remove_party_member_long_term: character={id_to_character[character]}");
 
         return _Common_removePartyMemberLongTerm.orig_fptr(work, storage, atelStack);
     }
@@ -2444,19 +2560,19 @@ public unsafe partial class ArchipelagoFFXModule {
                 return (int)get_party_frontline()[slot];
             }
         }
-        logger.Debug($"put_party_member_in_slot: slot={slot}, character={(character != 0xff ? id_to_character[character] : "Empty")}");
+        //logger.Debug($"put_party_member_in_slot: slot={slot}, character={(character != 0xff ? id_to_character[character] : "Empty")}");
 
         return _Common_putPartyMemberInSlot.orig_fptr(work, storage, atelStack);
     }
     public static int h_Common_pushParty(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug($"push_party");
+        //logger.Debug($"push_party");
 
         //if (party_overridden) return _Common_pushParty.orig_fptr(work, storage, atelStack);
         //save_party();
         return 0;
     }
     public static int h_Common_popParty(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        logger.Debug($"pop_party");
+        //logger.Debug($"pop_party");
 
         //if (party_overridden) return _Common_popParty.orig_fptr(work, storage, atelStack);
         //reset_party();
@@ -2465,10 +2581,10 @@ public unsafe partial class ArchipelagoFFXModule {
 
     // TODO: Get function pointer instead of hook for most of these
     public static void h_MsGetSavePartyMember(uint* param_1, uint* param_2, uint* param_3) {
-        logger.Debug($"get_current_party_slots");
+        //logger.Debug($"get_current_party_slots");
         _MsGetSavePartyMember.orig_fptr(param_1, param_2, param_3);
 
-        logger.Debug($"get_current_party_slots: slot_0={*param_1}, slot_1={*param_2}, slot_2={*param_3}");
+        //logger.Debug($"get_current_party_slots: slot_0={*param_1}, slot_1={*param_2}, slot_2={*param_3}");
     }
 
     // Pre-battle
@@ -2989,12 +3105,6 @@ public unsafe partial class ArchipelagoFFXModule {
         }
         *airshipDestinationCount = curr - 1;
         *airshipDestinationLength = curr - 1;
-        /*
-        airshipDestinations[0] = 2;
-        airshipDestinations[1] = 6;
-        *airshipDestinationCount = 1;
-        *airshipDestinationLength = 1;
-         */
     }
 
 
@@ -3007,10 +3117,10 @@ public unsafe partial class ArchipelagoFFXModule {
 
         // Guaranteed access to all sphere types
         //for (int i = 0; i < 18; i++) {
-        //    save_data->ply_arr[i].abi_map.has_extract_power = true;
-        //    save_data->ply_arr[i].abi_map.has_extract_mana = true;
-        //    save_data->ply_arr[i].abi_map.has_extract_speed = true;
-        //    save_data->ply_arr[i].abi_map.has_extract_ability = true;
+        //    save_data->ply_saves[i].abi_map.has_extract_power = true;
+        //    save_data->ply_saves[i].abi_map.has_extract_mana = true;
+        //    save_data->ply_saves[i].abi_map.has_extract_speed = true;
+        //    save_data->ply_saves[i].abi_map.has_extract_ability = true;
         //}
     }
 
@@ -3019,7 +3129,7 @@ public unsafe partial class ArchipelagoFFXModule {
         _MsSetSaveParam.orig_fptr(chr_id);
 
         return;
-        //PlySave ply = save_data->ply_arr[(int)chr_id];
+        //PlySave ply = save_data->ply_saves[(int)chr_id];
         //Equipment*[] equips =
         //[
         //    (Equipment*)_MsGetSaveWeapon(ply.wpn_inv_idx, 0x0),
@@ -3157,18 +3267,43 @@ public unsafe partial class ArchipelagoFFXModule {
     //}
 
     public static List<nint> loaded_clusters = [];
-    public static PTexture2DBase* loadCluster(string file) {
+    public static PCluster* loadCluster(string file) {
         //var filePath = Marshal.StringToHGlobalAnsi("/FFX_Data/GameData/PS3Data/map/hiku/hiku22/2d/tex/D3D11/0_11_132_16_12.dds.phyre");
         if (file == "") return null;
         var filePath = Marshal.StringToHGlobalAnsi(file);
         nint clusterManager = FhUtil.get_at<nint>(0x008cca44);
-        var cluster = _ClusterManager_loadPCluster(clusterManager, filePath);
+        PCluster* cluster = _ClusterManager_loadPCluster(clusterManager, filePath);
         Marshal.FreeHGlobal(filePath);
-        if (cluster == 0) return null;
-        loaded_clusters.Add(cluster);
+        if (cluster == null) return null;
+        loaded_clusters.Add((nint)cluster);
 
         int fixedClusterResult = _Phyre_PFramework_PApplication_FixupClusters(cluster, 1);
         if (fixedClusterResult != 0) return null;
+
+        return cluster;
+    }
+
+    public static void releaseCluster(PCluster* cluster) {
+        nint clusterManager = FhUtil.get_at<nint>(0x008cca44); //var clusterManager = getClusterManager();
+        _ClusterManager_releasePCluster(clusterManager, cluster);
+
+    }
+
+    public static PCluster* getCluster(string file) {
+        //var filePath = Marshal.StringToHGlobalAnsi("/FFX_Data/GameData/PS3Data/map/hiku/hiku22/2d/tex/D3D11/0_11_132_16_12.dds.phyre");
+        if (file == "") return null;
+        var filePath = Marshal.StringToHGlobalAnsi(file);
+        nint unifiedFilePath = (nint)NativeMemory.AllocZeroed(0x100);
+        _fiosUnifyFilename(filePath, unifiedFilePath, 0x100);
+        nint clusterManager = FhUtil.get_at<nint>(0x008cca44);
+        PCluster* cluster = _ClusterManager_getPClusterByName(clusterManager, unifiedFilePath);
+        Marshal.FreeHGlobal(filePath);
+        Marshal.FreeHGlobal(unifiedFilePath);
+
+        return cluster;
+    }
+
+    public static PTexture2DBase* getTextureFromCluster(PCluster* cluster) {
 
         FixedClusterData data = new();
         data._0x14 = *(nint*)cluster + 0x1c;
@@ -3181,11 +3316,6 @@ public unsafe partial class ArchipelagoFFXModule {
 
         PTexture2DBase* _this = (PTexture2DBase*)(data._0x00 + data._0x10);
         return _this;
-    }
-
-    public static void releaseCluster(nint cluster) {
-        nint clusterManager = FhUtil.get_at<nint>(0x008cca44); //var clusterManager = getClusterManager();
-        _ClusterManager_releasePCluster(clusterManager, cluster);
 
     }
 
@@ -3337,6 +3467,14 @@ public unsafe partial class ArchipelagoFFXModule {
         COLLECTED_PRIMERS,
         SEND_PARTY_MEMBER_LOCATION,
         SEND_RECRUIT_LOCATION,
+        BLOCK_WARP,
+        RESTORE_INTERACTION,
+        SET_AIRSHIP_DESTINATIONS,
+        SHOW_AIRSHIP_DESTINATIONS,
+        HIDE_AIRSHIP_DESTINATIONS,
+        SHOW_CURRENT_AIRSHIP_LOCATION,
+        HIDE_CURRENT_AIRSHIP_LOCATION,
+        TRANSITION_TO_REGION,
     }
 
     static AtelCallTarget[] customNameSpace = {
@@ -3348,7 +3486,17 @@ public unsafe partial class ArchipelagoFFXModule {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsTreasureLocationChecked)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_CollectedPrimers)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_SendPartyMemberLocation)},
-        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_SendRecruitLocation)}
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_SendRecruitLocation)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_BlockWarp)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_RestoreInteraction)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_SetAirshipDestinations)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_ShowAirshipDestinations)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_HideAirshipDestinations)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_ShowCurrentAirshipLocation)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_HideCurrentAirshipLocation)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_TransitionToRegion)},
+        
+
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
@@ -3365,9 +3513,9 @@ public unsafe partial class ArchipelagoFFXModule {
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     public static int CT_RetInt_PushFloat(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
-        int high = atelStack->pop_int();
-        int low  = atelStack->pop_int();
-        float result = BitConverter.Int32BitsToSingle((high << 16) | low);
+        uint high = (uint)atelStack->pop_int() & 0xFFFF;
+        uint low  = (uint)atelStack->pop_int() & 0xFFFF;
+        float result = BitConverter.Int32BitsToSingle((int)((high << 16) | low));
         logger.Debug($"PushFloat: ({high}, {low}) => {result}");
 
         atelStack->push_float(result);
@@ -3446,6 +3594,245 @@ public unsafe partial class ArchipelagoFFXModule {
         }
         return 1;
     }
-     
+
+    public static int atelTurnAround(Span<byte> dest, float x, float y, float z, ushort current_worker, ushort target_worker, ushort entry_point, float movementSpeed = 34.0f, float rotationSpeed1 = 0.10471976f, float rotationSpeed2 = 0.17453294f) {
+        logger?.Debug($"x={x}, y={y}, z={z}");
+        uint rotationFlags = 0x0000D002;
+        uint motionFlags   = 0x0000C001;
+        byte[] script = ((AtelInst[])[ // 5
+            //call Common.disablePlayerControl? [005Eh]();
+            AtelOp.CALLPOPA.build(0x005E),
+            //call Common.stopWorkerMotion [00D1h]();
+            AtelOp.CALLPOPA.build(0x00D1),
+            ////call ChEvent.setIgnoreNavmesh [500Eh](ignore=true [01h]);
+            //AtelOp.PUSHII  .build(0x0001),
+            //AtelOp.CALLPOPA.build(0x500E),
+            //call Common.setMovementSpeed [006Ch](speed=movementSpeed);
+            .. atelPushFloat(movementSpeed),
+            AtelOp.CALLPOPA.build(0x006C),
+            //call Common.0017(p1=0 [00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x0017),
+            //call Common.setRotationSpeed1 [002Eh](float=rotationSpeed1);
+            .. atelPushFloat(rotationSpeed1),
+            AtelOp.CALLPOPA.build(0x002E),
+            //call Common.setRotationSpeed2 [002Fh](float=rotationSpeed2);
+            .. atelPushFloat(rotationSpeed2),
+            AtelOp.CALLPOPA.build(0x002F),
+            //call Common.setDestination [0015h](x=x, y=y, z=z);
+            .. atelPushFloat(x),
+            .. atelPushFloat(y),
+            .. atelPushFloat(z),
+            AtelOp.CALLPOPA.build(0x0015),
+            //call Common.setRotationTarget1 [0028h](angle=Common.destinationToYaw [001Fh]());
+            AtelOp.CALL    .build(0x001F),
+            AtelOp.CALLPOPA.build(0x0028),
+            //call Common.startRotation [0019h](activeBits=0 [00h], flags=[b0002, b1000, b4000, b8000] [0000D002h], targetWorker=target_worker [00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            .. atelPushInt(rotationFlags),
+            AtelOp.PUSHII  .build(target_worker),
+            AtelOp.CALLPOPA.build(0x0019),
+            //call Common.startMotion [0018h](activeBits=0 [00h], flags=[b0001, b4000, b8000] [0000C001h], targetWorker=target_worker [00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            .. atelPushInt(motionFlags),
+            AtelOp.PUSHII  .build(target_worker),
+            AtelOp.CALLPOPA.build(0x0018),
+            // display customStrings[6]
+            .. atelDisplayFieldString(1, 0x8006, 256, 224, 4, 0, 0),
+            //call Common.waitForMotion [001Ah]();
+            AtelOp.CALLPOPA.build(0x001A),
+            //call Common.stopWorkerRotation [0078h](worker=Common.getWorkerIndex [0033h](worker=<Self> [FFFFh]));
+            AtelOp.PUSHII  .build(0xFFFF),
+            AtelOp.CALL    .build(0x0033),
+            AtelOp.CALLPOPA.build(0x0078),
+            // Restore entry point
+            AtelOp.PUSHII  .build(target_worker),
+            AtelOp.PUSHII  .build(entry_point),
+            AtelOp.PUSHII  .build(0x000C),
+            AtelOp.CALLPOPA.build(0x01B8),
+            // Restore cross
+            AtelOp.PUSHII  .build(current_worker),
+            AtelOp.CALLPOPA.build((ushort)CustomCallTarget.RESTORE_INTERACTION),
+            //call ChEvent.setIgnoreNavmesh [500Eh](ignore=false [00h]);
+            AtelOp.PUSHII  .build(0x0000),
+            AtelOp.CALLPOPA.build(0x500E),
+            // call Common.waitForText [0084h](boxIndex=1 [01h], p2=1 [01h]);
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.PUSHII  .build(0x0001),
+            AtelOp.CALLPOPA.build(0x0084),
+            //call Common.enablePlayerControl? [005Dh]();
+            AtelOp.CALLPOPA.build(0x005D),
+            //return;
+            AtelOp.RET     .build(      ),
+
+        ]).SelectMany(x => x.to_bytes()).ToArray();
+
+        if (dest.Length >= script.Length) {
+            script.CopyTo(dest);
+        }
+        return script.Length;
+    }
+    private static int   turnAroundScriptLength = atelTurnAround(Span<byte>.Empty, 0, 0, 0, 0, 0, 0);
+    private static byte* turnAroundScript       = (byte*)NativeMemory.AllocZeroed((uint)turnAroundScriptLength);
+    private static bool  savedCrossInteractionStatus;
+    private static byte  savedInteractionFlags;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_BlockWarp(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        return blockWarp(work, storage, atelStack);
+    }
+
+    public static int blockWarp(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int entrance = atelStack->pop_int();
+        int map      = atelStack->pop_int();
+
+        logger.Info($"Exit leads to other Region!");
+
+        Vector3 playerPos = Globals.actors->chr_pos_vec.AsVector3();
+        var closestEntrance = Atel.controllers[0].worker(0)->script_chunk->map_entrances.ToArray()
+                    .Select((e, i) => new {Index=i, Entrance=e, Distance=(playerPos - e.pos).Length()})
+                    .MinBy(tuple => tuple.Distance);
+        if (closestEntrance?.Distance < 200) {
+            logger.Debug($"Entrance within 200: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
+            Vector3 target_pos = closestEntrance.Entrance.pos;
+            //float direction = actors[0].chr_direction;
+            //float rotation = actors[0].chr_rotation_rad;
+            //if (rotation < 0) rotation = Math.Abs(rotation) + float.Pi;
+            //Vector4 pos = actors[0].chr_pos_vec;
+            //Vector3 offset = Vector3.Transform(new Vector3(-20, 0, 0), Matrix4x4.CreateRotationY(rotation + float.Pi));
+            //Vector3 target_pos = pos.AsVector3() + offset;
+
+            ushort entry_point = (ushort)(Atel.controllers[0].worker(0)->script_header->entry_point_count - 1);
+
+            if (turnAroundScript == null) turnAroundScript = (byte*)NativeMemory.AllocZeroed((uint)turnAroundScriptLength);
+            atelTurnAround(new Span<byte>(turnAroundScript, turnAroundScriptLength), target_pos.X, target_pos.Y, target_pos.Z, work->worker_idx, 0, entry_point, 17, 1f, 1f);
+
+
+            AtelBasicWorker* targetWorker = Atel.controllers[0].worker(0);
+            if (!originalEntryPoints.ContainsKey((0, entry_point))) {
+                originalEntryPoints[(0, entry_point)] = targetWorker->table_entry_points[entry_point];
+            }
+            int targetAddress = (int)turnAroundScript;
+            int addressOffset = targetAddress - (int)targetWorker->code_ptr;
+            targetWorker->table_entry_points[entry_point] = (uint)addressOffset;
+
+            // Disable cross interaction
+            savedInteractionFlags = work->field_interaction_flags;
+            work->field_interaction_flags = 0;
+            //savedCrossInteractionStatus = (work->field_interaction_flags & (1 << 2)) != 0;
+            //if (savedCrossInteractionStatus) work->field_interaction_flags = (byte)(work->field_interaction_flags & ~(1 << 2));
+
+            atelStack->push_int(2); // signal priority?
+            atelStack->push_int(0); // worker
+            atelStack->push_int(entry_point); // entrypoint
+            _FUN_00867370((byte)AtelOp.REQEW & 0x7F, work, &work->threads[work->current_thread_priority], atelStack, 0);
+            work->__0x34 = (ushort)(work->__0x34 & 0xEBFF | 0x800);
+            //work->__0x34 = (ushort)(work->__0x34 | 0x800);
+            atelStack->pop_int();
+            //_FUN_008671d0((byte)AtelOp.REQ & 0x7F, &work->threads[work->current_thread_priority], work, atelStack);
+        }
+        else {
+            logger.Debug($"Closest entrance: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
+            // Warp
+            atelStack->push_int(382);
+            atelStack->push_int(0);
+            h_Common_warpToMap(work, storage, atelStack);
+        }
+        return 1;
+
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_RestoreInteraction(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int target_worker_index = atelStack->pop_int();
+        AtelBasicWorker* target_worker = Atel.controllers[0].worker(target_worker_index);
+        //if (savedCrossInteractionStatus) target_worker->field_interaction_flags |= 1 << 2; // Enable cross interaction
+        target_worker->field_interaction_flags = savedInteractionFlags;
+        return 1;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_SetAirshipDestinations(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        set_airship_destinations();
+        return 1;
+    }
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_ShowAirshipDestinations(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        var var_table = work->table_event_data;
+        uint* airshipDestinations = &var_table[13];
+        uint airshipDestinationsOffset = var_table[50];
+        uint airshipDestinationsAbsoluteCursor = var_table[2];
+
+        for (uint i = 0; i < 15; i++) {
+            uint destination_index = airshipDestinations[i+airshipDestinationsOffset];
+            if (destination_index != 0) {
+                customStringDrawInfos[$"destination {i}"] = new CustomStringDrawInfo(airship_destination_names[destination_index - 1], new(57f, 108f + 16.857f * i), 1f);
+            }
+            else {
+                customStringDrawInfos.Remove($"destination {i}");
+            }
+        }
+
+        // Set eventVar0018 = (18 [12h] * (eventVar0008 - eventVar00C8)) + 84 [54h];
+        var_table[6] = (18 * (airshipDestinationsAbsoluteCursor - airshipDestinationsOffset)) + 84;
+        return 1;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_HideAirshipDestinations(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        for (uint i = 0; i < 15; i++) {
+            customStringDrawInfos.Remove($"destination {i}");
+        }
+        return 1;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_ShowCurrentAirshipLocation(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        customStringDrawInfos[$"current destination"] = new CustomStringDrawInfo(airship_destination_names[save_data->current_airship_location - 1], new(52f, 73f), 1f);
+
+        // AE0300 D80F80 call Map.?show2DLayer [800Fh](layerIndex=3 [03h]);
+        atelStack->push_int(3);
+        _Map_show2DLayerResultInt(work, storage, atelStack);
+        return 1;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_HideCurrentAirshipLocation(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        customStringDrawInfos.Remove($"current destination");
+
+        // AE0300 D81080 call Map.?hide2DLayer [8010h](layerIndex=3 [03h]);
+        atelStack->push_int(3);
+        _Map_hide2DLayerResultInt(work, storage, atelStack);
+        return 1;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_TransitionToRegion(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        RegionEnum region = (RegionEnum)atelStack->pop_int();
+
+        if (current_region != RegionEnum.None) {
+            update_region_state();
+            current_region = RegionEnum.None;
+            skip_state_updates = false;
+        }
+
+        current_region = region;
+        int map = 0, entrance = 0;
+        restore_region_state(ref map, ref entrance);
+        logger.Debug($"Entering {region}: map={map}, entrance={entrance}");
+
+        // Unlock locked characters. May not be necessary
+        foreach (var character in ArchipelagoFFXModule.locked_characters) {
+            ArchipelagoFFXModule.locked_characters[character.Key] = false;
+        }
+        save_party();
+        reset_party();
+
+        atelStack->push_int(map);
+        atelStack->push_int(entrance);
+        h_Common_transitionToMap(work, storage, atelStack);
+
+        return 1;
+    }
 }
 

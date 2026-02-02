@@ -432,6 +432,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                     region_states[region.Key].entrance = region.Value.entrance;
                     region_states[region.Key].completed_visits = region.Value.completed_visits;
                     region_states[region.Key].pilgrimage_completed = region.Value.pilgrimage_completed;
+                    region.Value.savedata.CopyTo(region_states[region.Key].savedata);
                 }
                 foreach (var region in loaded_state.region_is_unlocked) {
                     region_is_unlocked[region.Key] = region.Value;
@@ -505,10 +506,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
                 ArchipelagoRegion region = region_states[current_region];
                 if (region.story_checks.TryGetValue(story_progress, out var storyCheck)) {
                     storyCheck.check_delegate?.Invoke(region);
-                    if (region_is_unlocked.TryGetValue(storyCheck.return_if_locked, out var is_unlocked) && !is_unlocked) {
+                    if (storyCheck.return_to_airship) {
                         call_warp_to_map(382, 0);
-                        //Globals.save_data->current_room_id = 382;
-                        //Globals.save_data->current_spawnpoint = 0;
                     }
                     region.story_progress = storyCheck.next_story_progress ?? region.story_progress;
                     region.room_id = storyCheck.next_room_id ?? region.room_id;
@@ -531,7 +530,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             }
             last_story_progress = story_progress;
         }
-        if (last_room_id != Globals.save_data->current_room_id) {
+        if (last_room_id != Globals.save_data->current_room_id && Globals.save_data->current_room_id != 0xFFFF) {
             _logger.Info($"Room changed: Entered {Globals.save_data->current_room_id} at entrance {Globals.save_data->current_spawnpoint}");
             
             on_map_change();
@@ -852,5 +851,27 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
     public override void render_imgui() {
         ArchipelagoGUI.render();
+    }
+
+    private struct CustomStringDrawInfo(CustomString customString, Vector2 pos, float scale = 0.65f, byte color = 0) {
+        public CustomString customString = customString;
+        public Vector2      pos          = pos;
+        public float        scale        = scale;
+        public byte         color        = color;
+    }
+
+    private static Dictionary<string, CustomStringDrawInfo> customStringDrawInfos = [];
+
+    private static CustomString monster_arena = new("Calm Lands"u8, 0, 0);
+    public static Vector2 monster_arena_pos = new(52f, 73f);
+    public static float monster_arena_scale = 1f;
+    public static bool monster_arena_draw = false;
+    public override void render_game() {
+        if (monster_arena_draw) {
+            _TOMkpCrossExtMesFontLClutTypeRGBA(0, monster_arena.encoded, monster_arena_pos.X, monster_arena_pos.Y, 0x00, 0, 0x80, 0x80, 0x80, 0x80, monster_arena_scale, 0);
+        }
+        foreach ((string key, CustomStringDrawInfo drawInfo) in customStringDrawInfos) {
+            _TOMkpCrossExtMesFontLClutTypeRGBA(0, drawInfo.customString.encoded, drawInfo.pos.X, drawInfo.pos.Y, drawInfo.color, 0, 0x80, 0x80, 0x80, 0x80, drawInfo.scale, 0);
+        }
     }
 }
