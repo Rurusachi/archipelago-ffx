@@ -1179,6 +1179,15 @@ public unsafe partial class ArchipelagoFFXModule {
                     ]);
                 
                 break;
+
+            case "slik0000":
+                // Set destination to Besaid
+                ((byte*)((int)save_data + 0x0C7A))->set_bits<byte>(0, 2, 2);
+                break;
+            case "swin0000":
+                // Set destination to Kilika
+                ((byte*)((int)save_data + 0x0C7A))->set_bits<byte>(2, 2, 8);
+                break;
             case "hiku2100":
                 logger.Debug($"atel_event_setup: Inject set_airship_destinations call");
                 set(code_ptr, 0x26D1, [
