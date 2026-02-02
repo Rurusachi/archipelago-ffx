@@ -1263,10 +1263,10 @@ public unsafe partial class ArchipelagoFFXModule {
                 //set(code_ptr, 0x434E, AtelOp.PUSHII.build(18)); // Replace switch check
                 //set(code_ptr, 0x426F, AtelOp.PUSHII.build(307)); // Replace destination map
 
+                // Backing out returns to menu
                 set(code_ptr, [0x4041, 0x4903, 0x491B, 0x4933], [
-                                .. atelNOPArray(3),
-                                AtelOp.PUSHII  .build((ushort)RegionEnum.Airship),
-                                AtelOp.CALLPOPA.build((ushort)CustomCallTarget.TRANSITION_TO_REGION),
+                                AtelOp.PUSHII  .build(382),
+                                AtelOp.PUSHII  .build(0),
                             ]);
 
                 foreach ((RegionEnum region, ArchipelagoRegion state) in region_states) {
@@ -2908,11 +2908,13 @@ public unsafe partial class ArchipelagoFFXModule {
                 item_id &= 0xfff;
                 logger.Debug($"Trap: {item_id}");
                 if (item_id == 0) {
-                    play_voice_line(136815042); // "Stay away from the summoner"
+                    play_voice_line(voicelines[rng.Next(voicelines.Length)]);
+                    //play_voice_line(136815042); // "Stay away from the summoner"
                 }
                 break;
         }
     }
+    private static Random rng = new Random();
 
     public static void call_obtain_brotherhood() {
         AtelStack stack = new AtelStack();
@@ -3202,27 +3204,29 @@ public unsafe partial class ArchipelagoFFXModule {
     public static int h_FmodVoice_dataChange(nint FmodVoice, int event_id, nint param_2) {
         logger.Debug($"{FmodVoice}, {event_id}, {param_2}");
         int result = _FmodVoice_dataChange.orig_fptr(FmodVoice, event_id, param_2);
+        //string bank_name = "ffx_us_voice03"; // Contains "Stay away from the summoner!" (136815042)
+        foreach (string bank_name in (string[])["ffx_us_voice03", "ffx_us_voice07", "ffx_us_voice11", "ffx_us_voice12"]) {
+            string path = $"../../../FFX_Data/GameData/PS3Data/Sound_PC/Voice/US/{bank_name}.fev";
+            nint file_path = Marshal.StringToHGlobalAnsi(path);
 
-        string bank_name = "ffx_us_voice03"; // Contains "Stay away from the summoner!" (136815042)
-        string path = $"../../../FFX_Data/GameData/PS3Data/Sound_PC/Voice/US/{bank_name}.fev";
-        nint file_path = Marshal.StringToHGlobalAnsi(path);
+            int bank_index = bank_name[^1] + (bank_name[^2] * 5 - 0x108)*2;
+            nint bank = *(int*)(FmodVoice+0x18) + bank_index*4;
 
-        int bank_index = bank_name[^1] + (bank_name[^2] * 5 - 0x108)*2;
-        nint bank = *(int*)(FmodVoice+0x18) + bank_index*4;
+            nint load_result = _FMOD_EventSystem_load(param_2, file_path, 0, bank);
+            Marshal.FreeHGlobal(file_path);
 
-        nint load_result = _FMOD_EventSystem_load(param_2, file_path, 0, bank);
-        Marshal.FreeHGlobal(file_path);
+            if (load_result == 0) {
+                int* piVar5 = *(int**)bank;
+                if (piVar5 != null) {
+                    FMOD_Bank_Post_Load _FMOD_Bank_Post_Load = Marshal.GetDelegateForFunctionPointer<FMOD_Bank_Post_Load>(*(nint*)(*piVar5 + 8));
 
-        if (load_result == 0) {
-            int* piVar5 = *(int**)bank;
-            if (piVar5 != null) {
-                FMOD_Bank_Post_Load _FMOD_Bank_Post_Load = Marshal.GetDelegateForFunctionPointer<FMOD_Bank_Post_Load>(*(nint*)(*piVar5 + 8));
-
-                nint s_voice = Marshal.StringToHGlobalAnsi("voice");
-                load_result = _FMOD_Bank_Post_Load((nint)piVar5, s_voice, 0, *(int*)(FmodVoice + 0xc) + bank_index*4);
-                Marshal.FreeHGlobal(s_voice);
-                logger.Debug($"{bank_name}: {load_result}");
+                    nint s_voice = Marshal.StringToHGlobalAnsi("voice");
+                    load_result = _FMOD_Bank_Post_Load((nint)piVar5, s_voice, 0, *(int*)(FmodVoice + 0xc) + bank_index*4);
+                    Marshal.FreeHGlobal(s_voice);
+                    logger.Debug($"{bank_name}: {load_result}");
+                }
             }
+
         }
 
         return result;

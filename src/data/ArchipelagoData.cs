@@ -1152,4 +1152,16 @@ public static class ArchipelagoData {
         //{"kino00_70", 46}, {"kino01_70", 46}, {"kino01_72", 46}, {"kino05_70", 46}, // Dark Sandy
         //{"kino00_70", 47}, {"kino01_70", 47}, {"kino01_71", 47},                    // Dark Cindy
     };
+
+    public static int[] voicelines = [
+        0x0827A1C2, // ffx_us_voice03: "Stay away from the summoner"
+        0x0827B1C3, // ffx_us_voice03: "You're a bad man"
+        0x12A29504, // ffx_us_voice07: *Tidus laugh*
+        0x12A2A504, // ffx_us_voice07: *Tidus laugh*
+        0x12A2C504, // ffx_us_voice07: *Yuna and Tidus laugh*
+        0x1AF441C2, // ffx_us_voice11: "Hornless! Hornless!"
+        0x1B45F5CB, // ffx_us_voice11: "Those sand-blasted grease monkeys!"
+        0x1B1991C1, // ffx_us_voice11: "Ride ze shoopuf?"
+        0x1E5911C1, // ffx_us_voice12: "then burn me, boil me, it matters not."
+        ];
 }
