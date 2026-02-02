@@ -163,9 +163,9 @@ public unsafe static class ArchipelagoGUI {
                 loaded_clusters.Clear();
             }
 
-            if (loaded_texture2d != null && loaded_image == null) {
-                FhApi.Resources.create_srv(loaded_texture2d->buffer, null, out loaded_image);
-            }
+            //if (loaded_texture2d != null && loaded_image == null) {
+            //    FhApi.Resources.create_srv(loaded_texture2d->buffer, null, out loaded_image);
+            //}
             if (loaded_image.HasValue) {
                 ImGui.Image(loaded_image.Value, new(loaded_texture2d->width, loaded_texture2d->height), new(0, 1), new(1, 0));
             }

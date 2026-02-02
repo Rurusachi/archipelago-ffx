@@ -845,6 +845,7 @@ public static class ArchipelagoData {
     ];
 
     public static ArchipelagoFFXModule.CustomString[] airship_destination_names = [
+        new(""u8),
         new("Baaj Temple"u8),
         new("Besaid Island"u8),
         new("Kilika Port"u8),
@@ -927,6 +928,16 @@ public static class ArchipelagoData {
     public static Dictionary<string, Action> encounterEscapeActions => new() {
         // Bikanel forced Zu fight
         {"bika00_10", () =>  FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_LOGIC_ZU"] = true },
+        {"mihn02_00", () => {
+            int boss_id = 8; // Chocobo Eater
+            if (!FFXArchipelagoClient.local_checked_locations.Contains(boss_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(boss_id, out var item)) {
+                    if (FFXArchipelagoClient.sendLocation(boss_id, FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+                        ArchipelagoFFXModule.obtain_item(item.id);
+                    }
+                }
+            }
+        } },
     };
 
     public static Dictionary<string, Action> encounterToActionDict => new(){
