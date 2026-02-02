@@ -2218,8 +2218,6 @@ public unsafe partial class ArchipelagoFFXModule {
             var regions = id_to_regions[map];
             RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();
 
-            if (map == 205 && save_data->story_progress != 2000) region = RegionEnum.Airship;
-
             if (current_region != region) {
                 map = 382;
                 entrance = 0;
@@ -3560,56 +3558,54 @@ public unsafe partial class ArchipelagoFFXModule {
 
         logger.Info($"Exit leads to other Region!");
 
-        Vector3 playerPos = Globals.actors->chr_pos_vec.AsVector3();
-        var closestEntrance = Atel.controllers[0].worker(0)->script_chunk->map_entrances.ToArray()
-                    .Select((e, i) => new {Index=i, Entrance=e, Distance=(playerPos - e.pos).Length()})
-                    .MinBy(tuple => tuple.Distance);
-        if (closestEntrance?.Distance < 200) {
-            logger.Debug($"Entrance within 200: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
-            Vector3 target_pos = closestEntrance.Entrance.pos;
-            //float direction = actors[0].chr_direction;
-            //float rotation = actors[0].chr_rotation_rad;
-            //if (rotation < 0) rotation = Math.Abs(rotation) + float.Pi;
-            //Vector4 pos = actors[0].chr_pos_vec;
-            //Vector3 offset = Vector3.Transform(new Vector3(-20, 0, 0), Matrix4x4.CreateRotationY(rotation + float.Pi));
-            //Vector3 target_pos = pos.AsVector3() + offset;
+        Chr* tidus = (Chr*)((int)Atel.controllers[0].worker(0) + 0x9c);
+        if (tidus != null && tidus->actor != null) {
+            Vector3 playerPos = tidus->actor->chr_pos_vec.AsVector3();
+            var entrances = Atel.controllers[0].worker(0)->script_chunk->map_entrances.ToArray();
+            var closestEntrance = Atel.controllers[0].worker(0)->script_chunk->map_entrances.ToArray()
+                        .Select((e, i) => new {Index=i, Entrance=e, Distance=(playerPos - e.pos).Length()})
+                        .MinBy(tuple => tuple.Distance);
 
-            ushort entry_point = (ushort)(Atel.controllers[0].worker(0)->script_header->entry_point_count - 1);
+            if (closestEntrance?.Distance < 200) {
+                logger.Debug($"Entrance within 200: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
+                Vector3 target_pos = closestEntrance.Entrance.pos;
 
-            if (turnAroundScript == null) turnAroundScript = (byte*)NativeMemory.AllocZeroed((uint)turnAroundScriptLength);
-            atelTurnAround(new Span<byte>(turnAroundScript, turnAroundScriptLength), target_pos.X, target_pos.Y, target_pos.Z, work->worker_idx, 0, entry_point, 17, 1f, 1f);
+                ushort entry_point = (ushort)(Atel.controllers[0].worker(0)->script_header->entry_point_count - 1);
+
+                if (turnAroundScript == null) turnAroundScript = (byte*)NativeMemory.AllocZeroed((uint)turnAroundScriptLength);
+                atelTurnAround(new Span<byte>(turnAroundScript, turnAroundScriptLength), target_pos.X, target_pos.Y, target_pos.Z, work->worker_idx, 0, entry_point, 17, 1f, 1f);
 
 
-            AtelBasicWorker* targetWorker = Atel.controllers[0].worker(0);
-            if (!originalEntryPoints.ContainsKey((0, entry_point))) {
-                originalEntryPoints[(0, entry_point)] = targetWorker->table_entry_points[entry_point];
+                AtelBasicWorker* targetWorker = Atel.controllers[0].worker(0);
+                if (!originalEntryPoints.ContainsKey((0, entry_point))) {
+                    originalEntryPoints[(0, entry_point)] = targetWorker->table_entry_points[entry_point];
+                }
+                int targetAddress = (int)turnAroundScript;
+                int addressOffset = targetAddress - (int)targetWorker->code_ptr;
+                targetWorker->table_entry_points[entry_point] = (uint)addressOffset;
+
+                // Disable cross interaction
+                savedInteractionFlags = work->field_interaction_flags;
+                work->field_interaction_flags = 0;
+                //savedCrossInteractionStatus = (work->field_interaction_flags & (1 << 2)) != 0;
+                //if (savedCrossInteractionStatus) work->field_interaction_flags = (byte)(work->field_interaction_flags & ~(1 << 2));
+
+                atelStack->push_int(2); // signal priority?
+                atelStack->push_int(0); // worker
+                atelStack->push_int(entry_point); // entrypoint
+                _FUN_00867370((byte)AtelOp.REQEW & 0x7F, work, &work->threads[work->current_thread_priority], atelStack, 0);
+                work->__0x34 = (ushort)(work->__0x34 & 0xEBFF | 0x800);
+                //work->__0x34 = (ushort)(work->__0x34 | 0x800);
+                atelStack->pop_int();
+                //_FUN_008671d0((byte)AtelOp.REQ & 0x7F, &work->threads[work->current_thread_priority], work, atelStack);
+                return 1;
             }
-            int targetAddress = (int)turnAroundScript;
-            int addressOffset = targetAddress - (int)targetWorker->code_ptr;
-            targetWorker->table_entry_points[entry_point] = (uint)addressOffset;
-
-            // Disable cross interaction
-            savedInteractionFlags = work->field_interaction_flags;
-            work->field_interaction_flags = 0;
-            //savedCrossInteractionStatus = (work->field_interaction_flags & (1 << 2)) != 0;
-            //if (savedCrossInteractionStatus) work->field_interaction_flags = (byte)(work->field_interaction_flags & ~(1 << 2));
-
-            atelStack->push_int(2); // signal priority?
-            atelStack->push_int(0); // worker
-            atelStack->push_int(entry_point); // entrypoint
-            _FUN_00867370((byte)AtelOp.REQEW & 0x7F, work, &work->threads[work->current_thread_priority], atelStack, 0);
-            work->__0x34 = (ushort)(work->__0x34 & 0xEBFF | 0x800);
-            //work->__0x34 = (ushort)(work->__0x34 | 0x800);
-            atelStack->pop_int();
-            //_FUN_008671d0((byte)AtelOp.REQ & 0x7F, &work->threads[work->current_thread_priority], work, atelStack);
+            logger.Debug($"Closest entrance: pos:({closestEntrance?.Entrance.x}, {closestEntrance?.Entrance.y}, {closestEntrance?.Entrance.z}) distance:{closestEntrance?.Distance}");
         }
-        else {
-            logger.Debug($"Closest entrance: pos:({closestEntrance.Entrance.x}, {closestEntrance.Entrance.y}, {closestEntrance.Entrance.z}) distance:{closestEntrance.Distance}");
-            // Warp
-            atelStack->push_int(382);
-            atelStack->push_int(0);
-            h_Common_warpToMap(work, storage, atelStack);
-        }
+        // Warp
+        atelStack->push_int(382);
+        atelStack->push_int(0);
+        h_Common_warpToMap(work, storage, atelStack);
         return 1;
 
     }

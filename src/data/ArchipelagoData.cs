@@ -351,7 +351,7 @@ public static class ArchipelagoData {
             277,
             255,
             392,
-            //205,
+            205,
             199,
             200,
             201,
