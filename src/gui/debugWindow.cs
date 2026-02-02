@@ -263,7 +263,7 @@ public unsafe static class ArchipelagoGUI {
 
             ImGui.InputInt("Voiceline id", ref voiceline_id);
             if (ImGui.Button("Play voiceline")) {
-                play_voice_line(voiceline_id);
+                queued_voice_lines.Enqueue(voiceline_id);
             }
 
             int inMenu = FhUtil.get_at<int>(0x01efb4d4);

@@ -2908,8 +2908,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 item_id &= 0xfff;
                 logger.Debug($"Trap: {item_id}");
                 if (item_id == 0) {
-                    play_voice_line(voicelines[rng.Next(voicelines.Length)]);
-                    //play_voice_line(136815042); // "Stay away from the summoner"
+                    queued_voice_lines.Enqueue(voicelines[rng.Next(voicelines.Length)]);
                 }
                 break;
         }
@@ -3232,6 +3231,7 @@ public unsafe partial class ArchipelagoFFXModule {
         return result;
     }
 
+    public static Queue<int> queued_voice_lines = [];
     public static void play_voice_line(int voice_line) {
         AtelStack stack = new AtelStack();
         stack.push_int(voice_line);

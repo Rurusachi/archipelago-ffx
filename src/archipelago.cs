@@ -539,6 +539,11 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
             FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_ROOM"] = last_room_id;
         }
+
+        uint TkSndReadVoice = FhUtil.get_at<uint>(0xF2FED0);
+        if (queued_voice_lines.Count > 0 && TkSndReadVoice == 0) {
+            play_voice_line(queued_voice_lines.Dequeue());
+        }
     }
 
     public override void handle_input() {
