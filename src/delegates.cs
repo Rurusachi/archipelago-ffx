@@ -1,8 +1,9 @@
 ﻿using Fahrenheit.Core;
-using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.Atel;
+using Fahrenheit.Core.FFX;
 using Fahrenheit.Core.FFX.Battle;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TerraFX.Interop.DirectX;
 
@@ -419,18 +420,15 @@ public static unsafe class delegates {
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int CT_RetInt_01B6(nint work, int* storage, nint atelStack);
-
     public static int __addr_CT_RetInt_01B6 = 0x004594d0;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int Common_upgradeBrotherhoodRetInt(nint work, int* storage, nint atelStack);
-
     public static int __addr_CT_RetInt_01B7 = 0x004596a0;
 
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     public delegate void eiAbmParaGet();
-
     public static int __addr_eiAbmParaGet = 0x00654860;
 
 
@@ -475,6 +473,11 @@ public static unsafe class delegates {
     public const nint __addr_MsSetSaveParam = 0x3861B0;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate void MsSetRamChrParam(uint chr_id);
+    public const nint __addr_MsSetRamChrParam = 0x39c610;
+    
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public unsafe delegate void MsBattleExe(uint param_1, int field_idx, int group_idx, int formation_idx);
     public const nint __addr_MsBattleExe = 0x3810F0;
 
@@ -512,6 +515,65 @@ public static unsafe class delegates {
     public delegate int UpgradeBrotherhood(int level);
     public static int __addr_UpgradeBrotherhood = 0x004596a0;
 
+    // Initializes monster data pointers
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate void FUN_00783bb0(byte mon_id);
+    public static int __addr_FUN_00783bb0 = 0x00383bb0;
+
+
+    [StructLayout(LayoutKind.Explicit, Size = 0x80)]
+    public struct MonStats {
+        [FieldOffset(0x14)] public uint   hp;
+        [FieldOffset(0x18)] public uint   mp;
+        [FieldOffset(0x1c)] public uint   overkill_threshold;
+        [FieldOffset(0x20)] public byte   strength;
+        [FieldOffset(0x21)] public byte   defense;
+        [FieldOffset(0x22)] public byte   magic;
+        [FieldOffset(0x23)] public byte   magic_defense;
+        [FieldOffset(0x24)] public byte   agility;
+        [FieldOffset(0x25)] public byte   luck;
+        [FieldOffset(0x26)] public byte   evasion;
+        [FieldOffset(0x27)] public byte   accuracy;
+        [FieldOffset(0x28)] public ushort props;
+        [FieldOffset(0x2a)] public byte   poison_dmg;
+        [FieldOffset(0x2b)] public byte   elem_absorb;
+        [FieldOffset(0x2c)] public byte   elem_immune;
+        [FieldOffset(0x2d)] public byte   elem_resist;
+        [FieldOffset(0x2e)] public byte   elem_weak;
+        [FieldOffset(0x48)] public ushort auto_status1;
+        [FieldOffset(0x4a)] public ushort auto_status2;
+        [FieldOffset(0x4c)] public ushort auto_status3;
+        [FieldOffset(0x4e)] public ushort extra_status_resist;
+
+        [FieldOffset(0x70)] public ushort forced_move;
+        [FieldOffset(0x72)] public ushort monster_idx;
+        [FieldOffset(0x74)] public ushort model_idx;
+
+        [FieldOffset(0x77)] public byte   doom_counter;
+        [FieldOffset(0x78)] public ushort monster_arena_idx;
+
+        override public string ToString() {
+            return $"hp={hp}\n" +
+                   $"mp={mp}\n" +
+                   $"strength={strength}\n" +
+                   $"defense={defense}\n" +
+                   $"magic={magic}\n" +
+                   $"magic_defense={magic_defense}\n" +
+                   $"agility={agility}\n" +
+                   $"luck={luck}\n" +
+                   $"evasion={evasion}\n" +
+                   $"accuracy={accuracy}\n" +
+                   $"monster_arena_idx={monster_arena_idx}";
+        }
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate Chr* MsGetMon(byte mon_idx);
+    public static int __addr_MsGetMon = 0x00395ab0;
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public unsafe delegate Chr* MsGetChr(uint chr_id);
+    public const nint __addr_MsGetChr = 0x394030;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int FUN_00867370(byte opcode, AtelBasicWorker* work, AtelWorkThread* thread, AtelStack* stack, uint param_5);

@@ -79,11 +79,14 @@ public unsafe partial class ArchipelagoFFXModule {
     // getCurrentPartySlots
     private static FhMethodHandle<MsGetSavePartyMember> _MsGetSavePartyMember;
 
+    // Battle releated
     private static MsBtlListGroup _MsBtlListGroup;
     private static FhMethodHandle<MsBattleExe> _MsBattleExe;
     private static FhMethodHandle<MsMonsterCapture> _MsMonsterCapture;
     public static MsBattleLabelExe _MsBattleLabelExe;
     private static FhMethodHandle<FUN_00791820> _FUN_00791820;
+    public static FhMethodHandle<FUN_00783bb0> _FUN_00783bb0;
+    public static MsGetMon _MsGetMon;
 
     private static FhMethodHandle<MsBtlGetPos> _MsBtlGetPos;
 
@@ -105,7 +108,7 @@ public unsafe partial class ArchipelagoFFXModule {
     // obtainTreasureCleanup
     private static FhMethodHandle<FUN_007993f0> _FUN_007993f0;
 
-    private static FhCall.MsGetChr _MsGetChr;
+    private static MsGetChr _MsGetChr;
     private static FhCall.MsGetComData _MsGetComData;
     private static FhCall.MsGetCommandUse _MsGetCommandUse;
     private static FhCall.MsGetCommandMP _MsGetCommandMP;
@@ -116,8 +119,10 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhMethodHandle<TkMenuAppearMainCmdWindow> _TkMenuAppearMainCmdWindow;
 
     // Sphere Grid Experiment
-    private static FhMethodHandle<eiAbmParaGet> _eiAbmParaGet;
-    private static FhMethodHandle<FUN_00a48910> _FUN_00a48910;
+    private static FhMethodHandle<eiAbmParaGet>     _eiAbmParaGet;
+    private static FhMethodHandle<MsSetSaveParam>   _MsSetSaveParam;
+    private static FhMethodHandle<MsSetRamChrParam> _MsSetRamChrParam;
+    private static FhMethodHandle<FUN_00a48910>     _FUN_00a48910;
 
     private static FhMethodHandle<MsApUp> _MsApUp;
 
@@ -133,7 +138,6 @@ public unsafe partial class ArchipelagoFFXModule {
     private static FhCall.SndSepPlay _SndSepPlay;
 
 
-    private static FhMethodHandle<MsSetSaveParam> _MsSetSaveParam;
     public static MsGetExcelData _MsGetExcelData;
 
     private static FhMethodHandle<Map_800F> _Map_800F;
@@ -271,6 +275,8 @@ public unsafe partial class ArchipelagoFFXModule {
 
         _MsMonsterCapture = new FhMethodHandle<MsMonsterCapture>(this, game, __addr_MsMonsterCapture, h_MsMonsterCapture);
 
+        _FUN_00783bb0 = new FhMethodHandle<FUN_00783bb0>(this, game, __addr_FUN_00783bb0, h_FUN_00783bb0);
+        _MsGetMon = FhUtil.get_fptr<MsGetMon>(__addr_MsGetMon);
 
 
         // giveItem
@@ -289,14 +295,16 @@ public unsafe partial class ArchipelagoFFXModule {
         _FUN_007993f0 = new FhMethodHandle<FUN_007993f0>(this, game, 0x003993f0, h_obtain_treasure_cleanup);
 
 
-        _MsGetChr = FhUtil.get_fptr<FhCall.MsGetChr>(0x00394030);
-        _MsGetComData = FhUtil.get_fptr<FhCall.MsGetComData>(0x0039a4c0);
-        _MsGetCommandUse = FhUtil.get_fptr<FhCall.MsGetCommandUse>(0x0039a5c0);
-        _MsGetCommandMP = FhUtil.get_fptr<FhCall.MsGetCommandMP>(0x0038d030);
-        _MsGetRamChrMonster = FhUtil.get_fptr<FhCall.MsGetRamChrMonster>(0x0039af00);
-        _TODrawCrossBoxXYWHC2 = FhUtil.get_fptr<FhCall.TODrawCrossBoxXYWHC2>(0x004f4b20);
+        _MsGetChr             = FhUtil.get_fptr<MsGetChr>(__addr_MsGetChr);
+        _MsGetComData         = FhUtil.get_fptr<FhCall.MsGetComData>(FhCall.__addr_MsGetComData);
+        _MsGetCommandUse      = FhUtil.get_fptr<FhCall.MsGetCommandUse>(FhCall.__addr_MsGetCommandUse);
+        _MsGetCommandMP       = FhUtil.get_fptr<FhCall.MsGetCommandMP>(FhCall.__addr_MsGetCommandMP);
+        _MsGetRamChrMonster   = FhUtil.get_fptr<FhCall.MsGetRamChrMonster>(FhCall.__addr_MsGetRamChrMonster);
+        _TODrawCrossBoxXYWHC2 = FhUtil.get_fptr<FhCall.TODrawCrossBoxXYWHC2>(FhCall.__addr_TODrawCrossBoxXYWHC2);
 
         _eiAbmParaGet = new FhMethodHandle<eiAbmParaGet>(this, game, __addr_eiAbmParaGet, h_eiAbmParaGet);
+        _MsSetSaveParam = new FhMethodHandle<MsSetSaveParam>(this, game, __addr_MsSetSaveParam, h_MsSetSaveParam);
+        _MsSetRamChrParam = new FhMethodHandle<MsSetRamChrParam>(this, game, __addr_MsSetRamChrParam, h_MsSetRamChrParam);
         _FUN_00a48910 = new FhMethodHandle<FUN_00a48910>(this, game, 0x00648910, h_FUN_00a48910);
 
         _MsApUp = new FhMethodHandle<MsApUp>(this, game, 0x00398a10, h_MsApUp);
@@ -322,7 +330,6 @@ public unsafe partial class ArchipelagoFFXModule {
         _Map_800F = new FhMethodHandle<Map_800F>(this, game, 0x0051b1a0, h_Map_800F);
 
 
-        _MsSetSaveParam = new FhMethodHandle<MsSetSaveParam>(this, game, __addr_MsSetSaveParam, h_MsSetSaveParam);
         _MsGetExcelData = FhUtil.get_fptr<MsGetExcelData>(__addr_MsGetExcelData);
 
 
@@ -429,8 +436,8 @@ public unsafe partial class ArchipelagoFFXModule {
             && _SgEvent_showModularMenuInit.hook()
             && _Common_addPartyMember.hook() && _Common_removePartyMember.hook() && _Common_removePartyMemberLongTerm.hook() && _Common_setWeaponVisibilty.hook()
             && _Common_putPartyMemberInSlot.hook() && _Common_pushParty.hook() && _Common_popParty.hook() && _MsBattleExe.hook() && _FUN_00791820.hook()
-            && _MsApUp.hook() && _MsBtlReadSetScene.hook() && _MsMonsterCapture.hook() //&& _MsSetSaveParam.hook() // && _Map_800F.hook() //_MsBtlGetPos.hook()
-            && _eiAbmParaGet.hook() // && _FUN_00a48910.hook()
+            && _MsApUp.hook() && _MsBtlReadSetScene.hook() && _MsMonsterCapture.hook() && _FUN_00783bb0.hook() //&&  // && _Map_800F.hook() //_MsBtlGetPos.hook()
+            && _eiAbmParaGet.hook() && _MsSetSaveParam.hook() && _MsSetRamChrParam.hook() // && _FUN_00a48910.hook()
             && _FUN_0086bec0.hook() && _FUN_0086bea0.hook() // Custom strings
             && _graphicInitFMVPlayer.hook() && _FmodVoice_dataChange.hook()
             && _AtelInitTotal.hook()
@@ -2489,6 +2496,53 @@ public unsafe partial class ArchipelagoFFXModule {
         return captured;
     }
 
+    private static HashSet<ushort> initialized_monsters = [];
+    public static void h_FUN_00783bb0(byte mon_id) {
+        byte num_initialized = FhUtil.get_at<byte>(0xD2CA80);
+        if (num_initialized == 0) initialized_monsters.Clear();
+
+        _FUN_00783bb0.orig_fptr(mon_id);
+
+        Chr* mon = _MsGetMon(mon_id);
+        if (initialized_monsters.Add(mon->chr_id)) {
+            MonStats* stats = (MonStats*)mon->ptr_base_stats;
+            //logger.Debug($"{mon->chr_id & 0xFFF} stats:  stats=\n{stats->ToString()}");
+            if ((mon->chr_id & 0xFFF) == 101) {
+                // Tros
+                stats->monster_arena_idx = 0xFF;
+            }
+
+            //ChrLoot* loot = (ChrLoot*)(((int*)mon->ptr_mon_wep_bin)[5] + mon->ptr_mon_wep_bin);
+            //
+            //loot->drop_chance_equipment = 255;
+            //loot->equipment_loot.ability_count = 100; // Guaranteed 4 abilities?
+            //loot->equipment_loot.slot_count = 20; // Guaranteed 4 slots
+            //
+            //for (int chr = 0; chr < 7; chr++) {
+            //    // Guaranteed Capture
+            //    loot->equipment_loot.abilities_tidus.weapon_abilities[0] = 0x807A;
+            //    loot->equipment_loot.abilities_yuna.weapon_abilities[0] = 0x807A;
+            //    loot->equipment_loot.abilities_auron.weapon_abilities[0] = 0x807A;
+            //    loot->equipment_loot.abilities_kimahri.weapon_abilities[0] = 0x807A;
+            //    loot->equipment_loot.abilities_wakka.weapon_abilities[0] = 0x807A;
+            //    loot->equipment_loot.abilities_lulu.weapon_abilities[0] = 0x807A;
+            //    loot->equipment_loot.abilities_rikku.weapon_abilities[0] = 0x807A;
+            //    for (int i = 1; i < 8; i++) {
+            //        loot->equipment_loot.abilities_tidus.weapon_abilities[i] = (ushort)(0x8000 + rng.Next(0x81));
+            //        loot->equipment_loot.abilities_yuna.weapon_abilities[i] = (ushort)(0x8000 + rng.Next(0x81));
+            //        loot->equipment_loot.abilities_auron.weapon_abilities[i] = (ushort)(0x8000 + rng.Next(0x81));
+            //        loot->equipment_loot.abilities_kimahri.weapon_abilities[i] = (ushort)(0x8000 + rng.Next(0x81));
+            //        loot->equipment_loot.abilities_wakka.weapon_abilities[i] = (ushort)(0x8000 + rng.Next(0x81));
+            //        loot->equipment_loot.abilities_lulu.weapon_abilities[i] = (ushort)(0x8000 + rng.Next(0x81));
+            //        loot->equipment_loot.abilities_rikku.weapon_abilities[i] = (ushort)(0x8000 + rng.Next(0x81));
+            //    }
+            //}
+
+        } else {
+            logger.Debug($"{mon_id}: already initialized ({mon->chr_id})");
+        }
+    }
+
     // Battle loop?
     public static void h_FUN_00791820() {
         _FUN_00791820.orig_fptr();
@@ -2967,18 +3021,31 @@ public unsafe partial class ArchipelagoFFXModule {
         logger.Debug("Calculating stats");
         _eiAbmParaGet.orig_fptr();
 
-        // Guaranteed access to all sphere types
-        //for (int i = 0; i < 18; i++) {
-        //    save_data->ply_saves[i].abi_map.has_extract_power = true;
-        //    save_data->ply_saves[i].abi_map.has_extract_mana = true;
-        //    save_data->ply_saves[i].abi_map.has_extract_speed = true;
-        //    save_data->ply_saves[i].abi_map.has_extract_ability = true;
+        //foreach (ref PlySave ply in save_data->ply_saves) {
+        //    ply.abi_map.has_extract_power   = true;
+        //    ply.abi_map.has_extract_mana    = true;
+        //    ply.abi_map.has_extract_speed   = true;
+        //    ply.abi_map.has_extract_ability = true;
         //}
+    }
+
+    private static void h_MsSetRamChrParam(uint chr_id) {
+        logger.Debug($"MsSetRamChrParam: {chr_id}");
+        _MsSetRamChrParam.orig_fptr(chr_id);
+
+        Chr* chr = _MsGetChr(chr_id);
+
+        chr->ram.auto_ability_effects.has_sensor = true;
+        chr->ram.auto_ability_effects.has_capture = true;
     }
 
     private static void h_MsSetSaveParam(uint chr_id) {
         logger.Debug("Calculating base stats and equipment");
         _MsSetSaveParam.orig_fptr(chr_id);
+
+        // Does nothing??
+        save_data->ply_saves[(int)chr_id].auto_ability_effects.has_sensor = true;
+        save_data->ply_saves[(int)chr_id].auto_ability_effects.has_capture = true;
 
         return;
         //PlySave ply = save_data->ply_saves[(int)chr_id];
@@ -3204,7 +3271,7 @@ public unsafe partial class ArchipelagoFFXModule {
         logger.Debug($"{FmodVoice}, {event_id}, {param_2}");
         int result = _FmodVoice_dataChange.orig_fptr(FmodVoice, event_id, param_2);
         //string bank_name = "ffx_us_voice03"; // Contains "Stay away from the summoner!" (136815042)
-        foreach (string bank_name in (string[])["ffx_us_voice03", "ffx_us_voice07", "ffx_us_voice11", "ffx_us_voice12"]) {
+        foreach (string bank_name in (string[])["ffx_us_voice03", "ffx_us_voice07", "ffx_us_voice11", "ffx_us_voice12", "ffx_us_voice20"]) {
             string path = $"../../../FFX_Data/GameData/PS3Data/Sound_PC/Voice/US/{bank_name}.fev";
             nint file_path = Marshal.StringToHGlobalAnsi(path);
 

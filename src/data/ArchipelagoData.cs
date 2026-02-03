@@ -952,7 +952,6 @@ public static class ArchipelagoData {
         // Tutorials
         // Will softlock without Lulu
         {"bsil07_51", () => {
-            ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_LULU], true, false);
             int partyMember_id = 5; // Lulu
             if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                 if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
@@ -961,10 +960,10 @@ public static class ArchipelagoData {
                     }
                 }
             }
+            ArchipelagoFFXModule.set_party([PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_LULU], true, false);
         } },
         // Yuna is unable to act without an aeon, causing a softlock.
         {"bsil05_50", () => {
-            ArchipelagoFFXModule.set_party([PlySaveId.PC_LULU, PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_YUNA, PlySaveId.PC_VALEFOR], true, false);
             int partyMember_id = 1; // Yuna
             if (!FFXArchipelagoClient.local_checked_locations.Contains(partyMember_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
                 if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(partyMember_id, out var item)) {
@@ -973,6 +972,7 @@ public static class ArchipelagoData {
                     }
                 }
             }
+            ArchipelagoFFXModule.set_party([PlySaveId.PC_LULU, PlySaveId.PC_TIDUS, PlySaveId.PC_WAKKA, PlySaveId.PC_YUNA, PlySaveId.PC_VALEFOR], true, false);
         } },
 
         // Gui 2
@@ -1174,5 +1174,8 @@ public static class ArchipelagoData {
         0x1B45F5CB, // ffx_us_voice11: "Those sand-blasted grease monkeys!"
         0x1B1991C1, // ffx_us_voice11: "Ride ze shoopuf?"
         0x1E5911C1, // ffx_us_voice12: "then burn me, boil me, it matters not."
+        0x3172248B, // ffx_us_voice20: "Sometimes, when I got a lot on my mind"
+        0x4BC8C5CB, // ffx_us_voice_btl: "Who did that!?"
+        0x57EA548B, // ffx_us_voice_btl: "Guardians should fight, not think." + Rikku response
         ];
 }
