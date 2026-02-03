@@ -2167,81 +2167,81 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void on_map_change() {
         int map      = save_data->current_room_id;
         int entrance = save_data->current_spawnpoint;
-        handle_warp_transition(ref map, ref entrance); // We can ignore return value?
+        handle_warp_transition(save_data->last_room_id, save_data->last_spawnpoint, ref map, ref entrance); // We can ignore return value?
         if (map == 382) update_region_state(save_data->last_room_id, save_data->last_spawnpoint);
         if (save_data->current_room_id != map) {
             save_data->current_room_id    = (ushort)map;
             save_data->current_spawnpoint = (byte)entrance;
         }
     }
-    private static bool handle_warp_transition(ref int map, ref int entrance) {
-        if (map == -1) {
+    private static bool handle_warp_transition(int current_map, int current_entrance, ref int next_map, ref int next_entrance) {
+        if (next_map == -1) {
             // Loading a save
-            map = save_data->saved_current_room_id;
-            entrance = save_data->saved_current_spawnpoint;
+            next_map = save_data->saved_current_room_id;
+            next_entrance = save_data->saved_current_spawnpoint;
             save_data->last_room_id = save_data->saved_last_room_id;
             save_data->last_spawnpoint = save_data->saved_last_spawnpoint;
             save_data->saved_current_spawnpoint = 0;
-            if (id_to_regions.Contains(map)) {
-                var regions = id_to_regions[map];
+            if (id_to_regions.Contains(next_map)) {
+                var regions = id_to_regions[next_map];
                 RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();
                 current_region = region;
 
-                restore_region_state(ref map, ref entrance);
+                restore_region_state(ref next_map, ref next_entrance);
             }
         }
-        if (id_to_regions.Contains(map)) {
+        if (id_to_regions.Contains(next_map)) {
 
             // New Game
-            if (save_data->current_room_id == 0 && map == 132) {
+            if (save_data->current_room_id == 0 && next_map == 132) {
                 current_region = RegionEnum.DreamZanarkand;
                 FFXArchipelagoClient.local_checked_locations.Clear();
                 FFXArchipelagoClient.received_items = 0;
                 FFXArchipelagoClient.remote_locations_updated = true;
                 // Load seed here?
                 if (!loadSeed()) {
-                    map = 23;
-                    entrance = 0;
-                    return handle_warp_transition(ref map, ref entrance);
+                    next_map = 23;
+                    next_entrance = 0;
+                    return handle_warp_transition(current_map, current_entrance, ref next_map, ref next_entrance);
                     //return true;
                 }
                 foreach (uint item in seed.StartingItems) obtain_item(item);
             }
             if (seed.SeedId is null) {
                 // In-game with no seed
-                map = 23;
-                entrance = 0;
-                return handle_warp_transition(ref map, ref entrance);
+                next_map = 23;
+                next_entrance = 0;
+                return handle_warp_transition(current_map, current_entrance, ref next_map, ref next_entrance);
                 //return true;
             }
 
-            var regions = id_to_regions[map];
+            var regions = id_to_regions[next_map];
             RegionEnum region = regions.Any(r => current_region == r) ? current_region : regions.Last();
 
             if (current_region != region) {
-                map = 382;
-                entrance = 0;
+                next_map = 382;
+                next_entrance = 0;
                 return false;
             }
             else {
                 // Skip crystal collecting
-                if (map == 324 && save_data->story_progress == 3250) {
+                if (next_map == 324 && save_data->story_progress == 3250) {
                     logger.Info($"Skipping crystal collecting");
-                    map = 325;
-                    entrance = 0;
+                    next_map = 325;
+                    next_entrance = 0;
                     save_data->story_progress = 3260;
-                    return handle_warp_transition(ref map, ref entrance);
+                    return handle_warp_transition(current_map, current_entrance, ref next_map, ref next_entrance);
                 }
             }
         }
         else {
-            if (map == 23) {
+            if (next_map == 23) {
                 logger.Debug("Enter main menu");
                 // Main Menu
                 initalize_states();
                 seed = default;
             }
-            //if (map == 382) update_region_state(); // Airship Menu
+            if (next_map == 382) update_region_state(current_map, current_entrance); // Airship Menu
             current_region = RegionEnum.None;
             skip_state_updates = false;
         }
@@ -2282,7 +2282,7 @@ public unsafe partial class ArchipelagoFFXModule {
         ref int entrance = ref atelStack->values.as_int()[1];
         logger.Debug($"transition_to_map: map={map}, entrance={entrance}");
 
-        if (handle_warp_transition(ref map, ref entrance)) {
+        if (handle_warp_transition(save_data->current_room_id, save_data->current_spawnpoint, ref map, ref entrance)) {
             return _Common_transitionToMap.orig_fptr(work, storage, atelStack);
         }
         else {
@@ -2300,7 +2300,7 @@ public unsafe partial class ArchipelagoFFXModule {
             map = 23;
         }
 
-        if (handle_warp_transition(ref map, ref entrance)) {
+        if (handle_warp_transition(save_data->current_room_id, save_data->current_spawnpoint, ref map, ref entrance)) {
             return _Common_warpToMap.orig_fptr(work, storage, atelStack);
         } else {
             return blockWarp(work, storage, atelStack);
