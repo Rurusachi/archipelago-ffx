@@ -3035,8 +3035,12 @@ public unsafe partial class ArchipelagoFFXModule {
 
         Chr* chr = _MsGetChr(chr_id);
 
-        chr->ram.auto_ability_effects.has_sensor = true;
-        chr->ram.auto_ability_effects.has_capture = true;
+        if (seed.AlwaysSensor) {
+            chr->ram.auto_ability_effects.has_sensor = true;
+        }
+        if (seed.AlwaysCapture) {
+            chr->ram.auto_ability_effects.has_capture = true;
+        }
     }
 
     private static void h_MsSetSaveParam(uint chr_id) {
@@ -3044,8 +3048,12 @@ public unsafe partial class ArchipelagoFFXModule {
         _MsSetSaveParam.orig_fptr(chr_id);
 
         // Does nothing??
-        save_data->ply_saves[(int)chr_id].auto_ability_effects.has_sensor = true;
-        save_data->ply_saves[(int)chr_id].auto_ability_effects.has_capture = true;
+        if (seed.AlwaysSensor) {
+            save_data->ply_saves[(int)chr_id].auto_ability_effects.has_sensor = true;
+        }
+        if (seed.AlwaysCapture) {
+            save_data->ply_saves[(int)chr_id].auto_ability_effects.has_capture = true;
+        }
 
         return;
         //PlySave ply = save_data->ply_saves[(int)chr_id];

@@ -117,6 +117,10 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         public int             RequiredPrimers;
         [JsonInclude]
         public int             APMultiplier;
+        [JsonInclude]
+        public bool            AlwaysSensor;
+        [JsonInclude]
+        public bool            AlwaysCapture;
         [JsonInclude]          
         public List<uint>      StartingItems;
         [JsonInclude]          
@@ -144,6 +148,8 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
             RequiredPartyMembers = 1;
             RequiredPrimers = 0;
             APMultiplier = 1;
+            AlwaysSensor = false;
+            AlwaysCapture = false;
             StartingItems = [];
             Treasure = [];
             Boss = [];
