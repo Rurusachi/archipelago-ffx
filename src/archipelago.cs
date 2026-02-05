@@ -873,14 +873,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
 
     private static Dictionary<string, CustomStringDrawInfo> customStringDrawInfos = [];
 
-    private static CustomString monster_arena = new("Calm Lands"u8, 0, 0);
-    public static Vector2 monster_arena_pos = new(52f, 73f);
-    public static float monster_arena_scale = 1f;
-    public static bool monster_arena_draw = false;
     public override void render_game() {
-        if (monster_arena_draw) {
-            _TOMkpCrossExtMesFontLClutTypeRGBA(0, monster_arena.encoded, monster_arena_pos.X, monster_arena_pos.Y, 0x00, 0, 0x80, 0x80, 0x80, 0x80, monster_arena_scale, 0);
-        }
         foreach ((string key, CustomStringDrawInfo drawInfo) in customStringDrawInfos) {
             _TOMkpCrossExtMesFontLClutTypeRGBA(0, drawInfo.customString.encoded, drawInfo.pos.X, drawInfo.pos.Y, drawInfo.color, 0, 0x80, 0x80, 0x80, 0x80, drawInfo.scale, 0);
         }
