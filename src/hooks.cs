@@ -13,6 +13,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Utf8StringInterpolation;
 using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
@@ -1162,6 +1163,11 @@ public unsafe partial class ArchipelagoFFXModule {
         {"swin0000", [(0x8981,  5)] }, // Kiyuri
     };
 
+    private static readonly Dictionary<string, (uint offset, ushort southNorth)[]> event_to_lightning_dodging_offsets = new(){
+        {"kami0000", [(0x3848, 0)] },
+        {"kami0300", [(0x685F, 1)] },
+    };
+
     private static Dictionary<(int, int), uint> originalEntryPoints = new();
     private static string current_event_name = "";
     private static void h_AtelEventSetUp(int event_id) {
@@ -1213,7 +1219,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     .. atelNOPArray(15),
                     AtelOp.CALLPOPA.build((ushort)CustomCallTarget.SHOW_AIRSHIP_DESTINATIONS),
                     ]);
-                
+
 
                 // Hide airship destinations
                 set(code_ptr, 0x3765, [
@@ -1249,7 +1255,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.CALLPOPA.build((ushort)CustomCallTarget.HIDE_CURRENT_AIRSHIP_LOCATION),
                     ]);
 
-                set(code_ptr, 
+                set(code_ptr,
                     [
                         0x1CB8 + 3, 0x1CDF + 3, 0x1D06 + 3, 0x1D2D + 3,
                         0x1D54 + 3, 0x1D7B + 3, 0x1DA2 + 3, 0x1DC9 + 3,
@@ -1262,7 +1268,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     );
 
                 set(code_ptr, 0x434E, AtelOp.PUSHII.build(12)); // Change destination 26 switch case to 12
-                
+
                 set(code_ptr, 0x4028, atelNOPArray(13));         // Skip setting GameMoment for destination 16
                 set(code_ptr, 0x4118, AtelOp.JMP.build(0x0141)); // Skip setting GameMoment for destination 18
 
@@ -1603,6 +1609,18 @@ public unsafe partial class ArchipelagoFFXModule {
             }
         }
 
+        //Lightning Dodging
+        if (event_to_lightning_dodging_offsets.TryGetValue(event_name, out var lightning_offset)) {
+            // kami0000 - 0x3848 | kami0300 - 0x685F
+            foreach ((uint offset, ushort southNorth) in lightning_offset) {
+                set(code_ptr, offset, [
+                    AtelOp.PUSHII       .build(southNorth),
+                    AtelOp.CALL         .build((ushort)CustomCallTarget.LIGHTNING_DODGING),
+                    AtelOp.NOP          .build(),
+                    ]);
+            }
+        }
+
         // Celestial weapon locations
         if (event_to_celestial_offsets.TryGetValue(event_name, out var celestial_offsets)) {
             // Remove CelestialMirrorObtained check
@@ -1623,7 +1641,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     AtelOp.NOP      .build(),
                     ]);
             }
-            {  
+            {
                 uint? offset = null;
                 if (event_name == "bika0000") offset = 0x15FC;
                 if (event_name == "cdsp0000") offset = 0xC62F;
@@ -2308,6 +2326,7 @@ public unsafe partial class ArchipelagoFFXModule {
         }
 
         if (handle_warp_transition(save_data->current_room_id, save_data->current_spawnpoint, ref map, ref entrance)) {
+            clearCustomDrawInfos();
             return _Common_warpToMap.orig_fptr(work, storage, atelStack);
         } else {
             return blockWarp(work, storage, atelStack);
@@ -3264,9 +3283,9 @@ public unsafe partial class ArchipelagoFFXModule {
     // Unsure if there are side effects
     public static void h_LocalizationManager_Initialize(FFXLocalizationManager* localizationManager) {
         _LocalizationManager_Initialize.orig_fptr(localizationManager);
-        if (TextLanguage.HasValue) { 
+        if (TextLanguage.HasValue) {
             logger.Debug($"Text: {TextLanguage.Value}");
-            localizationManager->text = (int)TextLanguage; 
+            localizationManager->text = (int)TextLanguage;
         }
         if (VoiceLanguage.HasValue) {
             logger.Debug($"Voice: {VoiceLanguage.Value}");
@@ -3416,6 +3435,7 @@ public unsafe partial class ArchipelagoFFXModule {
         IS_GOAL_UNLOCKED,
         REPLACE_ENTRY_POINT,
         RESTORE_ENTRY_POINT,
+        LIGHTNING_DODGING,
     }
 
     static AtelCallTarget[] customNameSpace = {
@@ -3447,6 +3467,7 @@ public unsafe partial class ArchipelagoFFXModule {
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_IsGoalUnlocked)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_ReplaceEntryPoint)},
         new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_RestoreEntryPoint)},
+        new() { ret_int_func = (nint)(delegate* unmanaged[Cdecl]<AtelBasicWorker*, int*, AtelStack*, int>)(&CT_RetInt_LightningDodging)},
     };
     static GCHandle customNameSpaceHandle = GCHandle.Alloc(customNameSpace, GCHandleType.Pinned);
 
@@ -3634,6 +3655,12 @@ public unsafe partial class ArchipelagoFFXModule {
         return blockWarp(work, storage, atelStack);
     }
 
+    public static void clearCustomDrawInfos() {
+        foreach((string key, CustomStringDrawInfo drawInfo) in customStringDrawInfos) {
+            customStringDrawInfos.Remove(key);
+        }
+    }
+
     public static int blockWarp(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int entrance = atelStack->pop_int();
         int map      = atelStack->pop_int();
@@ -3685,6 +3712,7 @@ public unsafe partial class ArchipelagoFFXModule {
             logger.Debug($"Closest entrance: pos:({closestEntrance?.Entrance.x}, {closestEntrance?.Entrance.y}, {closestEntrance?.Entrance.z}) distance:{closestEntrance?.Distance}");
         }
         // Warp
+        clearCustomDrawInfos();
         atelStack->push_int(382);
         atelStack->push_int(0);
         h_Common_warpToMap(work, storage, atelStack);
@@ -3940,5 +3968,40 @@ public unsafe partial class ArchipelagoFFXModule {
         }
         return 1;
     }
-}
 
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    public static int CT_RetInt_LightningDodging(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
+        int southNorth = atelStack->pop_int();
+        ushort highestDodged = save_data->lightning_dodging_highest_consecutive_dodges;
+        byte* table = (byte*)work->table_event_data;
+        byte* dodged;
+        byte* streak;
+
+        if (southNorth == 0) {
+            dodged = &table[0x0007];
+            streak = &table[0x0012];
+        } else {
+            dodged = &table[0x0009];
+            streak = &table[0x000E];
+        }
+
+        int current;
+        if (*dodged == 0)
+            current = 0;
+        else
+            current = *streak + 1;
+
+        logger.Info($"Lightning Dodged: {current}");
+        byte[] utf8Dodged = Utf8String.Format($"Dodged: {current}");
+        customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new CustomString(utf8Dodged), new(40f, 140f), 0.5f);
+
+        if (*streak > save_data->lightning_dodging_highest_consecutive_dodges)
+            highestDodged = *streak;
+
+        logger.Info($"Highest Consecutive Dodged: {highestDodged}");
+        byte[] utf8Streak = Utf8String.Format($"Highest: {highestDodged}");
+        customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new CustomString(utf8Streak), new(40f, 150f), 0.5f);
+
+        return *dodged == 1 ? 1 : 0;
+    }
+}
