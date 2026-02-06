@@ -13,7 +13,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Utf8StringInterpolation;
 using static Fahrenheit.Core.FFX.Globals;
 using static Fahrenheit.Modules.ArchipelagoFFX.ArchipelagoData;
 using static Fahrenheit.Modules.ArchipelagoFFX.Client.FFXArchipelagoClient;
@@ -3991,16 +3990,24 @@ public unsafe partial class ArchipelagoFFXModule {
         else
             current = *streak + 1;
 
-        logger.Info($"Lightning Dodged: {current}");
         string currentString = $"Dodged: {current}";
+        if (customStringDrawInfos.ContainsKey("Lightning Streak")) {
+            customStringDrawInfos["Lightning Streak"].customString.Free();
+            customStringDrawInfos.Remove("Lightning Streak");
+        }
         customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new CustomString(currentString), new(40f, 140f), 0.5f);
+        logger.Info($"Lightning Dodged: {current}");
 
         if (*streak > save_data->lightning_dodging_highest_consecutive_dodges)
             highestDodged = *streak;
 
-        logger.Info($"Highest Consecutive Dodged: {highestDodged}");
         string highestString = $"Highest: {highestDodged}";
+        if (customStringDrawInfos.ContainsKey("Lightning Highest Streak")) {
+            customStringDrawInfos["Lightning Highest Streak"].customString.Free();
+            customStringDrawInfos.Remove("Lightning Highest Streak");
+        }
         customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new CustomString(highestString), new(40f, 150f), 0.5f);
+        logger.Info($"Highest Consecutive Dodged: {highestDodged}");
 
         return *dodged == 1 ? 1 : 0;
     }
