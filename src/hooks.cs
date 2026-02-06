@@ -3992,15 +3992,15 @@ public unsafe partial class ArchipelagoFFXModule {
             current = *streak + 1;
 
         logger.Info($"Lightning Dodged: {current}");
-        byte[] utf8Dodged = Utf8String.Format($"Dodged: {current}");
-        customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new CustomString(utf8Dodged), new(40f, 140f), 0.5f);
+        string currentString = $"Dodged: {current}";
+        customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new CustomString(currentString), new(40f, 140f), 0.5f);
 
         if (*streak > save_data->lightning_dodging_highest_consecutive_dodges)
             highestDodged = *streak;
 
         logger.Info($"Highest Consecutive Dodged: {highestDodged}");
-        byte[] utf8Streak = Utf8String.Format($"Highest: {highestDodged}");
-        customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new CustomString(utf8Streak), new(40f, 150f), 0.5f);
+        string highestString = $"Highest: {highestDodged}";
+        customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new CustomString(highestString), new(40f, 150f), 0.5f);
 
         return *dodged == 1 ? 1 : 0;
     }
