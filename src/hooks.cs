@@ -3976,6 +3976,7 @@ public unsafe partial class ArchipelagoFFXModule {
         byte* dodged;
         byte* streak;
 
+        // Get relevant eventVars per room
         if (southNorth == 0) {
             dodged = &table[0x0007];
             streak = &table[0x0012];
@@ -3984,6 +3985,17 @@ public unsafe partial class ArchipelagoFFXModule {
             streak = &table[0x000E];
         }
 
+        // Free & Remove existing strings
+        if (customStringDrawInfos.ContainsKey("Lightning Streak")) {
+            customStringDrawInfos["Lightning Streak"].customString.Free();
+            customStringDrawInfos.Remove("Lightning Streak");
+        }
+        if (customStringDrawInfos.ContainsKey("Lightning Highest Streak")) {
+            customStringDrawInfos["Lightning Highest Streak"].customString.Free();
+            customStringDrawInfos.Remove("Lightning Highest Streak");
+        }
+
+        // Did the player dodge?
         int current;
         if (*dodged == 0)
             current = 0;
@@ -3991,10 +4003,6 @@ public unsafe partial class ArchipelagoFFXModule {
             current = *streak + 1;
 
         string currentString = $"Dodged: {current}";
-        if (customStringDrawInfos.ContainsKey("Lightning Streak")) {
-            customStringDrawInfos["Lightning Streak"].customString.Free();
-            customStringDrawInfos.Remove("Lightning Streak");
-        }
         customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new CustomString(currentString), new(40f, 140f), 0.5f);
         logger.Info($"Lightning Dodged: {current}");
 
@@ -4002,10 +4010,6 @@ public unsafe partial class ArchipelagoFFXModule {
             highestDodged = *streak;
 
         string highestString = $"Highest: {highestDodged}";
-        if (customStringDrawInfos.ContainsKey("Lightning Highest Streak")) {
-            customStringDrawInfos["Lightning Highest Streak"].customString.Free();
-            customStringDrawInfos.Remove("Lightning Highest Streak");
-        }
         customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new CustomString(highestString), new(40f, 150f), 0.5f);
         logger.Info($"Highest Consecutive Dodged: {highestDodged}");
 
