@@ -930,7 +930,7 @@ public static class ArchipelagoData {
         {"bika00_10", () =>  FFXArchipelagoClient.current_session?.DataStorage[Scope.Slot, "FFX_LOGIC_ZU"] = true },
         {"mihn02_00", () => {
             int boss_id = 8; // Chocobo Eater
-            if (!FFXArchipelagoClient.local_checked_locations.Contains(boss_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.PartyMember)) {
+            if (!FFXArchipelagoClient.local_checked_locations.Contains(boss_id | (long)FFXArchipelagoClient.ArchipelagoLocationType.Boss)) {
                 if (ArchipelagoFFXModule.item_locations.party_member.TryGetValue(boss_id, out var item)) {
                     if (FFXArchipelagoClient.sendLocation(boss_id, FFXArchipelagoClient.ArchipelagoLocationType.Boss)) {
                         ArchipelagoFFXModule.obtain_item(item.id);
