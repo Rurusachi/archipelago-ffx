@@ -2507,10 +2507,24 @@ public unsafe partial class ArchipelagoFFXModule {
         if (initialized_monsters.Add(mon->chr_id)) {
             MonStats* stats = (MonStats*)mon->ptr_base_stats;
             //logger.Debug($"{mon->chr_id & 0xFFF} stats:  stats=\n{stats->ToString()}");
-            if ((mon->chr_id & 0xFFF) == 101) {
-                // Tros
+            if (
+                (mon->chr_id & 0xFFF) == 041 ||  // Sahagin
+                (mon->chr_id & 0xFFF) == 042 ||  // Sahagin
+                (mon->chr_id & 0xFFF) == 043 ||  // Sahagin
+                (mon->chr_id & 0xFFF) == 068 ||  // Piranha
+                (mon->chr_id & 0xFFF) == 069 ||  // Piranha
+                (mon->chr_id & 0xFFF) == 070 ||  // Piranha   
+                (mon->chr_id & 0xFFF) == 101 ||  // Tros
+                (mon->chr_id & 0xFFF) == 155 ||  // Sahagin
+                (mon->chr_id & 0xFFF) == 156 ||  // Sahagin Chief
+                (mon->chr_id & 0xFFF) == 157 ||  // Garuda
+                (mon->chr_id & 0xFFF) == 230 ||  // Garuda
+                (mon->chr_id & 0xFFF) == 231 ||  // Dingo
+                (mon->chr_id & 0xFFF) == 232 ||  // Water Flan
+                (mon->chr_id & 0xFFF) == 233 ||  // Condor
+                (mon->chr_id & 0xFFF) == 234     // Ragora - Lancet Tutorial
+               )
                 stats->monster_arena_idx = 0xFF;
-            }
 
             //ChrLoot* loot = (ChrLoot*)(((int*)mon->ptr_mon_wep_bin)[5] + mon->ptr_mon_wep_bin);
             //
