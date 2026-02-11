@@ -524,14 +524,33 @@ public unsafe partial class ArchipelagoFFXModule {
     //    //}.SelectMany(x => x).ToArray(),
     //    //FhEncoding.Us.to_bytes("{TIME:0}Ready to fight {COLOR:BLUE}Sin{COLOR:WHITE}?\n{CHOICE:0}Yes\n{CHOICE:1}No"),
     //};
-    public struct CustomString {
+
+    public struct ManagedCustomString {
+        public byte[] encoded;
+
+        public ManagedCustomString(ReadOnlySpan<byte> text, FhEncodingFlags encodingFlags = default) {
+
+            int encodedLength = FhEncoding.compute_encode_buffer_size(text, flags: encodingFlags);
+            this.encoded = new byte[encodedLength + 1];
+            int actual_size = FhEncoding.encode(text, encoded, flags: encodingFlags);
+        }
+        public ManagedCustomString(string text, FhEncodingFlags encodingFlags = default) {
+
+            ReadOnlySpan<byte> utf8String = Encoding.UTF8.GetBytes(text);
+
+            int encodedLength = FhEncoding.compute_encode_buffer_size(utf8String, flags: encodingFlags);
+            this.encoded = new byte[encodedLength + 1];
+            int actual_size = FhEncoding.encode(utf8String, encoded, flags: encodingFlags);
+        }
+    }
+    public struct NativeCustomString {
         public byte* encoded;
         public int encodedLength;
         public string decoded;
         public int choices;
         public int flags;
 
-        public CustomString(ReadOnlySpan<byte> text, int choices = 0, int flags = 0, FhEncodingFlags encodingFlags = default) {
+        public NativeCustomString(ReadOnlySpan<byte> text, int choices = 0, int flags = 0, FhEncodingFlags encodingFlags = default) {
             this.choices = choices;
             this.flags = flags;
 
@@ -542,7 +561,7 @@ public unsafe partial class ArchipelagoFFXModule {
             int actual_size = FhEncoding.encode(text, new Span<byte>(encoded, encodedLength), flags: encodingFlags);
         }
 
-        public CustomString(string text, int choices = 0, int flags = 0, FhEncodingFlags encodingFlags = default) {
+        public NativeCustomString(string text, int choices = 0, int flags = 0, FhEncodingFlags encodingFlags = default) {
             this.choices = choices;
             this.flags = flags;
             this.decoded = text;
@@ -570,14 +589,14 @@ public unsafe partial class ArchipelagoFFXModule {
     //private const byte OL_PURPLE = 0xA1;
     //private const byte OL_CYAN   = 0xB1;
 
-    public static readonly CustomString[] customStrings = [
-        new CustomString("{TIME:00}Ready to fight {COLOR:88}Sin{COLOR:41}?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
-        new CustomString("{TIME:00}Ready to fight {COLOR:88}Jecht{COLOR:41}?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
-        new CustomString("{TIME:00}Locked"u8, 0, 0),
-        new CustomString("{TIME:00}{CHOICE:00}Save{LF}{CHOICE:01}Board airship{LF}{CHOICE:02}Play blitzball{LF}{CHOICE:03}Cancel"u8, 4, 0),
-        new CustomString("{TIME:00}The {MACRO:06:42} are not at full{LF}strength. You need more members{LF}to participate in blitzball."u8, 0, 0),
-        new CustomString("{TIME:00}Skip ending?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
-        new CustomString("{TIME:00}Other regions must be accessed from the Airship Menu"u8, 0, 0),
+    public static readonly NativeCustomString[] customStrings = [
+        new NativeCustomString("{TIME:00}Ready to fight {COLOR:88}Sin{COLOR:41}?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
+        new NativeCustomString("{TIME:00}Ready to fight {COLOR:88}Jecht{COLOR:41}?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
+        new NativeCustomString("{TIME:00}Locked"u8, 0, 0),
+        new NativeCustomString("{TIME:00}{CHOICE:00}Save{LF}{CHOICE:01}Board airship{LF}{CHOICE:02}Play blitzball{LF}{CHOICE:03}Cancel"u8, 4, 0),
+        new NativeCustomString("{TIME:00}The {MACRO:06:42} are not at full{LF}strength. You need more members{LF}to participate in blitzball."u8, 0, 0),
+        new NativeCustomString("{TIME:00}Skip ending?{LF}{CHOICE:00}Yes{LF}{CHOICE:01}No"u8, 2, 0),
+        new NativeCustomString("{TIME:00}Other regions must be accessed from the Airship Menu"u8, 0, 0),
     ];
     //public static readonly byte[][] rawCustomStrings = [
     //    "{TIME:0}Ready to fight {COLOR:BLUE}Sin{COLOR:WHITE}?\n{CHOICE:0}Yes\n{CHOICE:1}No"u8.ToArray()
@@ -1172,12 +1191,16 @@ public unsafe partial class ArchipelagoFFXModule {
     private static void h_AtelEventSetUp(int event_id) {
         _AtelEventSetUp.orig_fptr(event_id);
 
-        foreach (var handle in cached_strings) {
-            handle.Free();
+        foreach (NativeCustomString customString in cached_strings) {
+            customString.Free();
         }
         cached_strings.Clear();
 
         originalEntryPoints.Clear();
+
+        foreach ((string key, CustomStringDrawInfo drawInfo) in customStringDrawInfos) {
+            if (!drawInfo.persistent) customStringDrawInfos.Remove(key);
+        }
 
         string event_name = Marshal.PtrToStringAnsi((nint)get_event_name((uint)event_id))!;
         logger.Debug($"atel_event_setup: {event_name}");
@@ -1947,7 +1970,7 @@ public unsafe partial class ArchipelagoFFXModule {
             if (FFXArchipelagoClient.sendLocation(treasure_id, ArchipelagoLocationType.Treasure)) {
                 obtain_item(item.id);
 
-                CustomString name = new CustomString(item.id != 0 ? item.name : $"{item.name} to {item.player}", encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
+                NativeCustomString name = new NativeCustomString(item.id != 0 ? item.name : $"{item.name} to {item.player}", encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
                 //CustomString name = new CustomString(item.name, encodingFlags: FhEncodingFlags.IGNORE_EXPRESSIONS);
                 logger.Info(item.name);
 
@@ -1956,7 +1979,7 @@ public unsafe partial class ArchipelagoFFXModule {
                 if (item.id != 0) {
                     message_text = _FUN_008bda20(0x4018); // "Obtained %0!"
                 } else {
-                    CustomString sent_text = new CustomString("Sent {VAR:00}!");
+                    NativeCustomString sent_text = new NativeCustomString("Sent {VAR:00}!");
                     //CustomString sent_text = new CustomString("Sent {VAR:00} to {VAR:01}!");
                     cached_strings.Add(sent_text);
                     message_text = sent_text.encoded;
@@ -1966,7 +1989,7 @@ public unsafe partial class ArchipelagoFFXModule {
                     //_FUN_008b8930(window_id, 1, (int)player_name.encoded);
                 }
             } else {
-                CustomString sent_text = new CustomString("Already received this item!");
+                NativeCustomString sent_text = new NativeCustomString("Already received this item!");
                 cached_strings.Add(sent_text);
                 message_text = sent_text.encoded;
             }
@@ -2159,21 +2182,22 @@ public unsafe partial class ArchipelagoFFXModule {
     }
     private static void update_region_state(int map, int entrance) {
         logger.Info($"Update region state");
-        if (skip_state_updates) {
-            return;
-        }
 
         // Update region state
         if (current_region != RegionEnum.None && region_states.TryGetValue(current_region, out ArchipelagoData.ArchipelagoRegion? current_state)) {
             current_state = region_states[current_region];
-            current_state.room_id = (ushort)map;
-            current_state.entrance = (ushort)entrance;
-            current_state.story_progress = save_data->story_progress;
 
             for (int i = 0; i < current_state.savedata.Length; i++) {
                 ref var data = ref current_state.savedata[i];
                 new Span<byte>((byte*)((int)save_data + data.offset), data.size).CopyTo(data.bytes);
             }
+
+            if (skip_state_updates) {
+                return;
+            }
+            current_state.room_id = (ushort)map;
+            current_state.entrance = (ushort)entrance;
+            current_state.story_progress = save_data->story_progress;
         }
     }
 
@@ -2325,7 +2349,6 @@ public unsafe partial class ArchipelagoFFXModule {
         }
 
         if (handle_warp_transition(save_data->current_room_id, save_data->current_spawnpoint, ref map, ref entrance)) {
-            clearCustomDrawInfos();
             return _Common_warpToMap.orig_fptr(work, storage, atelStack);
         } else {
             return blockWarp(work, storage, atelStack);
@@ -3668,12 +3691,6 @@ public unsafe partial class ArchipelagoFFXModule {
         return blockWarp(work, storage, atelStack);
     }
 
-    public static void clearCustomDrawInfos() {
-        foreach((string key, CustomStringDrawInfo drawInfo) in customStringDrawInfos) {
-            customStringDrawInfos.Remove(key);
-        }
-    }
-
     public static int blockWarp(AtelBasicWorker* work, int* storage, AtelStack* atelStack) {
         int entrance = atelStack->pop_int();
         int map      = atelStack->pop_int();
@@ -3725,7 +3742,6 @@ public unsafe partial class ArchipelagoFFXModule {
             logger.Debug($"Closest entrance: pos:({closestEntrance?.Entrance.x}, {closestEntrance?.Entrance.y}, {closestEntrance?.Entrance.z}) distance:{closestEntrance?.Distance}");
         }
         // Warp
-        clearCustomDrawInfos();
         atelStack->push_int(382);
         atelStack->push_int(0);
         h_Common_warpToMap(work, storage, atelStack);
@@ -4000,14 +4016,6 @@ public unsafe partial class ArchipelagoFFXModule {
         }
 
         // Free & Remove existing strings
-        if (customStringDrawInfos.ContainsKey("Lightning Streak")) {
-            customStringDrawInfos["Lightning Streak"].customString.Free();
-            customStringDrawInfos.Remove("Lightning Streak");
-        }
-        if (customStringDrawInfos.ContainsKey("Lightning Highest Streak")) {
-            customStringDrawInfos["Lightning Highest Streak"].customString.Free();
-            customStringDrawInfos.Remove("Lightning Highest Streak");
-        }
 
         // Did the player dodge?
         int current;
@@ -4017,14 +4025,14 @@ public unsafe partial class ArchipelagoFFXModule {
             current = *streak + 1;
 
         string currentString = $"Dodged: {current}";
-        customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new CustomString(currentString), new(40f, 140f), 0.5f);
+        customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new ManagedCustomString(currentString), new(40f, 140f), 0.5f);
         logger.Info($"Lightning Dodged: {current}");
 
         if (*streak > save_data->lightning_dodging_highest_consecutive_dodges)
             highestDodged = *streak;
 
         string highestString = $"Highest: {highestDodged}";
-        customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new CustomString(highestString), new(40f, 150f), 0.5f);
+        customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new ManagedCustomString(highestString), new(40f, 150f), 0.5f);
         logger.Info($"Highest Consecutive Dodged: {highestDodged}");
 
         return *dodged == 1 ? 1 : 0;

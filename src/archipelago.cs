@@ -166,7 +166,7 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         //public GCHandle name_handle = GCHandle.Alloc(FhEncoding.Us.to_bytes(name), GCHandleType.Pinned);
     }
 
-    public static List<CustomString> cached_strings = [];
+    public static List<NativeCustomString> cached_strings = [];
     public record ArchipelagoLocations(ArchipelagoSeed seed) {
         public Dictionary<int, ArchipelagoItem> treasure  =      seed.Treasure.ToDictionary(     x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
         public Dictionary<int, ArchipelagoItem> boss =           seed.Boss.ToDictionary(         x => x.location_id, x => new ArchipelagoItem(x.item_id, x.item_name, x.player_name));
@@ -864,18 +864,21 @@ public unsafe partial class ArchipelagoFFXModule : FhModule {
         ArchipelagoGUI.render();
     }
 
-    private struct CustomStringDrawInfo(CustomString customString, Vector2 pos, float scale = 0.65f, byte color = 0) {
-        public CustomString customString = customString;
-        public Vector2      pos          = pos;
-        public float        scale        = scale;
-        public byte         color        = color;
+    public struct CustomStringDrawInfo(ManagedCustomString customString, Vector2 pos, float scale = 0.65f, byte color = 0, bool persistent = false) {
+        public ManagedCustomString customString = customString;
+        public Vector2             pos          = pos;
+        public float               scale        = scale;
+        public byte                color        = color;
+        public bool                persistent   = persistent;
     }
 
-    private static Dictionary<string, CustomStringDrawInfo> customStringDrawInfos = [];
+    public static Dictionary<string, CustomStringDrawInfo> customStringDrawInfos = [];
 
     public override void render_game() {
         foreach ((string key, CustomStringDrawInfo drawInfo) in customStringDrawInfos) {
-            _TOMkpCrossExtMesFontLClutTypeRGBA(0, drawInfo.customString.encoded, drawInfo.pos.X, drawInfo.pos.Y, drawInfo.color, 0, 0x80, 0x80, 0x80, 0x80, drawInfo.scale, 0);
+            fixed (byte* text = drawInfo.customString.encoded) {
+                _TOMkpCrossExtMesFontLClutTypeRGBA(0, text, drawInfo.pos.X, drawInfo.pos.Y, drawInfo.color, 0, 0x80, 0x80, 0x80, 0x80, drawInfo.scale, 0);
+            }
         }
     }
 }

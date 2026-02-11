@@ -844,7 +844,7 @@ public static class ArchipelagoData {
         //0x426F,
     ];
 
-    public static ArchipelagoFFXModule.CustomString[] airship_destination_names = [
+    public static ArchipelagoFFXModule.ManagedCustomString[] airship_destination_names = [
         new(""u8),
         new("Baaj Temple"u8),
         new("Besaid Island"u8),
