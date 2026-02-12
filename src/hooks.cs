@@ -4028,8 +4028,8 @@ public unsafe partial class ArchipelagoFFXModule {
         customStringDrawInfos["Lightning Streak"] = new CustomStringDrawInfo(new ManagedCustomString(currentString), new(40f, 140f), 0.5f);
         logger.Info($"Lightning Dodged: {current}");
 
-        if (*streak > save_data->lightning_dodging_highest_consecutive_dodges)
-            highestDodged = *streak;
+        if (current > save_data->lightning_dodging_highest_consecutive_dodges)
+            highestDodged = (ushort)current;
 
         string highestString = $"Highest: {highestDodged}";
         customStringDrawInfos["Lightning Highest Streak"] = new CustomStringDrawInfo(new ManagedCustomString(highestString), new(40f, 150f), 0.5f);
